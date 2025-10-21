@@ -1,0 +1,20 @@
+@font-face {
+  font-family: 'Raleway';
+  src: url(../../assets/fonts/Raleway-VariableFont_wght.ttf) format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Montserrat', sans-serif;
+  src: url(../../assets/fonts/Montserrat-VariableFont_wght.ttf) format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.pageBanner {
+  background-image: url(../../assets/images/pagebanner.png);
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}

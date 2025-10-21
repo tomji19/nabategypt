@@ -1,0 +1,7 @@
+.discountbackground {
+    background-image: url(../../assets//images/discount.png);
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    margin: 0 8rem;
+}

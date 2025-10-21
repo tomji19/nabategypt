@@ -1,0 +1,8 @@
+body {
+    font-family: var(--font-nav);
+}
+
+.searchIcon {
+    background-color: var(--main-color);
+    color: white;
+}

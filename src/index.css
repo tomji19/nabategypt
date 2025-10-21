@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@import '@fortawesome/fontawesome-free/css/all.css';
+
+@font-face {
+  font-family: 'Montserrat', sans-serif;
+  src: url(../../assets/fonts/Montserrat-VariableFont_wght.ttf) format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Raleway', serif;
+  src: url(../../assets/fonts/Raleway-VariableFont_wght.ttf) format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Open Sans', serif;
+  src: url(../../assets/fonts/OpenSans-VariableFont_wght.ttf) format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+body {
+  @apply bg-white
+}
+
+:root {
+  --main-color: #355e3b;
+  --secondary-color: #f3f3f3;
+  --font-heading: 'Raleway', sans-serif;
+  --font-body: 'Raleway', sans-serif;
+  --font-nav: 'Montserrat', sans-serif;
+}
+
+.active {
+  @apply text-blue-500 text-xl transition-colors
+}

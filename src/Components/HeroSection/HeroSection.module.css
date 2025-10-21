@@ -1,0 +1,19 @@
+.backgroundImageMain {
+  background-image: url(../../assets/images/herosection.png);
+  background-position: center;
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+
+.backgroundImagetwo {
+  background-image: url(../../assets/images/newarrivals.png);
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+
+.backgroundImagethree {
+  background-image: url(../../assets/images/bestselling.png);
+  background-position: right;
+  background-size: contain;
+  background-repeat: no-repeat;
+}

@@ -1,0 +1,37 @@
+.outdoorbackground {
+    background-image: url(../../assets/images/outdoorplants.png);
+    background-position: center;
+    background-size: contain;
+    background-repeat: no-repeat;
+  }
+
+  .succulentsbackground {
+    background-image: url(../../assets/images/succulents.png);
+    background-position: center;
+    background-size: contain;
+    background-repeat: no-repeat;
+  }
+
+  .indoorbackground {
+    background-image: url(../../assets/images/indoor.png);
+    background-position: center;
+    background-size: contain;
+    background-repeat: no-repeat;
+  }
+
+  .caretoolsbackground {
+    background-image: url(../../assets/images/caretools.png);
+    background-position: center;
+    background-size: contain;
+    background-repeat: no-repeat;
+  }
+
+  .potsbackground {
+    background-image: url(../../assets/images/pots.png);
+    background-position: center;
+    background-size: contain;
+    background-repeat: no-repeat;
+  }
+  
+
+  

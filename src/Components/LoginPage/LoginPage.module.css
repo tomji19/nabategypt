@@ -1,0 +1,6 @@
+.backgroundimage {
+    background-image: url(../../assets/images/loginregisterbackground.png);
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+}
