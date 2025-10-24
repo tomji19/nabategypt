@@ -1,6 +1,6 @@
 import React from 'react';
 import classes from '../ProductData/ProductData.module.css';
-import irishflower from '../../assets/plantimages/succulent/irishflower.jpg';
+import irishflower from '../../assets/plantimages/succulent/Irishflower.jpg';
 import bluechalksticks from '../../assets/plantimages/succulent/bluechalksticks.jpg';
 import coppersedum from '../../assets/plantimages/succulent/coppersedum.jpg';
 import gollumjade from '../../assets/plantimages/succulent/gollumjade.jpg';
