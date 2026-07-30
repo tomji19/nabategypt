@@ -3,23 +3,21 @@ import { useCart } from '../CartContext/CartContext';
 import { useNavigate } from 'react-router-dom';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import { ToastContainer, toast } from 'react-toastify';
+import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useAuth } from '../AuthContext/AuthContext';
-
 
 const CheckoutForm = () => {
   const { cartItems, clearCart } = useCart();
   const navigate = useNavigate();
   const { userLoggedIn, loading } = useAuth();
 
-    useEffect(() => {
-      if (!loading && !userLoggedIn) {
-        navigate('/login');
-      }
-    }, [userLoggedIn, loading, navigate]);
+  useEffect(() => {
+    if (!loading && !userLoggedIn) {
+      navigate('/login');
+    }
+  }, [userLoggedIn, loading, navigate]);
 
-  // Validation schema using Yup
   const validationSchema = Yup.object({
     email: Yup.string()
       .email('Invalid email address')
@@ -27,7 +25,7 @@ const CheckoutForm = () => {
     firstName: Yup.string().required('First Name is required'),
     lastName: Yup.string().required('Last Name is required'),
     address: Yup.string().required('Address is required'),
-    apartment: Yup.string().required('Apartment is required'), // Make apartment required
+    apartment: Yup.string().required('Apartment is required'),
     phone: Yup.string()
       .matches(
         /^(01[0125][0-9]{8}|0[2-9]{1}[0-9]{7,8}|0[2-9]{1}[0-9]{1,4}[0-9]{7})$/,
@@ -37,7 +35,6 @@ const CheckoutForm = () => {
     paymentMethod: Yup.string().required('Payment method is required'),
   });
 
-  // Formik setup
   const formik = useFormik({
     initialValues: {
       email: '',
@@ -52,8 +49,6 @@ const CheckoutForm = () => {
     },
     validationSchema: validationSchema,
     onSubmit: (values) => {
-      
-      // Prepare the new order data
       const newOrder = {
         items: cartItems,
         totalAmount: total,
@@ -68,18 +63,15 @@ const CheckoutForm = () => {
         status: 'Processing',
       };
 
-      // Load existing orders from localStorage and add the new order
       const existingOrders = JSON.parse(localStorage.getItem('orders')) || [];
       const updatedOrders = [...existingOrders, newOrder];
       localStorage.setItem('orders', JSON.stringify(updatedOrders));
 
-      // Clear the cart and navigate to the Thank You page
       clearCart();
       navigate('/thankyoupage', { state: { formData: values, cartItems } });
     },
   });
 
-  // Calculate subtotal, tax, shipping, and total based on cartItems
   const subtotal = cartItems.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0
@@ -88,197 +80,193 @@ const CheckoutForm = () => {
   const tax = subtotal * 0.08;
   const total = subtotal + shipping + tax;
 
+  const fieldClass = (name) =>
+    `input-box ${
+      formik.touched[name] && formik.errors[name] ? '!border-red-500' : ''
+    }`;
+
   return (
-    <div className="max-w-6xl mx-auto p-6">
+    <div className="leaf-wash section-pad py-12 md:py-16">
       <ToastContainer />
-      <form onSubmit={formik.handleSubmit}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Left Column - Form */}
-          <div>
-            <h2 className="text-2xl font-semibold mb-4">Contact information</h2>
-            <input
-              type="email"
-              placeholder="Email address"
-              {...formik.getFieldProps('email')}
-              className={`w-full p-2 mb-4 border ${formik.touched.email && formik.errors.email ? 'border-red-500' : ''}`}
-            />
-            {formik.touched.email && formik.errors.email ? (
-              <div className="text-red-500 mb-4">{formik.errors.email}</div>
-            ) : null}
+      <div className="mx-auto max-w-6xl">
+        <p className="section-label">Checkout</p>
+        <h1 className="section-title mb-10">Complete your order</h1>
 
-            <h2 className="text-2xl font-semibold mb-4">
-              Shipping information
-            </h2>
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <input
-                type="text"
-                placeholder="First name"
-                {...formik.getFieldProps('firstName')}
-                className={`p-2 border ${formik.touched.firstName && formik.errors.firstName ? 'border-red-500' : ''}`}
-              />
-              {formik.touched.firstName && formik.errors.firstName ? (
-                <div className="text-red-500 mb-4">
-                  {formik.errors.firstName}
-                </div>
-              ) : null}
-
-              <input
-                type="text"
-                placeholder="Last name"
-                {...formik.getFieldProps('lastName')}
-                className={`p-2 border ${formik.touched.lastName && formik.errors.lastName ? 'border-red-500' : ''}`}
-              />
-              {formik.touched.lastName && formik.errors.lastName ? (
-                <div className="text-red-500 mb-4">
-                  {formik.errors.lastName}
-                </div>
-              ) : null}
-            </div>
-
-            <input
-              type="text"
-              placeholder="Address"
-              {...formik.getFieldProps('address')}
-              className={`w-full p-2 mb-4 border ${formik.touched.address && formik.errors.address ? 'border-red-500' : ''}`}
-            />
-            {formik.touched.address && formik.errors.address ? (
-              <div className="text-red-500 mb-4">{formik.errors.address}</div>
-            ) : null}
-
-            <input
-              type="text"
-              placeholder="Apartment, suite, etc."
-              {...formik.getFieldProps('apartment')}
-              className={`w-full p-2 mb-4 border ${formik.touched.apartment && formik.errors.apartment ? 'border-red-500' : ''}`}
-            />
-            {formik.touched.apartment && formik.errors.apartment ? (
-              <div className="text-red-500 mb-4">{formik.errors.apartment}</div>
-            ) : null}
-
-            <input
-              type="text"
-              value={formik.values.city}
-              className="w-full p-2 mb-4 border"
-              disabled
-            />
-            <select
-              className="w-full p-2 mb-4 border rounded"
-              value={formik.values.country}
-              disabled
-            >
-              <option>Egypt</option>
-            </select>
-
-            <input
-              type="tel"
-              placeholder="Phone"
-              {...formik.getFieldProps('phone')}
-              className={`w-full p-2 mb-4 border ${formik.touched.phone && formik.errors.phone ? 'border-red-500' : ''}`}
-            />
-            {formik.touched.phone && formik.errors.phone ? (
-              <div className="text-red-500 mcheb-4">{formik.errors.phone}</div>
-            ) : null}
-
-            <div className="mb-6">
-              <h2 className="text-2xl font-semibold mb-4">Payment method</h2>
-              <div className="space-y-3">
-                <div className="p-4 border">
-                  <label className="flex items-center space-x-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="paymentMethod"
-                      value="Vodafone Cash"
-                      checked={formik.values.paymentMethod === 'Vodafone Cash'}
-                      onChange={formik.handleChange}
-                      className="form-radio"
-                    />
-                    <span>Vodafone Cash</span>
-                  </label>
-                </div>
-                <div className="p-4 border">
-                  <label className="flex items-center space-x-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="paymentMethod"
-                      value="Cash On Delivery"
-                      checked={
-                        formik.values.paymentMethod === 'Cash On Delivery'
-                      }
-                      onChange={formik.handleChange}
-                      className="form-radio"
-                    />
-                    <span>Cash On Delivery</span>
-                  </label>
-                </div>
+        <form onSubmit={formik.handleSubmit}>
+          <div className="grid gap-10 lg:grid-cols-2 lg:gap-14">
+            <div className="space-y-8 bg-white p-6 md:p-8">
+              <div>
+                <h2 className="font-heading text-xl font-medium">Contact</h2>
+                <input
+                  type="email"
+                  placeholder="Email address"
+                  {...formik.getFieldProps('email')}
+                  className={`mt-4 ${fieldClass('email')}`}
+                />
+                {formik.touched.email && formik.errors.email && (
+                  <p className="mt-1 font-nav text-sm text-red-500">
+                    {formik.errors.email}
+                  </p>
+                )}
               </div>
-              {formik.touched.paymentMethod && !formik.values.paymentMethod ? (
-                <div className="text-red-500 mb-4">
-                  Payment method is required
-                </div>
-              ) : null}
-            </div>
-          </div>
 
-          {/* Right Column - Order Summary */}
-          <div>
-            <div className="bg-gray-50 p-6">
-              <h2 className="text-2xl font-semibold mb-4">Order summary</h2>
-              <div className="space-y-4">
-                {cartItems.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex justify-between items-center"
-                  >
-                    <div className="flex items-center space-x-4">
-                      <img
-                        src={item.image}
-                        alt={item.name}
-                        className="w-16 h-16 object-cover"
+              <div>
+                <h2 className="font-heading text-xl font-medium">Shipping</h2>
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                  <div>
+                    <input
+                      type="text"
+                      placeholder="First name"
+                      {...formik.getFieldProps('firstName')}
+                      className={fieldClass('firstName')}
+                    />
+                    {formik.touched.firstName && formik.errors.firstName && (
+                      <p className="mt-1 font-nav text-sm text-red-500">
+                        {formik.errors.firstName}
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <input
+                      type="text"
+                      placeholder="Last name"
+                      {...formik.getFieldProps('lastName')}
+                      className={fieldClass('lastName')}
+                    />
+                    {formik.touched.lastName && formik.errors.lastName && (
+                      <p className="mt-1 font-nav text-sm text-red-500">
+                        {formik.errors.lastName}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <input
+                  type="text"
+                  placeholder="Address"
+                  {...formik.getFieldProps('address')}
+                  className={`mt-3 ${fieldClass('address')}`}
+                />
+                {formik.touched.address && formik.errors.address && (
+                  <p className="mt-1 font-nav text-sm text-red-500">
+                    {formik.errors.address}
+                  </p>
+                )}
+                <input
+                  type="text"
+                  placeholder="Apartment, suite, etc."
+                  {...formik.getFieldProps('apartment')}
+                  className={`mt-3 ${fieldClass('apartment')}`}
+                />
+                {formik.touched.apartment && formik.errors.apartment && (
+                  <p className="mt-1 font-nav text-sm text-red-500">
+                    {formik.errors.apartment}
+                  </p>
+                )}
+                <input
+                  type="text"
+                  value={formik.values.city}
+                  disabled
+                  className="input-box mt-3 bg-nabat-soft"
+                />
+                <select
+                  className="input-box mt-3 bg-nabat-soft"
+                  value={formik.values.country}
+                  disabled
+                >
+                  <option>Egypt</option>
+                </select>
+                <input
+                  type="tel"
+                  placeholder="Phone"
+                  {...formik.getFieldProps('phone')}
+                  className={`mt-3 ${fieldClass('phone')}`}
+                />
+                {formik.touched.phone && formik.errors.phone && (
+                  <p className="mt-1 font-nav text-sm text-red-500">
+                    {formik.errors.phone}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <h2 className="font-heading text-xl font-medium">Payment</h2>
+                <div className="mt-4 space-y-3">
+                  {['Vodafone Cash', 'Cash On Delivery'].map((method) => (
+                    <label
+                      key={method}
+                      className="flex cursor-pointer items-center gap-3 border border-nabat-border p-4 font-nav text-sm transition-colors has-[:checked]:border-nabat-accent has-[:checked]:bg-nabat-mist"
+                    >
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        value={method}
+                        checked={formik.values.paymentMethod === method}
+                        onChange={formik.handleChange}
+                        className="accent-nabat-accent"
                       />
-                      <div>
-                        <p className="font-medium">{item.name}</p>
-                        <p className="text-gray-600">
-                          {item.size ? `${item.size}` : ''}
-                        </p>
-                      </div>
-                    </div>
-                    <p>${(item.price * item.quantity).toFixed(2)}</p>
-                  </div>
-                ))}
+                      {method}
+                    </label>
+                  ))}
+                </div>
+                {formik.touched.paymentMethod && !formik.values.paymentMethod && (
+                  <p className="mt-2 font-nav text-sm text-red-500">
+                    Payment method is required
+                  </p>
+                )}
+              </div>
+            </div>
 
-                <div className="border-t pt-4">
-                  <div className="flex justify-between mb-2">
-                    <p className="text-lg">Subtotal</p>
-                    <p className="text-lg">${subtotal.toFixed(2)}</p>
+            <div>
+              <div className="border border-nabat-border bg-white p-6 md:p-8 lg:sticky lg:top-28">
+                <h2 className="font-heading text-xl font-medium">Summary</h2>
+                <div className="mt-6 space-y-4">
+                  {cartItems.map((item) => (
+                    <div key={item.id} className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="h-14 w-14 object-cover bg-nabat-mist"
+                        />
+                        <div>
+                          <p className="font-nav text-sm font-medium">{item.name}</p>
+                          <p className="font-nav text-xs text-nabat-muted">
+                            {item.size || ''}
+                          </p>
+                        </div>
+                      </div>
+                      <p className="font-nav text-sm">
+                        ${(item.price * item.quantity).toFixed(2)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-6 space-y-2 border-t border-nabat-border pt-4 font-nav text-sm">
+                  <div className="flex justify-between text-nabat-muted">
+                    <span>Subtotal</span>
+                    <span className="text-nabat-text">${subtotal.toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between mb-2">
-                    <p className="text-lg">Shipping</p>
-                    <p className="text-lg">${shipping.toFixed(2)}</p>
+                  <div className="flex justify-between text-nabat-muted">
+                    <span>Shipping</span>
+                    <span className="text-nabat-text">${shipping.toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between mb-2">
-                    <p className="text-lg">Taxes</p>
-                    <p className="text-lg">${tax.toFixed(2)}</p>
+                  <div className="flex justify-between text-nabat-muted">
+                    <span>Tax</span>
+                    <span className="text-nabat-text">${tax.toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between font-medium text-lg">
-                    <p className="text-3xl text-[var(--main-color)] font-semibold">
-                      Total
-                    </p>
-                    <p className="text-3xl text-[var(--main-color)] font-semibold">
-                      ${total.toFixed(2)}
-                    </p>
+                  <div className="flex justify-between pt-2 font-heading text-xl font-medium text-nabat-primary">
+                    <span>Total</span>
+                    <span>${total.toFixed(2)}</span>
                   </div>
                 </div>
+                <button type="submit" className="btn-primary mt-8 w-full">
+                  Confirm order
+                </button>
               </div>
-              <button
-                type="submit"
-                className="w-full mt-6 bg-[var(--main-color)] text-white py-3 px-4 hover:bg-[var(--main-color)]"
-              >
-                Confirm order
-              </button>
             </div>
           </div>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
   );
 };

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import classes from '../TestimonialSection/TestimonialSection.module.css';
 
 const testimonials = [
   {
@@ -8,105 +7,98 @@ const testimonials = [
     quote:
       'Et, dignissimos obcaecati. Recusandae praesentium doloribus vitae? Rem unde atque mollitia!',
     name: 'Leroy Jenkins',
-    image: 'https://source.unsplash.com/random/100x100?1',
   },
   {
     id: 2,
     quote:
       'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam dapibus magna et tristique fermentum.',
     name: 'Sarah Smith',
-    image: 'https://source.unsplash.com/random/100x100?2',
   },
   {
     id: 3,
     quote:
       'Nullam scelerisque, lacus sed consequat laoreet, dui enim iaculis leo, eu viverra ex nulla in tellus.',
     name: 'John Doe',
-    image: 'https://source.unsplash.com/random/100x100?3',
   },
   {
     id: 4,
     quote:
       'Curabitur auctor, velit ut congue finibus, nisi nulla consectetur purus, eu varius purus est eget nunc.',
     name: 'Emily Johnson',
-    image: 'https://source.unsplash.com/random/100x100?4',
   },
 ];
 
-export default function testimonialSection() {
+export default function TestimonialSection() {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentIndex((prevIndex) => (prevIndex + 1) % testimonials.length);
-    }, 15000);
-
+      setCurrentIndex((prev) => (prev + 1) % testimonials.length);
+    }, 12000);
     return () => clearInterval(timer);
   }, []);
 
-  const handleDotClick = (index) => {
-    setCurrentIndex(index);
-  };
-
   return (
-    <>
-      <h1 className="text-6xl mb-7 text-center relative mt-7">Testimonials</h1>
-      <section
-        className={`${classes.testimonialbackground} px-32 py-7 relative max-w-7xl mx-auto h-[25rem]`}
-      >
-        <div className="absolute inset-0 opacity-10"></div>
-        <div className="container max-w-6xl mx-auto relative z-10">
+    <section className="section-pad bg-white py-20 md:py-28">
+      <div className="mx-auto max-w-3xl text-center">
+        <p className="section-label">Words from growers</p>
+        <div className="relative mt-10 min-h-[14rem]">
           <AnimatePresence mode="wait">
-            <motion.div
+            <motion.blockquote
               key={currentIndex}
-              initial={{ opacity: 0, y: 50 }}
+              initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -50 }}
-              transition={{ duration: 0.5 }}
-              className="flex flex-col items-center w-full p-6 space-y-8 lg:h-full lg:p-8 dark:text-black"
+              exit={{ opacity: 0, y: -16 }}
+              transition={{ duration: 0.45 }}
+              className="font-heading text-[clamp(1.5rem,3.5vw,2.25rem)] font-medium italic leading-snug tracking-tight text-nabat-text"
             >
-              <blockquote className="max-w-lg text-2xl italic font-bold text-center">
-                "{testimonials[currentIndex].quote}"
-              </blockquote>
-              <div className="text-center dark:text-black">
-                <p>{testimonials[currentIndex].name}</p>
-                <img
-                  src={testimonials[currentIndex].image}
-                  alt=""
-                  className="w-20 h-20 rounded-full mt-5 dark:bg-gray-500"
-                />
-              </div>
-            </motion.div>
+              &ldquo;{testimonials[currentIndex].quote}&rdquo;
+              <footer className="mt-8 not-italic">
+                <cite className="font-nav text-xs font-semibold uppercase tracking-[0.2em] text-nabat-accent not-italic">
+                  {testimonials[currentIndex].name}
+                </cite>
+              </footer>
+            </motion.blockquote>
           </AnimatePresence>
-
-          <div className="absolute top-1/2 -left-36 transform -translate-y-1/2">
-            <button
-              type="button"
-              aria-label="Previous"
-              className="text-black text-4xl py-2 px-4 transition-all duration-300"
-              onClick={() =>
-                handleDotClick(
-                  currentIndex > 0 ? currentIndex - 1 : testimonials.length - 1
-                )
-              }
-            >
-              <i className="fa-solid fa-chevron-left text-3xl"></i>
-            </button>
-          </div>
-          <div className="absolute top-1/2 -right-36 transform -translate-y-1/2">
-            <button
-              type="button"
-              aria-label="Next"
-              className="text-black text-2xl py-2 px-4 transition-all duration-300"
-              onClick={() =>
-                handleDotClick((currentIndex + 1) % testimonials.length)
-              }
-            >
-              <i className="fa-solid fa-chevron-right text-3xl"></i>
-            </button>
-          </div>
         </div>
-      </section>
-    </>
+        <div className="mt-10 flex items-center justify-center gap-6">
+          <button
+            type="button"
+            aria-label="Previous"
+            className="text-nabat-muted transition-colors hover:text-nabat-primary"
+            onClick={() =>
+              setCurrentIndex((i) =>
+                i > 0 ? i - 1 : testimonials.length - 1
+              )
+            }
+          >
+            <i className="fa-solid fa-arrow-left" />
+          </button>
+          <div className="flex gap-2">
+            {testimonials.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                aria-label={`Go to testimonial ${i + 1}`}
+                onClick={() => setCurrentIndex(i)}
+                className={`h-1.5 w-1.5 rounded-full transition-colors ${
+                  i === currentIndex ? 'bg-nabat-accent' : 'bg-nabat-border'
+                }`}
+              />
+            ))}
+          </div>
+          <button
+            type="button"
+            aria-label="Next"
+            className="text-nabat-muted transition-colors hover:text-nabat-primary"
+            onClick={() =>
+              setCurrentIndex((i) => (i + 1) % testimonials.length)
+            }
+          >
+            <i className="fa-solid fa-arrow-right" />
+          </button>
+        </div>
+      </div>
+    </section>
   );
 }

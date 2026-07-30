@@ -15,11 +15,12 @@ export default function AddToCartButton({ product }) {
 
   return (
     <button
+      type="button"
       onClick={handleAddToCart}
-      className="bg-[var(--main-color)] py-2 px-6 text-white font-bold w-[100%] flex justify-between items-center"
+      className="flex w-full items-center justify-center gap-2 bg-nabat-primary py-3 font-nav text-[11px] font-semibold uppercase tracking-[0.16em] text-white transition-colors hover:bg-nabat-hover"
     >
-      <span className="w-full text-center">Add to Cart</span>
-      <i className="fa-solid fa-bag-shopping w-auto text-end"></i>
+      Add to cart
+      <i className="fa-solid fa-bag-shopping text-xs" />
     </button>
   );
 }

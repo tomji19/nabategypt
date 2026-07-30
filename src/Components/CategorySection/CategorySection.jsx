@@ -1,119 +1,66 @@
 import React from 'react';
-import classes from '../CategorySection/CategorySection.module.css';
+import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import outdoorImg from '../../assets/images/outdoorplants.png';
+import succulentsImg from '../../assets/images/succulents.png';
+import indoorImg from '../../assets/images/indoor.png';
+import careToolsImg from '../../assets/images/caretools.png';
+import potsImg from '../../assets/images/pots.png';
 
+const categories = [
+  { name: 'Indoor', image: indoorImg, wide: true },
+  { name: 'Outdoor', image: outdoorImg, wide: false },
+  { name: 'Succulents', image: succulentsImg, wide: false },
+  { name: 'Care Tools', image: careToolsImg, wide: false },
+  { name: 'Pots', image: potsImg, wide: false },
+];
 
-export default function categorySection() {
+export default function CategorySection() {
   return (
-    <section className=" px-32 py-7">
-      <h1 className="text-6xl mb-7 text-center">Categories</h1>
-      <div className="flex justify-between">
-        {/* Left Section */}
-        <div className="w-1/3 mr-3 flex flex-col space-y-4">
-          <div
-            className={`${classes.outdoorbackground} p-6 flex justify-between items-center relative h-[17.5rem]`}
-          >
-            <div className="absolute inset-0 bg-black opacity-10"></div>
-            <div className="relative z-10">
-              <h3 className="text-4xl mb-2 text-white font-bold">
-                Outdoor Plants
-              </h3>
-              <a
-                href="#_"
-                className="relative w-[90%] inline-flex items-center justify-start py-3 pl-4 pr-12 overflow-hidden font-semibold text-white transition-all duration-150 ease-in-out group"
-              >
-                <span className="absolute bottom-0 left-0 w-[50%] h-1 transition-all duration-150 ease-in-out bg-[var(--main-color)] group-hover:h-full"></span>
-                <span className="absolute right-0 pr-4 duration-200 ease-out group-hover:translate-x-0"></span>
-                <span className="absolute left-0 pl-2.5 -translate-x-0 group-hover:translate-x-0 ease-out duration-200"></span>
-                <span className="relative text-left transition-colors duration-200 ease-in-out group-hover:text-white">
-                  Shop Now
-                </span>
-              </a>
-            </div>
-          </div>
-          <div
-            className={`${classes.succulentsbackground} p-6 flex justify-between items-center relative h-[17.5rem]`}
-          >
-            <div className="absolute inset-0 bg-black opacity-10"></div>
-            <div className="relative z-10">
-              <h3 className="text-4xl mb-2 text-white font-bold">Succulents</h3>
-              <a
-                href="#_"
-                className="relative w-[100%] inline-flex items-center justify-start py-3 pl-4 pr-12 overflow-hidden font-semibold text-white transition-all duration-150 ease-in-out group"
-              >
-                <span className="absolute bottom-0 left-0 w-[60%] h-1 transition-all duration-150 ease-in-out bg-[var(--main-color)] group-hover:h-full"></span>
-                <span className="absolute right-0 pr-4 duration-200 ease-out group-hover:translate-x-0"></span>
-                <span className="absolute left-0 pl-2.5 -translate-x-0 group-hover:translate-x-0 ease-out duration-200"></span>
-                <span className="relative text-left transition-colors duration-200 ease-in-out group-hover:text-white">
-                  Shop Now
-                </span>
-              </a>
-            </div>
-          </div>
-        </div>
+    <section className="leaf-wash section-pad py-20 md:py-28">
+      <div className="mb-12 md:mb-16">
+        <p className="section-label">Browse</p>
+        <h2 className="section-title">Find your plant</h2>
+        <p className="section-subtitle">
+          From sunlit balconies to quiet corners indoors
+        </p>
+      </div>
 
-        {/* Middle Section */}
-        <div
-          className={`${classes.indoorbackground} w-1/3 mr-3 p-6 relative h-[36rem] flex items-center`}
-        >
-          <div className="absolute inset-0 bg-black opacity-10"></div>
-          <div className="relative z-10 flex flex-col justify-center">
-            <h2 className="text-5xl mb-2 text-white font-bold">Indoor Plants</h2>
-            <a
-              href="#_"
-              className="relative w-[100%] inline-flex items-center justify-start py-3 pl-4 pr-12 overflow-hidden font-semibold text-white transition-all duration-150 ease-in-out group"
+      <div className="flex gap-3 overflow-x-auto pb-4 md:grid md:grid-cols-6 md:gap-4 md:overflow-visible md:pb-0">
+        {categories.map((cat, i) => (
+          <motion.div
+            key={cat.name}
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-60px' }}
+            transition={{ duration: 0.5, delay: i * 0.07 }}
+            className={`min-w-[70vw] shrink-0 sm:min-w-[45vw] md:min-w-0 ${
+              cat.wide ? 'md:col-span-2 md:row-span-2' : 'md:col-span-2'
+            }`}
+          >
+            <Link
+              to="/shop"
+              className={`group relative block overflow-hidden ${
+                cat.wide ? 'aspect-[3/4] md:h-full md:min-h-[28rem]' : 'aspect-[4/3]'
+              }`}
             >
-              <span className="absolute bottom-0 left-0 w-[40%] h-1 transition-all duration-150 ease-in-out bg-[var(--main-color)] group-hover:h-full"></span>
-              <span className="absolute right-0 pr-4 duration-200 ease-out group-hover:translate-x-0"></span>
-              <span className="absolute left-0 pl-2.5 -translate-x-0 group-hover:translate-x-0 ease-out duration-200"></span>
-              <span className="relative text-left transition-colors duration-200 ease-in-out group-hover:text-white">
-                Shop Now
-              </span>
-            </a>
-          </div>
-        </div>
-
-        {/* Right Section */}
-        <div className="w-1/3 flex flex-col space-y-4">
-          <div
-            className={`${classes.caretoolsbackground} p-6 flex justify-between items-center relative h-[17.5rem]`}
-          >
-            <div className="absolute inset-0 bg-black opacity-10"></div>
-            <div className="relative z-10">
-              <h3 className="text-4xl mb-2 text-white font-bold">Care Tools</h3>
-              <a
-                href="#_"
-                className="relative w-[100%] inline-flex items-center justify-start py-3 pl-4 pr-12 overflow-hidden font-semibold text-white transition-all duration-150 ease-in-out group"
-              >
-                <span className="absolute bottom-0 left-0 w-[60%] h-1 transition-all duration-150 ease-in-out bg-[var(--main-color)] group-hover:h-full"></span>
-                <span className="absolute right-0 pr-4 duration-200 ease-out group-hover:translate-x-0"></span>
-                <span className="absolute left-0 pl-2.5 -translate-x-0 group-hover:translate-x-0 ease-out duration-200"></span>
-                <span className="relative text-left transition-colors duration-200 ease-in-out group-hover:text-white">
-                  Shop Now
+              <img
+                src={cat.image}
+                alt=""
+                className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-nabat-primary/70 via-transparent to-transparent" />
+              <div className="absolute inset-x-0 bottom-0 p-5 md:p-6">
+                <h3 className="font-heading text-xl font-medium text-white md:text-2xl">
+                  {cat.name}
+                </h3>
+                <span className="mt-1 block font-nav text-[10px] uppercase tracking-[0.18em] text-white/70 opacity-0 transition-opacity group-hover:opacity-100">
+                  Explore
                 </span>
-              </a>
-            </div>
-          </div>
-
-          <div
-            className={`${classes.potsbackground} p-6 flex justify-between items-center relative h-[17.5rem]`}
-          >
-            <div className="absolute inset-0 bg-black opacity-10"></div>
-            <div className="relative z-10">
-              <h3 className="text-4xl mb-2 text-white font-bold">Pots</h3>
-              <a
-                href="#_"
-                className="relative w-[100%] inline-flex items-center justify-start py-3 pl-4 pr-12 overflow-hidden font-semibold text-white transition-all duration-150 ease-in-out group"
-              >
-                <span className="absolute bottom-0 left-0 w-[80%] h-1 transition-all duration-150 ease-in-out bg-[var(--main-color)] group-hover:h-full"></span>
-                <span className="absolute right-0 pr-4 duration-200 ease-out group-hover:translate-x-0"></span>
-                <span className="absolute left-0 pl-2.5 -translate-x-0 group-hover:translate-x-0 ease-out duration-200"></span>
-                <span className="relative text-left transition-colors duration-200 ease-in-out group-hover:text-white">
-                  Shop Now
-                </span>
-              </a>
-            </div>
-          </div>
-        </div>
+              </div>
+            </Link>
+          </motion.div>
+        ))}
       </div>
     </section>
   );

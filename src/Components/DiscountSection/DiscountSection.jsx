@@ -1,42 +1,42 @@
 import React from 'react';
-import classes from '../DiscountSection/DiscountSection.module.css';
+import discountImage from '../../assets/images/discount.png';
 
-export default function discountSection() {
+export default function DiscountSection() {
   return (
-    <>
-      <section
-        className={`${classes.discountbackground} px-32 mt-7 h-[28rem] relative`}
-      >
-        <div className="absolute flex flex-col text-start justify-center items-center top-0 bottom-0 left-0 right-0">
-          <h1 className="text-4xl mb-5 text-center text-white font-['Raleway']">
-            Get 30% Off Your Next Order
-          </h1>
-          <form className="max-w-md">
-            <div className="relative z-0 w-[29rem] group">
-              <input
-                type="email"
-                name="floating_email"
-                id="floating_email"
-                className="block py-2.5 pl-2 pr-[5rem] w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-white appearance-none dark:text-white dark:border-white dark:focus:border-white focus:outline-none focus:ring-0 focus:border-white peer"
-                placeholder=" "
-                required
-              />
-              <label
-                htmlFor="floating_email"
-                className="peer-focus:font-medium absolute text-sm text-white dark:text-white duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto peer-focus:text-white peer-focus:dark:text-white peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
-              >
-                Email address
-              </label>
-              <button
-                type="submit"
-                className="absolute right-0 top-0 py-2 px-4 bg-black border border-black text-white"
-              >
-                Subscribe
-              </button>
-            </div>
-          </form>
-        </div>
-      </section>
-    </>
+    <section className="relative flex min-h-[28rem] items-center justify-center overflow-hidden md:min-h-[32rem]">
+      <img
+        src={discountImage}
+        alt=""
+        className="absolute inset-0 h-full w-full object-cover"
+      />
+      <div className="absolute inset-0 bg-nabat-primary/70" />
+      <div className="relative z-10 section-pad mx-auto max-w-xl py-20 text-center">
+        <p className="mb-4 font-nav text-[11px] font-semibold uppercase tracking-[0.22em] text-nabat-mist">
+          Offer
+        </p>
+        <h2 className="font-heading text-[clamp(2rem,5vw,3.5rem)] font-medium tracking-tight text-white">
+          Get 30% off your next order
+        </h2>
+        <form
+          className="mx-auto mt-10 flex max-w-md border border-white/40"
+          onSubmit={(e) => e.preventDefault()}
+        >
+          <input
+            type="email"
+            id="discount_email"
+            name="floating_email"
+            required
+            placeholder="Your email"
+            className="w-full bg-transparent px-4 py-3.5 font-body text-sm text-white placeholder:text-white/55 focus:outline-none"
+          />
+          <button
+            type="submit"
+            className="shrink-0 bg-white px-6 py-3.5 font-nav text-[11px] font-semibold uppercase tracking-[0.14em] text-nabat-primary transition-colors hover:bg-nabat-mist"
+          >
+            Subscribe
+          </button>
+        </form>
+      </div>
+    </section>
   );
 }

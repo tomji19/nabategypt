@@ -3,125 +3,131 @@ import { getProducts } from '../ProductData/ProductData';
 import { useNavigate } from 'react-router-dom';
 import AddToCartButton from '../AddToCartButton/AddToCartButton';
 
-const ProductCarousel = () => {
+function ProductRail({ products }) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [hoveredProductId, setHoveredProductId] = useState(null);
+  const [hoveredId, setHoveredId] = useState(null);
   const navigate = useNavigate();
-  const { recentProducts } = getProducts();
 
-  if (!Array.isArray(recentProducts)) {
-    console.error('recentProducts is not an array:', recentProducts);
-    return null;
-  }
+  if (!Array.isArray(products) || products.length === 0) return null;
+
+  const visible = 3;
+  const maxIndex = Math.max(0, products.length - visible);
 
   const handlePrevious = () => {
-    setCurrentIndex((prevIndex) =>
-      prevIndex === 0 ? recentProducts.length - 3 : prevIndex - 1
-    );
+    setCurrentIndex((i) => (i === 0 ? maxIndex : i - 1));
   };
 
   const handleNext = () => {
-    setCurrentIndex((prevIndex) =>
-      prevIndex === recentProducts.length - 3 ? 0 : prevIndex + 1
-    );
+    setCurrentIndex((i) => (i >= maxIndex ? 0 : i + 1));
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-2 relative overflow-hidden">
+    <div className="relative">
       <div className="overflow-hidden">
         <div
-          className="flex transition-transform duration-500 ease-in-out"
+          className="flex transition-transform duration-500 ease-out"
           style={{
-            transform: `translateX(-${currentIndex * (100 / recentProducts.length)}%)`,
-            width: `${(recentProducts.length * 100) / 3}%`,
+            transform: `translateX(-${currentIndex * (100 / products.length)}%)`,
+            width: `${(products.length * 100) / visible}%`,
           }}
         >
-          {recentProducts.map((product) => (
+          {products.map((product) => (
             <div
               key={product.id}
-              className="relative flex-shrink-0 p-2 group"
-              style={{ width: `${100 / recentProducts.length}%` }}
-              onMouseEnter={() => setHoveredProductId(product.id)}
-              onMouseLeave={() => setHoveredProductId(null)}
+              className="shrink-0 px-2 md:px-3"
+              style={{ width: `${100 / products.length}%` }}
+              onMouseEnter={() => setHoveredId(product.id)}
+              onMouseLeave={() => setHoveredId(null)}
             >
-              <div className="m-2 bg-white p-4 shadow-lg">
-                <div className="aspect-square mb-4 bg-gray-100 overflow-hidden relative">
+              <article className="product-card">
+                <div className="product-card-image-wrap">
                   <img
                     src={product.image}
                     alt={product.name}
-                    className="w-full h-full object-cover cursor-pointer"
+                    className="product-card-image cursor-pointer"
                     onClick={() => navigate(`/singleproduct/${product.id}`)}
                   />
-                  {/* Sliding Button on Image */}
-                  <div 
-                    className={`absolute left-0 right-0 transition-all duration-300 ease-in-out 
-                      ${hoveredProductId === product.id 
-                        ? 'translate-y-0 opacity-100' 
+                  <div
+                    className={`absolute inset-x-0 bottom-0 transition-all duration-300 ${
+                      hoveredId === product.id
+                        ? 'translate-y-0 opacity-100'
                         : 'translate-y-full opacity-0'
-                      } 
-                      bottom-0 p-2 bg-white/100 z-10`}
+                    }`}
                   >
-                    <AddToCartButton 
-                      product={product} 
-                      className="w-full"
-                    />
+                    <AddToCartButton product={product} />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <p className="text-sm text-gray-500 text-start">
+                <div className="mt-4 space-y-1 text-left">
+                  <p className="font-nav text-[10px] uppercase tracking-[0.18em] text-nabat-accent">
                     {product.category}
                   </p>
-                  <h3 className="text-2xl my-1 text-gray-900 font-[Raleway] text-start">
+                  <h3
+                    className="cursor-pointer font-heading text-lg font-medium text-nabat-text transition-colors hover:text-nabat-accent md:text-xl"
+                    onClick={() => navigate(`/singleproduct/${product.id}`)}
+                  >
                     {product.name}
                   </h3>
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg text-gray-900">
+                  <div className="flex items-baseline gap-2 pt-1">
+                    <span className="font-nav text-sm text-nabat-text">
                       ${product.price.toFixed(2)}
                     </span>
                     {product.originalPrice && (
-                      <span className="text-sm text-gray-500 line-through">
+                      <span className="font-nav text-xs text-nabat-muted line-through">
                         ${product.originalPrice.toFixed(2)}
                       </span>
                     )}
                   </div>
-                  <div className="flex gap-2 mt-2">
-                    {product.colorOptions.map((color, index) => (
+                  <div className="flex gap-1.5 pt-2">
+                    {product.colorOptions?.map((color, index) => (
                       <div
                         key={index}
-                        className="w-4 h-4 border border-gray-300"
+                        className="h-3 w-3 border border-nabat-border"
                         style={{ backgroundColor: color }}
                       />
                     ))}
                   </div>
                 </div>
-              </div>
+              </article>
             </div>
           ))}
         </div>
       </div>
 
       <button
+        type="button"
         onClick={handlePrevious}
-        className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 p-2"
+        className="absolute -left-2 top-[35%] z-10 flex h-10 w-10 items-center justify-center bg-white/90 text-nabat-primary shadow-sm transition-colors hover:bg-nabat-primary hover:text-white md:-left-4"
+        aria-label="Previous"
       >
-        <i className="fa-solid fa-chevron-left text-3xl text-black"></i>
+        <i className="fa-solid fa-arrow-left text-sm" />
       </button>
-
       <button
+        type="button"
         onClick={handleNext}
-        className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 p-2"
+        className="absolute -right-2 top-[35%] z-10 flex h-10 w-10 items-center justify-center bg-white/90 text-nabat-primary shadow-sm transition-colors hover:bg-nabat-primary hover:text-white md:-right-4"
+        aria-label="Next"
       >
-        <i className="fa-solid fa-chevron-right text-3xl text-black"></i>
+        <i className="fa-solid fa-arrow-right text-sm" />
       </button>
     </div>
   );
-};
+}
 
 export default function RecentProducts() {
+  const { recentProducts } = getProducts();
+
   return (
-    <section className="px-32 py-7 bg-gray-100 text-center">
-      <h2 className="text-5xl mb-4">Recent Products</h2>
-      <ProductCarousel />
+    <section className="section-pad bg-white py-20 md:py-28">
+      <div className="mb-12 flex flex-col gap-4 md:mb-16 md:flex-row md:items-end md:justify-between">
+        <div>
+          <p className="section-label">Just in</p>
+          <h2 className="section-title">Recent plants</h2>
+        </div>
+        <p className="max-w-xs font-body text-sm text-nabat-muted md:text-right">
+          Fresh arrivals for your space
+        </p>
+      </div>
+      <ProductRail products={recentProducts} />
     </section>
   );
 }
