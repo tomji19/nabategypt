@@ -1,10 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useAuth } from '../AuthContext/AuthContext';
 
 const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
-  const { token } = useAuth();
   const [cartItems, setCartItems] = useState(() => {
     // Load cart from localStorage if it exists
     const storedItems = localStorage.getItem('cartItems');

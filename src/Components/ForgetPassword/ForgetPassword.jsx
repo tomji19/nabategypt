@@ -2,7 +2,7 @@
 // FORGET PASSWORD COMPONENT
 // ============================================
 // This component handles password reset requests
-// It uses Supabase for authentication instead of Firebase
+// It uses Supabase for authentication
 
 import React, { useState } from 'react';
 import classes from '../ForgetPassword/ForgetPassword.module.css';

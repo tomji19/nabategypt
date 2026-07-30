@@ -1,73 +1,136 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import heroImage from '../../assets/images/herosection.png';
-import logo from '../../assets/images/logocolored.png';
-import newArrivals from '../../assets/images/newarrivals.png';
-import bestSelling from '../../assets/images/bestselling.png';
+import styles from './HeroSection.module.css';
+
+import bamboo from '../../assets/images/hero-bamboo.jpeg';
+import leather from '../../assets/images/leather-1-hero.jpeg';
+import succulent1 from '../../assets/images/succulent-1-hero.png';
+import succulent2 from '../../assets/images/succulent-2-hero.png';
+import succulent3 from '../../assets/images/succulent-3-hero.png';
+import pothos from '../../assets/images/pothos-hero.jpeg';
+
+const enter = {
+  hidden: { opacity: 0, y: 16 },
+  show: (i) => ({
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.55, delay: 0.05 * i, ease: [0.22, 1, 0.36, 1] },
+  }),
+};
+
+const marqueeText = 'Indoor · Outdoor · Succulents · Nabat Egypt · ';
+
+const trioItems = [
+  { src: succulent1, alt: 'Succulent one', to: '/shop' },
+  { src: succulent2, alt: 'Succulent two', to: '/shop' },
+  { src: succulent3, alt: 'Succulent three', to: '/shop' },
+];
 
 export default function HeroSection() {
   return (
-    <>
-      <section className="relative flex min-h-[100svh] w-full items-end overflow-hidden md:items-center">
-        <img
-          src={heroImage}
-          alt=""
-          className="absolute inset-0 h-full w-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-nabat-primary/85 via-nabat-primary/35 to-nabat-primary/15 md:bg-gradient-to-r md:from-nabat-primary/80 md:via-nabat-primary/40 md:to-transparent" />
-
-        <div className="relative z-10 section-pad w-full pb-16 pt-28 md:pb-24 md:pt-20">
-          <motion.div
-            initial={{ opacity: 0, y: 32 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
-            className="max-w-2xl"
-          >
-            <img
-              src={logo}
-              alt="Nabat"
-              className="mb-6 h-12 w-auto brightness-0 invert md:h-14"
-            />
-            <p className="font-heading text-hero font-medium text-white">Nabat</p>
-            <h1 className="mt-4 max-w-md font-heading text-xl font-normal tracking-wide text-white/90 md:text-2xl">
-              Plants for modern living
-            </h1>
-            <p className="mt-4 max-w-sm font-body text-base text-white/75">
-              Delivering life to your doorstep
-            </p>
-            <Link to="/shop" className="btn-ghost mt-10 inline-flex">
-              Shop the collection
+    <section className={`section-pad ${styles.hero}`}>
+      <div className={styles.mosaic}>
+        <motion.div
+          className={styles.brand}
+          custom={0}
+          variants={enter}
+          initial="hidden"
+          animate="show"
+        >
+          <p className={styles.brandMeta}>Est. greenhouse</p>
+          <h1 className={styles.brandWord}>Nabat</h1>
+          <div>
+            <p className={styles.brandCopy}>Delivering life to your doorstep.</p>
+            <Link to="/shop" className={styles.cta}>
+              Enter the shop
+              <span aria-hidden>↗</span>
             </Link>
-          </motion.div>
-        </div>
-      </section>
+          </div>
+        </motion.div>
 
-      <section className="grid md:grid-cols-2">
-        {[
-          { img: newArrivals, title: 'New Arrivals', to: '/shop' },
-          { img: bestSelling, title: 'Best Selling', to: '/shop' },
-        ].map((item) => (
-          <Link
-            key={item.title}
-            to={item.to}
-            className="group relative flex min-h-[11rem] items-center justify-between overflow-hidden border-b border-white/10 px-6 py-10 md:min-h-[13rem] md:px-12"
-          >
-            <img
-              src={item.img}
-              alt=""
-              className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-            />
-            <div className="absolute inset-0 bg-nabat-primary/55 transition-colors group-hover:bg-nabat-primary/45" />
-            <span className="relative z-10 font-heading text-2xl font-medium text-white md:text-3xl">
-              {item.title}
-            </span>
-            <span className="relative z-10 font-nav text-[11px] uppercase tracking-[0.2em] text-white/80">
-              Shop →
-            </span>
+        <motion.div
+          className={`${styles.cell} ${styles.cellFeat}`}
+          custom={1}
+          variants={enter}
+          initial="hidden"
+          animate="show"
+        >
+          <Link to="/shop" className={`${styles.tile} ${styles.tileBamboo}`}>
+            <img src={bamboo} alt="Lucky bamboo" className={styles.tileImg} />
+            <div className={styles.marquee} aria-hidden>
+              <div className={styles.marqueeBar}>
+                <div className={styles.marqueeTrack}>
+                  <span>{marqueeText.repeat(4)}</span>
+                  <span>{marqueeText.repeat(4)}</span>
+                </div>
+              </div>
+            </div>
+            <div className={styles.label}>
+              <p className={styles.labelEyebrow}>Signature</p>
+              <p className={styles.labelTitle}>Lucky bamboo</p>
+            </div>
           </Link>
-        ))}
-      </section>
-    </>
+        </motion.div>
+
+        <motion.div
+          className={`${styles.cell} ${styles.cellFern}`}
+          custom={2}
+          variants={enter}
+          initial="hidden"
+          animate="show"
+        >
+          <Link to="/shop" className={`${styles.tile} ${styles.tileFern}`}>
+            <img src={leather} alt="Leatherleaf fern" className={styles.tileImg} />
+            <div className={styles.label}>
+              <p className={styles.labelEyebrow}>Indoor</p>
+              <p className={styles.labelTitle}>Leatherleaf fern</p>
+            </div>
+          </Link>
+        </motion.div>
+
+        <motion.div
+          className={`${styles.cell} ${styles.cellTrio}`}
+          custom={3}
+          variants={enter}
+          initial="hidden"
+          animate="show"
+        >
+          <div className={`${styles.tile} ${styles.tileTrio}`}>
+            <div className={styles.trioRow}>
+              {trioItems.map((item) => (
+                <Link
+                  key={item.alt}
+                  to={item.to}
+                  className={styles.trioItem}
+                >
+                  <img src={item.src} alt={item.alt} />
+                </Link>
+              ))}
+            </div>
+            <div className={styles.label}>
+              <p className={styles.labelEyebrow}>Trending Bundle</p>
+              <p className={styles.labelTitle}>Desert trio</p>
+            </div>
+          </div>
+        </motion.div>
+
+        <motion.div
+          className={`${styles.cell} ${styles.cellStrip}`}
+          custom={4}
+          variants={enter}
+          initial="hidden"
+          animate="show"
+        >
+          <Link to="/shop" className={`${styles.tile} ${styles.tileFern}`}>
+            <img src={pothos} alt="Hanging pothos" className={styles.tileImg} />
+            <div className={styles.label}>
+              <p className={styles.labelEyebrow}>Collection</p>
+              <p className={styles.labelTitle}>Hanging pothos</p>
+            </div>
+          </Link>
+        </motion.div>
+      </div>
+    </section>
   );
 }

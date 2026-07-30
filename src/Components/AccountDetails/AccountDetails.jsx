@@ -2,7 +2,7 @@
 // ACCOUNT DETAILS COMPONENT
 // ============================================
 // This component displays and allows editing of user account information
-// It uses Supabase for database operations instead of Firebase
+// It uses Supabase for database operations
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../AuthContext/AuthContext';

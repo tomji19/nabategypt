@@ -190,7 +190,7 @@ export const doSendEmailVerification = async () => {
 // ============================================
 // FUNCTION 8: Sign In Anonymously (Guest login)
 // ============================================
-// Supabase doesn't have anonymous auth by default like Firebase.
+// Supabase does not enable anonymous auth by default.
 // For now, this function will throw an error.
 // If anonymous login is needed, you would implement a custom solution,
 // e.g., creating a temporary user with a special email pattern or

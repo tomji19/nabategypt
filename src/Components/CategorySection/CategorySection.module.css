@@ -1,37 +1,154 @@
-.outdoorbackground {
-    background-image: url(../../assets/images/outdoorplants.png);
-    background-position: center;
-    background-size: contain;
-    background-repeat: no-repeat;
-  }
+/* Quote + categories share one row on desktop */
+.layout {
+  display: grid;
+  gap: 2.5rem;
+  align-items: stretch;
+  width: 100%;
+}
 
-  .succulentsbackground {
-    background-image: url(../../assets/images/succulents.png);
-    background-position: center;
-    background-size: contain;
-    background-repeat: no-repeat;
+@media (min-width: 900px) {
+  .layout {
+    grid-template-columns: minmax(14rem, 0.9fr) 2.4fr;
+    gap: 2rem 2.75rem;
+    align-items: center;
   }
+}
 
-  .indoorbackground {
-    background-image: url(../../assets/images/indoor.png);
-    background-position: center;
-    background-size: contain;
-    background-repeat: no-repeat;
+.quote {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin: 0;
+  padding: 2rem 1.75rem 2.15rem;
+  background: linear-gradient(165deg, #1f3d2b 0%, #2a5238 55%, #163024 100%);
+  color: #eaf3ec;
+  min-height: 12rem;
+}
+
+@media (min-width: 900px) {
+  .quote {
+    min-height: 100%;
+    padding: 2.5rem 1.85rem 2.75rem;
   }
+}
 
-  .caretoolsbackground {
-    background-image: url(../../assets/images/caretools.png);
-    background-position: center;
-    background-size: contain;
-    background-repeat: no-repeat;
+.quoteMark {
+  display: block;
+  font-family: var(--font-heading);
+  font-size: 4rem;
+  line-height: 0.55;
+  color: #8fb59a;
+  margin-bottom: 1rem;
+}
+
+.quote p {
+  font-family: var(--font-heading);
+  font-size: clamp(1.2rem, 2vw, 1.55rem);
+  font-weight: 500;
+  font-style: italic;
+  line-height: 1.4;
+  letter-spacing: -0.015em;
+  color: #f4faf5;
+  max-width: 14rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+@media (max-width: 639px) {
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 1.75rem;
   }
+}
 
-  .potsbackground {
-    background-image: url(../../assets/images/pots.png);
-    background-position: center;
-    background-size: contain;
-    background-repeat: no-repeat;
+@media (min-width: 640px) and (max-width: 899px) {
+  .grid {
+    gap: 1.5rem;
   }
-  
+}
 
-  
+@media (min-width: 900px) {
+  .grid {
+    gap: 1.75rem 1.5rem;
+  }
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.1rem;
+  text-decoration: none;
+  color: inherit;
+  text-align: center;
+}
+
+/* Soft circle stage for transparent plant cutouts */
+.stage {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 1;
+  padding: 8% 10% 6%;
+}
+
+.halo {
+  position: absolute;
+  inset: 12%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 50% 45%,
+    #eef3ef 0%,
+    #e4ebe5 55%,
+    #d8e2da 100%
+  );
+  transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    background 0.55s ease;
+}
+
+.plant {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+  transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.item:hover .halo,
+.item:focus-visible .halo {
+  transform: scale(1.04);
+  background: radial-gradient(
+    circle at 50% 45%,
+    #f3f7f3 0%,
+    #dce8de 60%,
+    #cfdcd2 100%
+  );
+}
+
+.item:hover .plant,
+.item:focus-visible .plant {
+  transform: translateY(-6px) scale(1.03);
+}
+
+.name {
+  font-family: var(--font-heading);
+  font-size: clamp(1rem, 1.4vw, 1.15rem);
+  font-weight: 500;
+  color: #1f3d2b;
+  letter-spacing: -0.01em;
+  transition: color 0.35s ease;
+}
+
+.item:hover .name,
+.item:focus-visible .name {
+  color: #5b8a6a;
+}

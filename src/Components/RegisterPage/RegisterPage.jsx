@@ -2,7 +2,7 @@
 // REGISTRATION PAGE COMPONENT
 // ============================================
 // This component handles user registration
-// It uses Supabase for authentication instead of Firebase
+// It uses Supabase for authentication
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';

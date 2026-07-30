@@ -126,8 +126,6 @@ export default function ShopPage() {
                   <option value="Succulent">Succulent</option>
                   <option value="Indoor Plants">Indoor Plants</option>
                   <option value="Outdoor Plants">Outdoor Plants</option>
-                  <option value="Outdoor Plants">Pots</option>
-                  <option value="Outdoor Plants">Care Tools</option>
                 </select>
               </div>
 
