@@ -9,6 +9,7 @@ import { useAuth } from '../AuthContext/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../supabase/supabase';
 import pageBanner from '../../assets/images/pagebanner.png';
+import PlantLoader from '../PlantLoader/PlantLoader';
 
 export default function AccountDetails() {
   const [activeTab, setActiveTab] = useState('personal'); // 'personal' or 'orders'
@@ -223,13 +224,8 @@ export default function AccountDetails() {
     }));
   };
 
-  // STEP 5: Show loading spinner while data is loading
   if (loading || authLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-10 w-10 animate-spin rounded-full border-2 border-nabat-primary border-t-transparent"></div>
-      </div>
-    );
+    return <PlantLoader variant="overlay" />;
   }
 
   // STEP 6: Render the Account Details Page

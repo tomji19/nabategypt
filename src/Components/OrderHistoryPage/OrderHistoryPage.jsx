@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../AuthContext/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import pageBanner from '../../assets/images/pagebanner.png';
+import PlantLoader from '../PlantLoader/PlantLoader';
 
 export default function OrderHistoryPage() {
   const [orders, setOrders] = useState([]);
@@ -41,11 +42,7 @@ export default function OrderHistoryPage() {
   };
 
   if (loading) {
-    return (
-      <div className="flex min-h-[50vh] items-center justify-center">
-        <div className="h-10 w-10 animate-spin rounded-full border-2 border-nabat-accent border-t-transparent" />
-      </div>
-    );
+    return <PlantLoader variant="overlay" />;
   }
 
   if (error) {

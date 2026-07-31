@@ -17,7 +17,7 @@ export default {
         },
       },
       fontFamily: {
-        heading: ['Raleway', 'sans-serif'],
+        heading: ['Montserrat', 'sans-serif'],
         body: ['Montserrat', 'sans-serif'],
         nav: ['Montserrat', 'sans-serif'],
       },

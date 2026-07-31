@@ -1,59 +1,39 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import nabatlogo from '../../assets/images/nabat-logo2.png';
+import nabatlogo from '../../assets/images/logocolored.png';
 
 export default function Footer() {
   return (
     <footer className="leaf-wash mt-auto border-t border-nabat-border">
-      <div className="section-pad py-16 md:py-20">
+      <div className="section-pad py-10 md:py-12">
         <div className="mx-auto max-w-3xl text-center">
           <img
             src={nabatlogo}
             alt="Nabat"
-            className="mx-auto mb-5 h-14 w-auto object-contain md:h-16"
+            className="mx-auto mb-3 h-10 w-auto object-contain md:h-11"
           />
-          <p className="font-heading text-2xl font-medium tracking-tight text-nabat-text md:text-3xl">
-            Nabat
-          </p>
-          <p className="mt-2 font-body text-sm text-nabat-muted">
+          <p className="font-body text-sm text-nabat-muted">
             Delivering life to your doorstep
           </p>
 
-          <div className="mt-8 flex justify-center gap-2">
+          <div className="mt-5 flex justify-center gap-1.5">
             {['facebook', 'instagram', 'youtube', 'whatsapp'].map((network) => (
               <a
                 key={network}
                 href="#"
                 aria-label={network}
-                className="flex h-10 w-10 items-center justify-center text-nabat-primary transition-colors hover:bg-nabat-primary hover:text-white"
+                className="flex h-9 w-9 items-center justify-center text-nabat-primary transition-colors hover:bg-nabat-primary hover:text-white"
               >
                 <i className={`fa-brands fa-${network}`} />
               </a>
             ))}
           </div>
-
-          <form
-            className="mx-auto mt-10 flex max-w-md border border-nabat-border bg-white"
-            onSubmit={(e) => e.preventDefault()}
-          >
-            <input
-              type="email"
-              id="footer_email"
-              name="floating_email"
-              required
-              placeholder="Email for plant tips"
-              className="w-full bg-transparent px-4 py-3 font-body text-sm focus:outline-none"
-            />
-            <button type="submit" className="btn-primary shrink-0 !px-5 !py-3">
-              Join
-            </button>
-          </form>
         </div>
 
-        <div className="mt-14 grid gap-10 border-t border-nabat-border pt-10 sm:grid-cols-2 md:grid-cols-3">
+        <div className="mt-8 grid gap-6 border-t border-nabat-border pt-8 sm:grid-cols-2 md:grid-cols-3">
           <div>
-            <h3 className="section-label !mb-4">Explore</h3>
-            <ul className="space-y-2.5 font-nav text-sm text-nabat-muted">
+            <h3 className="section-label !mb-3">Explore</h3>
+            <ul className="space-y-2 font-nav text-sm text-nabat-muted">
               <li>
                 <Link to="/about" className="hover:text-nabat-primary">
                   About
@@ -77,8 +57,8 @@ export default function Footer() {
             </ul>
           </div>
           <div className="sm:text-center">
-            <h3 className="section-label !mb-4">Account</h3>
-            <ul className="space-y-2.5 font-nav text-sm text-nabat-muted">
+            <h3 className="section-label !mb-3">Account</h3>
+            <ul className="space-y-2 font-nav text-sm text-nabat-muted">
               <li>
                 <Link to="/accountdetails" className="hover:text-nabat-primary">
                   My Account
@@ -102,7 +82,7 @@ export default function Footer() {
             </ul>
           </div>
           <div className="sm:col-span-2 md:col-span-1 md:text-right">
-            <h3 className="section-label !mb-4">Visit</h3>
+            <h3 className="section-label !mb-3">Visit</h3>
             <p className="font-body text-sm leading-relaxed text-nabat-muted">
               Alexandria, Egypt
               <br />
@@ -111,10 +91,17 @@ export default function Footer() {
           </div>
         </div>
       </div>
-      <div className="border-t border-nabat-border section-pad py-4">
-        <p className="text-center font-nav text-[11px] uppercase tracking-[0.16em] text-nabat-muted">
-          © {new Date().getFullYear()} Nabat Egypt
-        </p>
+
+      <div className="border-t border-nabat-border section-pad py-3">
+        <a
+          href="https://youssefashour.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block text-center font-nav text-[10px] uppercase tracking-[0.14em] text-nabat-muted transition-colors hover:text-nabat-primary"
+        >
+          © 2020–{new Date().getFullYear()} Nabat Egypt · All rights reserved · Designed
+          and Developed by Youssef Ashour
+        </a>
       </div>
     </footer>
   );

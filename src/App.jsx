@@ -1,27 +1,28 @@
-import React from 'react';
+import React, { lazy } from 'react';
 import './App.css';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import Home from './Components/Home/Home';
 import Layout from './Components/Layout/Layout';
-import ErrorPage from './Components/ErrorPage/ErrorPage';
-import ShopPage from './Components/ShopPage/ShopPage';
-import SingleProduct from './Components/SingleProduct/SingleProduct';
-import CartPage from './Components/CartPage/CartPage';
-import CheckoutPage from './Components/CheckoutPage/CheckoutPage';
-import ThankYouPage from './Components/ThankYouPage/ThankYouPage';
-import LoginPage from './Components/LoginPage/LoginPage';
-import RegisterPage from './Components/RegisterPage/RegisterPage';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { CartProvider } from './Components/CartContext/CartContext';
 import { AuthProvider } from './Components/AuthContext/AuthContext';
-import OrderHistoryPage from './Components/OrderHistoryPage/OrderHistoryPage';
-import ContactPage from './Components/ContactPage/ContactPage';
-import AboutPage from './Components/AboutPage/AboutPage';
-import ForgetPassword from './Components/ForgetPassword/ForgetPassword';
-import SearchResultsPage from './Components/SearchResultsPage/SearchResultsPage';
 import ProtectedRoute from './Components/ProtectedRoute/ProtectedRoute';
-import AccountDetails from './Components/AccountDetails/AccountDetails';
+
+const Home = lazy(() => import('./Components/Home/Home'));
+const ErrorPage = lazy(() => import('./Components/ErrorPage/ErrorPage'));
+const ShopPage = lazy(() => import('./Components/ShopPage/ShopPage'));
+const SingleProduct = lazy(() => import('./Components/SingleProduct/SingleProduct'));
+const CartPage = lazy(() => import('./Components/CartPage/CartPage'));
+const CheckoutPage = lazy(() => import('./Components/CheckoutPage/CheckoutPage'));
+const ThankYouPage = lazy(() => import('./Components/ThankYouPage/ThankYouPage'));
+const LoginPage = lazy(() => import('./Components/LoginPage/LoginPage'));
+const RegisterPage = lazy(() => import('./Components/RegisterPage/RegisterPage'));
+const OrderHistoryPage = lazy(() => import('./Components/OrderHistoryPage/OrderHistoryPage'));
+const ContactPage = lazy(() => import('./Components/ContactPage/ContactPage'));
+const AboutPage = lazy(() => import('./Components/AboutPage/AboutPage'));
+const ForgetPassword = lazy(() => import('./Components/ForgetPassword/ForgetPassword'));
+const SearchResultsPage = lazy(() => import('./Components/SearchResultsPage/SearchResultsPage'));
+const AccountDetails = lazy(() => import('./Components/AccountDetails/AccountDetails'));
 
 export default function App() {
   const router = createBrowserRouter([
@@ -29,34 +30,13 @@ export default function App() {
       path: '/',
       element: <Layout />,
       children: [
-        {
-          index: true,
-          element: <Home />,
-        },
-        {
-          path: '/shop',
-          element: <ShopPage />,
-        },
-        {
-          path: '/contact',
-          element: <ContactPage />,
-        },
-        {
-          path: '/about',
-          element: <AboutPage />,
-        },
-        {
-          path: '/singleproduct/:id',
-          element: <SingleProduct />,
-        },
-        {
-          path: '/cart',
-          element: <CartPage />,
-        },
-        {
-          path: '/checkout',
-          element: <CheckoutPage />,
-        },
+        { index: true, element: <Home /> },
+        { path: '/shop', element: <ShopPage /> },
+        { path: '/contact', element: <ContactPage /> },
+        { path: '/about', element: <AboutPage /> },
+        { path: '/singleproduct/:id', element: <SingleProduct /> },
+        { path: '/cart', element: <CartPage /> },
+        { path: '/checkout', element: <CheckoutPage /> },
         {
           path: '/accountdetails',
           element: (
@@ -81,26 +61,11 @@ export default function App() {
             </ProtectedRoute>
           ),
         },
-        {
-          path: '/login',
-          element: <LoginPage />,
-        },
-        {
-          path: '/register',
-          element: <RegisterPage />,
-        },
-        {
-          path: '/forgetpassword',
-          element: <ForgetPassword />,
-        },
-        {
-          path: '/search',
-          element: <SearchResultsPage />,
-        },
-        {
-          path: '*',
-          element: <ErrorPage />,
-        },
+        { path: '/login', element: <LoginPage /> },
+        { path: '/register', element: <RegisterPage /> },
+        { path: '/forgetpassword', element: <ForgetPassword /> },
+        { path: '/search', element: <SearchResultsPage /> },
+        { path: '*', element: <ErrorPage /> },
       ],
     },
   ]);

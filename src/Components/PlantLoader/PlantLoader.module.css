@@ -1,0 +1,106 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(247, 249, 247, 0.72);
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.2s ease;
+  overscroll-behavior: none;
+  touch-action: none;
+  pointer-events: all;
+}
+
+.page {
+  display: flex;
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  overscroll-behavior: none;
+}
+
+.inline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+}
+
+.sprout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
+  color: #1f3d2b;
+}
+
+.svg {
+  width: 2.75rem;
+  height: auto;
+  overflow: visible;
+}
+
+.stem {
+  stroke-dasharray: 32;
+  stroke-dashoffset: 32;
+  animation: growStem 1.4s ease-in-out infinite;
+}
+
+.leafLeft,
+.leafRight {
+  transform-box: fill-box;
+  transform-origin: center;
+  opacity: 0;
+  animation: unfurl 1.4s ease-in-out infinite;
+}
+
+.leafLeft {
+  animation-delay: 0.12s;
+}
+
+.leafRight {
+  animation-delay: 0.22s;
+}
+
+.label {
+  font-family: var(--font-nav);
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #5b8a6a;
+}
+
+@keyframes growStem {
+  0%,
+  100% {
+    stroke-dashoffset: 28;
+  }
+  50% {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes unfurl {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.7);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
