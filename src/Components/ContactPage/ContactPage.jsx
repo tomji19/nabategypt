@@ -1,8 +1,19 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import pageBanner from '../../assets/images/pagebanner.png';
+import BrandLogo from '../BrandLogo/BrandLogo';
+import { STORE } from '../../config/store';
+import { useLanguage } from '../LanguageContext/LanguageContext';
+import { useSiteContent } from '../SiteContentContext/SiteContentContext';
 
 export default function ContactPage() {
+  const { t } = useLanguage();
+  const { content } = useSiteContent();
+  const contact = content?.contact || {};
+  const phone = content?.store?.phone || STORE.phone;
+  const email = content?.store?.email || STORE.adminEmail;
+  const wa = `https://wa.me/2${String(phone).replace(/^0/, '')}`;
+
   return (
     <>
       <section className="page-banner min-h-[16rem] md:min-h-[20rem]">
@@ -14,35 +25,65 @@ export default function ContactPage() {
         <div className="absolute inset-0 bg-nabat-primary/55" />
         <div className="relative z-10">
           <p className="mb-2 font-nav text-[11px] uppercase tracking-[0.2em] text-white/70">
-            Reach out
+            {t('reachOut')}
           </p>
-          <h1 className="page-banner-title">Contact</h1>
+          <h1 className="page-banner-title">{t('contactTitle')}</h1>
         </div>
       </section>
 
       <section className="leaf-wash section-pad py-20 md:py-28">
         <div className="mx-auto grid max-w-5xl gap-12 md:grid-cols-2 md:gap-16">
           <div>
-            <p className="section-label">Hello</p>
-            <h2 className="section-title">We&apos;d love to hear from you</h2>
+            <BrandLogo
+              className="mb-8"
+              imgClassName="h-12 w-auto object-contain"
+            />
+            <p className="section-label">
+              {contact.eyebrow || t('contactEyebrow')}
+            </p>
+            <h2 className="section-title">
+              {contact.title || t('contactHeading')}
+            </h2>
             <p className="section-subtitle">
-              Questions about plants, orders, or care? Send us a note.
+              {contact.subtitle || t('contactSubtitle')}
             </p>
             <div className="mt-10 space-y-6 font-nav text-sm">
               <div>
-                <p className="section-label !mb-1">Location</p>
-                <p className="text-nabat-text">Alexandria, Egypt</p>
+                <p className="section-label !mb-1">
+                  {contact.locationLabel || t('location')}
+                </p>
+                <p className="text-nabat-text">
+                  {contact.location || t('alexandria')}
+                </p>
               </div>
               <div>
-                <p className="section-label !mb-1">Email</p>
-                <p className="text-nabat-accent">hello@nabat.eg</p>
+                <p className="section-label !mb-1">{t('phoneWhatsapp')}</p>
+                <a
+                  href={`tel:${phone}`}
+                  className="text-nabat-accent hover:underline"
+                  dir="ltr"
+                >
+                  {phone}
+                </a>
+              </div>
+              <div>
+                <p className="section-label !mb-1">{t('email')}</p>
+                <a
+                  href={`mailto:${email}`}
+                  className="text-nabat-accent hover:underline"
+                  dir="ltr"
+                >
+                  {email}
+                </a>
               </div>
             </div>
             <div className="mt-10 flex gap-2">
               {['facebook', 'instagram', 'whatsapp'].map((n) => (
                 <a
                   key={n}
-                  href="#"
+                  href={n === 'whatsapp' ? wa : '#'}
+                  target={n === 'whatsapp' ? '_blank' : undefined}
+                  rel={n === 'whatsapp' ? 'noopener noreferrer' : undefined}
                   aria-label={n}
                   className="flex h-11 w-11 items-center justify-center border border-nabat-border text-nabat-primary transition-colors hover:bg-nabat-primary hover:text-white"
                 >
@@ -53,34 +94,39 @@ export default function ContactPage() {
           </div>
 
           <div className="border border-nabat-border bg-white p-8 md:p-10">
-            <form
-              className="space-y-6"
-              onSubmit={(e) => e.preventDefault()}
-            >
+            <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
               <div>
-                <label className="section-label !mb-2">Name</label>
-                <input type="text" className="input-field" placeholder="Your name" />
+                <label className="section-label !mb-2">{t('name')}</label>
+                <input
+                  type="text"
+                  className="input-field"
+                  placeholder={t('yourName')}
+                />
               </div>
               <div>
-                <label className="section-label !mb-2">Email</label>
-                <input type="email" className="input-field" placeholder="Your email" />
+                <label className="section-label !mb-2">{t('email')}</label>
+                <input
+                  type="email"
+                  className="input-field"
+                  placeholder={t('yourEmail')}
+                />
               </div>
               <div>
-                <label className="section-label !mb-2">Message</label>
+                <label className="section-label !mb-2">{t('message')}</label>
                 <textarea
                   className="input-field min-h-[8rem] resize-y"
-                  placeholder="How can we help?"
+                  placeholder={t('howCanWeHelp')}
                 />
               </div>
               <button type="submit" className="btn-primary w-full">
-                Send message
+                {t('sendMessage')}
               </button>
             </form>
             <Link
               to="/shop"
               className="mt-6 block text-center font-nav text-xs uppercase tracking-[0.14em] text-nabat-muted hover:text-nabat-accent"
             >
-              Or continue shopping →
+              {t('orContinueShopping')}
             </Link>
           </div>
         </div>

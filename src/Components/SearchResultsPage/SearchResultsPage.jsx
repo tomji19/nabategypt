@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { getProducts } from '../ProductData/ProductData';
+import { useProducts } from '../ProductsContext/ProductsContext';
 import AddToCartButton from '../AddToCartButton/AddToCartButton';
 import pageBanner from '../../assets/images/pagebanner.png';
 
@@ -9,7 +9,7 @@ export default function SearchResultsPage() {
   const navigate = useNavigate();
   const queryParams = new URLSearchParams(location.search);
   const searchQuery = queryParams.get('query') || '';
-  const { products } = getProducts();
+  const { products } = useProducts();
   const [hoveredProductId, setHoveredProductId] = useState(null);
 
   const searchResults = products.filter(

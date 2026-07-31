@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { getProducts } from '../ProductData/ProductData';
+import { useProducts } from '../ProductsContext/ProductsContext';
 import { useCart } from '../CartContext/CartContext';
+import { useWishlist } from '../WishlistContext/WishlistContext';
+import { formatEGP } from '../../utils/money';
 import styles from './SingleProduct.module.css';
 
 const REVIEWS = [
@@ -31,26 +33,19 @@ const CARE_NOTES = [
 
 export default function SingleProduct() {
   const { id } = useParams();
+  const { getProductById, loading } = useProducts();
   const { addToCart, cartItems } = useCart();
+  const { isInWishlist, toggleWishlist } = useWishlist();
   const [product, setProduct] = useState(null);
-  const [selectedSize, setSelectedSize] = useState('');
-  const [selectedColor, setSelectedColor] = useState('');
   const [openPanel, setOpenPanel] = useState('about');
 
   useEffect(() => {
-    const { getProductById } = getProducts();
-    const productData = getProductById(id);
-    setProduct(productData || null);
-    if (productData?.colorOptions?.length) {
-      setSelectedColor(productData.colorOptions[0]);
-    }
-    if (productData?.sizeOptions?.length) {
-      const mid = productData.sizeOptions.includes('M')
-        ? 'M'
-        : productData.sizeOptions[0];
-      setSelectedSize(mid);
-    }
-  }, [id]);
+    setProduct(getProductById(id));
+  }, [id, getProductById]);
+
+  if (loading && !product) {
+    return <p className={`section-pad ${styles.missing}`}>Loading…</p>;
+  }
 
   if (!product) {
     return (
@@ -58,11 +53,9 @@ export default function SingleProduct() {
     );
   }
 
-  const handleAdd = () => {
-    addToCart({ ...product, selectedSize, selectedColor });
-  };
-
+  const outOfStock = product.stock != null && product.stock <= 0;
   const quantity = cartItems.find((item) => item.id === product.id)?.quantity || 0;
+  const wished = isInWishlist(product.id);
 
   const panels = [
     {
@@ -95,9 +88,6 @@ export default function SingleProduct() {
             <button type="button" className={`${styles.thumb} ${styles.thumbActive}`}>
               <img src={product.image} alt="" />
             </button>
-            <button type="button" className={styles.thumb}>
-              <img src={product.image} alt="" />
-            </button>
           </div>
         </div>
 
@@ -110,54 +100,33 @@ export default function SingleProduct() {
 
           <p className={styles.category}>{product.category}</p>
           <h1 className={styles.name}>{product.name}</h1>
-          <p className={styles.price}>{product.price} EGP</p>
-
-          {product.colorOptions?.length > 0 && (
-            <div className={styles.optionBlock}>
-              <p className={styles.optionLabel}>Pot tone</p>
-              <div className={styles.swatches}>
-                {product.colorOptions.map((color) => (
-                  <button
-                    key={color}
-                    type="button"
-                    aria-label={color}
-                    onClick={() => setSelectedColor(color)}
-                    className={`${styles.swatch} ${
-                      selectedColor === color ? styles.swatchActive : ''
-                    }`}
-                    style={{
-                      backgroundColor: color === 'grey' ? '#888' : color,
-                    }}
-                  />
-                ))}
-              </div>
-            </div>
+          <p className={styles.price}>{formatEGP(product.price)}</p>
+          {outOfStock && (
+            <p className="mt-2 font-nav text-sm text-red-600">Out of stock</p>
           )}
 
-          {product.sizeOptions?.length > 0 && (
-            <div className={styles.optionBlock}>
-              <p className={styles.optionLabel}>Size</p>
-              <div className={styles.sizes}>
-                {product.sizeOptions.map((size) => (
-                  <button
-                    key={size}
-                    type="button"
-                    onClick={() => setSelectedSize(size)}
-                    className={`${styles.sizeBtn} ${
-                      selectedSize === size ? styles.sizeBtnActive : ''
-                    }`}
-                  >
-                    {size}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <button type="button" className={styles.addBtn} onClick={handleAdd}>
-            {quantity > 0 ? `Add another · ${quantity} in bag` : 'Add to bag'}
-            <span>{product.price} EGP</span>
-          </button>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <button
+              type="button"
+              className={styles.addBtn}
+              onClick={() => addToCart(product)}
+              disabled={outOfStock}
+            >
+              {outOfStock
+                ? 'Out of stock'
+                : quantity > 0
+                  ? `Add another · ${quantity} in bag`
+                  : 'Add to bag'}
+              {!outOfStock && <span>{formatEGP(product.price)}</span>}
+            </button>
+            <button
+              type="button"
+              className="btn-outline"
+              onClick={() => toggleWishlist(product)}
+            >
+              {wished ? 'Saved ♥' : 'Wishlist'}
+            </button>
+          </div>
 
           <div className={styles.accordions}>
             {panels.map((panel) => {
@@ -181,19 +150,16 @@ export default function SingleProduct() {
                       {panel.body && <p>{panel.body}</p>}
                       {panel.list && (
                         <ul>
-                          {panel.list.map((item) => (
-                            <li key={item}>{item}</li>
+                          {panel.list.map((note) => (
+                            <li key={note}>{note}</li>
                           ))}
                         </ul>
                       )}
                       {panel.reviews &&
-                        panel.reviews.map((review) => (
-                          <div key={review.author} className={styles.review}>
-                            <p className={styles.reviewAuthor}>
-                              {review.author}
-                              <span>{'★'.repeat(review.rating)}</span>
-                            </p>
-                            <p>{review.text}</p>
+                        panel.reviews.map((r) => (
+                          <div key={r.author} className="mb-3">
+                            <p className="font-medium">{r.author}</p>
+                            <p className="text-nabat-muted">{r.text}</p>
                           </div>
                         ))}
                     </div>

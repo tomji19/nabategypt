@@ -1,11 +1,14 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import logo from '../../assets/images/logocolored.png';
+import BrandLogo from '../BrandLogo/BrandLogo';
 
 export default function ErrorPage() {
   return (
     <section className="leaf-wash section-pad flex min-h-[70vh] flex-col items-center justify-center py-24 text-center">
-      <img src={logo} alt="Nabat" className="mb-10 h-12 w-auto object-contain opacity-80" />
+      <BrandLogo
+        className="mb-10 opacity-80"
+        imgClassName="h-12 w-auto object-contain"
+      />
       <p className="font-heading text-[clamp(4rem,12vw,8rem)] font-medium leading-none tracking-tight text-nabat-mist">
         404
       </p>
