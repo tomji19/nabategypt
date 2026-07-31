@@ -1,105 +1,149 @@
-import React, { useEffect } from 'react';
-import { useCart } from '../CartContext/CartContext';
+import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { toast } from 'react-toastify';
+import { useCart } from '../CartContext/CartContext';
 import { useAuth } from '../AuthContext/AuthContext';
+import { createOrder } from '../../supabase/orders';
+import { STORE, PAYMENT_METHODS } from '../../config/store';
+import { calcOrderTotals, formatEGP } from '../../utils/money';
+import { useLanguage } from '../LanguageContext/LanguageContext';
+
+const PAY_LABEL = {
+  cod: 'payCod',
+  vodafone_cash: 'payVodafone',
+  instapay: 'payInstapay',
+  visa: 'payVisa',
+};
+
+const PAY_HINT = {
+  vodafone_cash: 'payVodafoneHint',
+  instapay: 'payInstapayHint',
+  visa: 'payVisaHint',
+};
 
 const CheckoutForm = () => {
   const { cartItems, clearCart } = useCart();
   const navigate = useNavigate();
-  const { userLoggedIn, loading } = useAuth();
+  const { currentUser, userLoggedIn } = useAuth();
+  const { t } = useLanguage();
+  const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    if (!loading && !userLoggedIn) {
-      navigate('/login');
-    }
-  }, [userLoggedIn, loading, navigate]);
+  const { subtotal, shipping, total } = calcOrderTotals(cartItems);
 
-  const validationSchema = Yup.object({
-    email: Yup.string()
-      .email('Invalid email address')
-      .required('Email Address is required'),
-    firstName: Yup.string().required('First Name is required'),
-    lastName: Yup.string().required('Last Name is required'),
-    address: Yup.string().required('Address is required'),
-    apartment: Yup.string().required('Apartment is required'),
-    phone: Yup.string()
-      .matches(
-        /^(01[0125][0-9]{8}|0[2-9]{1}[0-9]{7,8}|0[2-9]{1}[0-9]{1,4}[0-9]{7})$/,
-        'Invalid phone number'
-      )
-      .required('Phone Number is required'),
-    paymentMethod: Yup.string().required('Payment method is required'),
-  });
+  const validationSchema = useMemo(
+    () =>
+      Yup.object({
+        email: Yup.string()
+          .email(t('invalidEmail'))
+          .required(t('emailRequired')),
+        firstName: Yup.string().required(t('firstNameRequired')),
+        lastName: Yup.string().required(t('lastNameRequired')),
+        address: Yup.string().required(t('addressRequired')),
+        apartment: Yup.string().required(t('apartmentRequired')),
+        phone: Yup.string()
+          .matches(/^01[0125][0-9]{8}$/, t('phoneInvalid'))
+          .required(t('phoneRequired')),
+        paymentMethod: Yup.string().required(t('paymentRequired')),
+      }),
+    [t]
+  );
 
   const formik = useFormik({
     initialValues: {
-      email: '',
+      email: currentUser?.email || '',
       firstName: '',
       lastName: '',
       address: '',
       apartment: '',
-      city: 'Alexandria',
-      country: 'Egypt',
+      city: STORE.city,
+      country: STORE.country,
       phone: '',
       paymentMethod: '',
     },
-    validationSchema: validationSchema,
-    onSubmit: (values) => {
-      const newOrder = {
-        items: cartItems,
-        totalAmount: total,
-        createdAt: new Date().toISOString(),
-        shippingAddress: {
-          street: values.address,
-          apartment: values.apartment,
-          city: values.city,
-          country: values.country,
-          phone: values.phone,
-        },
-        status: 'Processing',
-      };
+    enableReinitialize: true,
+    validationSchema,
+    onSubmit: async (values) => {
+      if (cartItems.length === 0) {
+        toast.error(t('cartEmptyCheckout'));
+        return;
+      }
 
-      const existingOrders = JSON.parse(localStorage.getItem('orders')) || [];
-      const updatedOrders = [...existingOrders, newOrder];
-      localStorage.setItem('orders', JSON.stringify(updatedOrders));
+      setSubmitting(true);
+      try {
+        const order = await createOrder({
+          userId: userLoggedIn ? currentUser?.uid : null,
+          formData: values,
+          cartItems,
+          subtotal,
+          shipping,
+          total,
+        });
 
-      clearCart();
-      navigate('/thankyoupage', { state: { formData: values, cartItems } });
+        const snapshot = [...cartItems];
+        clearCart();
+        navigate('/thankyoupage', {
+          state: {
+            formData: values,
+            cartItems: snapshot,
+            order,
+            subtotal,
+            shipping,
+            total,
+          },
+        });
+      } catch (err) {
+        console.error(err);
+        toast.error(err?.message || t('cartEmptyCheckout'));
+      } finally {
+        setSubmitting(false);
+      }
     },
   });
 
-  const subtotal = cartItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
-  const shipping = 35.0;
-  const tax = subtotal * 0.08;
-  const total = subtotal + shipping + tax;
+  const selectedId = formik.values.paymentMethod;
+  const hintKey = PAY_HINT[selectedId];
 
   const fieldClass = (name) =>
     `input-box ${
       formik.touched[name] && formik.errors[name] ? '!border-red-500' : ''
     }`;
 
+  if (cartItems.length === 0) {
+    return (
+      <div className="leaf-wash section-pad py-16 text-center">
+        <p className="font-body text-nabat-muted">{t('cartEmptyCheckout')}</p>
+        <button
+          type="button"
+          className="btn-primary mt-6"
+          onClick={() => navigate('/shop')}
+        >
+          {t('continueShopping')}
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="leaf-wash section-pad py-12 md:py-16">
-      <ToastContainer />
       <div className="mx-auto max-w-6xl">
-        <p className="section-label">Checkout</p>
-        <h1 className="section-title mb-10">Complete your order</h1>
+        <p className="section-label">{t('checkoutLabel')}</p>
+        <h1 className="section-title mb-2">{t('checkoutTitle')}</h1>
+        <p className="mb-10 font-nav text-sm text-nabat-muted">
+          {t('checkoutHint')}
+        </p>
 
         <form onSubmit={formik.handleSubmit}>
           <div className="grid gap-10 lg:grid-cols-2 lg:gap-14">
             <div className="space-y-8 bg-white p-6 md:p-8">
               <div>
-                <h2 className="font-heading text-xl font-medium">Contact</h2>
+                <h2 className="font-heading text-xl font-medium">
+                  {t('contactSection')}
+                </h2>
                 <input
                   type="email"
-                  placeholder="Email address"
+                  placeholder={t('emailAddress')}
                   {...formik.getFieldProps('email')}
                   className={`mt-4 ${fieldClass('email')}`}
                 />
@@ -111,12 +155,17 @@ const CheckoutForm = () => {
               </div>
 
               <div>
-                <h2 className="font-heading text-xl font-medium">Shipping</h2>
+                <h2 className="font-heading text-xl font-medium">
+                  {t('shippingSection')}
+                </h2>
+                <p className="mt-1 font-nav text-xs text-nabat-muted">
+                  {t('deliveryOnlyAlex')}
+                </p>
                 <div className="mt-4 grid grid-cols-2 gap-3">
                   <div>
                     <input
                       type="text"
-                      placeholder="First name"
+                      placeholder={t('firstName')}
                       {...formik.getFieldProps('firstName')}
                       className={fieldClass('firstName')}
                     />
@@ -129,7 +178,7 @@ const CheckoutForm = () => {
                   <div>
                     <input
                       type="text"
-                      placeholder="Last name"
+                      placeholder={t('lastName')}
                       {...formik.getFieldProps('lastName')}
                       className={fieldClass('lastName')}
                     />
@@ -142,7 +191,7 @@ const CheckoutForm = () => {
                 </div>
                 <input
                   type="text"
-                  placeholder="Address"
+                  placeholder={t('streetAddress')}
                   {...formik.getFieldProps('address')}
                   className={`mt-3 ${fieldClass('address')}`}
                 />
@@ -153,7 +202,7 @@ const CheckoutForm = () => {
                 )}
                 <input
                   type="text"
-                  placeholder="Apartment, suite, etc."
+                  placeholder={t('apartment')}
                   {...formik.getFieldProps('apartment')}
                   className={`mt-3 ${fieldClass('apartment')}`}
                 />
@@ -164,7 +213,7 @@ const CheckoutForm = () => {
                 )}
                 <input
                   type="text"
-                  value={formik.values.city}
+                  value={t('alexandriaCity')}
                   disabled
                   className="input-box mt-3 bg-nabat-soft"
                 />
@@ -173,13 +222,14 @@ const CheckoutForm = () => {
                   value={formik.values.country}
                   disabled
                 >
-                  <option>Egypt</option>
+                  <option value="Egypt">{t('egypt')}</option>
                 </select>
                 <input
                   type="tel"
-                  placeholder="Phone"
+                  placeholder={t('phone')}
                   {...formik.getFieldProps('phone')}
                   className={`mt-3 ${fieldClass('phone')}`}
+                  dir="ltr"
                 />
                 {formik.touched.phone && formik.errors.phone && (
                   <p className="mt-1 font-nav text-sm text-red-500">
@@ -189,39 +239,57 @@ const CheckoutForm = () => {
               </div>
 
               <div>
-                <h2 className="font-heading text-xl font-medium">Payment</h2>
+                <h2 className="font-heading text-xl font-medium">
+                  {t('paymentSection')}
+                </h2>
                 <div className="mt-4 space-y-3">
-                  {['Vodafone Cash', 'Cash On Delivery'].map((method) => (
+                  {PAYMENT_METHODS.map((method) => (
                     <label
-                      key={method}
+                      key={method.id}
                       className="flex cursor-pointer items-center gap-3 border border-nabat-border p-4 font-nav text-sm transition-colors has-[:checked]:border-nabat-accent has-[:checked]:bg-nabat-mist"
                     >
                       <input
                         type="radio"
                         name="paymentMethod"
-                        value={method}
-                        checked={formik.values.paymentMethod === method}
+                        value={method.id}
+                        checked={formik.values.paymentMethod === method.id}
                         onChange={formik.handleChange}
                         className="accent-nabat-accent"
                       />
-                      {method}
+                      <span>{t(PAY_LABEL[method.id] || method.id)}</span>
                     </label>
                   ))}
                 </div>
-                {formik.touched.paymentMethod && !formik.values.paymentMethod && (
+                {formik.touched.paymentMethod && formik.errors.paymentMethod && (
                   <p className="mt-2 font-nav text-sm text-red-500">
-                    Payment method is required
+                    {formik.errors.paymentMethod}
                   </p>
+                )}
+                {hintKey && (
+                  <div className="mt-4 border border-nabat-border bg-nabat-mist p-4 font-nav text-sm text-nabat-text">
+                    <p className="font-medium text-nabat-primary">
+                      {t('paymentInstructions')}
+                    </p>
+                    <p className="mt-2 text-nabat-muted">{t(hintKey)}</p>
+                    <p className="mt-2 font-medium" dir="ltr">
+                      {t('numberLabel')}: {STORE.paymentNumber}
+                    </p>
+                  </div>
                 )}
               </div>
             </div>
 
             <div>
               <div className="border border-nabat-border bg-white p-6 md:p-8 lg:sticky lg:top-28">
-                <h2 className="font-heading text-xl font-medium">Summary</h2>
+                <h2 className="font-heading text-xl font-medium">
+                  {t('summary')}
+                </h2>
                 <div className="mt-6 space-y-4">
                   {cartItems.map((item) => (
-                    <div key={item.id} className="flex items-center justify-between gap-3">
+                    <div
+                      key={item.id}
+                      className="flex items-center justify-between gap-3"
+                    >
                       <div className="flex items-center gap-3">
                         <img
                           src={item.image}
@@ -229,38 +297,40 @@ const CheckoutForm = () => {
                           className="h-14 w-14 object-cover bg-nabat-mist"
                         />
                         <div>
-                          <p className="font-nav text-sm font-medium">{item.name}</p>
+                          <p className="font-nav text-sm font-medium">
+                            {item.name}
+                          </p>
                           <p className="font-nav text-xs text-nabat-muted">
-                            {item.size || ''}
+                            {t('qty')} {item.quantity}
                           </p>
                         </div>
                       </div>
                       <p className="font-nav text-sm">
-                        ${(item.price * item.quantity).toFixed(2)}
+                        {formatEGP(item.price * item.quantity)}
                       </p>
                     </div>
                   ))}
                 </div>
                 <div className="mt-6 space-y-2 border-t border-nabat-border pt-4 font-nav text-sm">
                   <div className="flex justify-between text-nabat-muted">
-                    <span>Subtotal</span>
-                    <span className="text-nabat-text">${subtotal.toFixed(2)}</span>
+                    <span>{t('subtotal')}</span>
+                    <span className="text-nabat-text">{formatEGP(subtotal)}</span>
                   </div>
                   <div className="flex justify-between text-nabat-muted">
-                    <span>Shipping</span>
-                    <span className="text-nabat-text">${shipping.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-nabat-muted">
-                    <span>Tax</span>
-                    <span className="text-nabat-text">${tax.toFixed(2)}</span>
+                    <span>{t('shippingAlex')}</span>
+                    <span className="text-nabat-text">{formatEGP(shipping)}</span>
                   </div>
                   <div className="flex justify-between pt-2 font-heading text-xl font-medium text-nabat-primary">
-                    <span>Total</span>
-                    <span>${total.toFixed(2)}</span>
+                    <span>{t('total')}</span>
+                    <span>{formatEGP(total)}</span>
                   </div>
                 </div>
-                <button type="submit" className="btn-primary mt-8 w-full">
-                  Confirm order
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="btn-primary mt-8 w-full disabled:opacity-60"
+                >
+                  {submitting ? t('placingOrder') : t('confirmOrder')}
                 </button>
               </div>
             </div>

@@ -10,6 +10,7 @@ import { Formik, Form, Field } from 'formik';
 import * as Yup from 'yup';
 import { DoPasswordReset } from '../../supabase/auth';
 import { supabase } from '../../supabase/supabase';
+import BrandLogo from '../BrandLogo/BrandLogo';
 
 export default function ForgetPassword() {
   const [error, setError] = useState('');
@@ -83,7 +84,7 @@ export default function ForgetPassword() {
       <div className={`${classes.backgroundimage} relative hidden min-h-[20rem] lg:block`}>
         <div className="absolute inset-0 bg-nabat-primary/50" />
         <div className="relative z-10 flex h-full flex-col justify-end p-12 text-white">
-          <p className="font-heading text-5xl font-medium tracking-tight">Nabat</p>
+          <BrandLogo imgClassName="h-14 w-auto object-contain brightness-0 invert" />
           <p className="mt-3 max-w-sm font-body text-white/80">
             We&apos;ll help you get back in
           </p>

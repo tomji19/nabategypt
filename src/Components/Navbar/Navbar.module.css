@@ -277,7 +277,58 @@
   display: flex;
   align-items: center;
   justify-self: end;
-  gap: 0.15rem;
+  gap: 0.35rem;
+}
+
+.langBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-inline-end: 0.25rem;
+  padding: 0.55rem 0.95rem;
+  border: 1.5px solid #1f3d2b;
+  background: #1f3d2b;
+  color: #fff;
+  font-family: var(--font-nav, inherit);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.25s ease, color 0.25s ease, transform 0.2s ease,
+    box-shadow 0.25s ease;
+  box-shadow: 0 2px 0 #163024;
+}
+
+.langBtn:hover {
+  background: #fff;
+  color: #1f3d2b;
+  transform: translateY(-1px);
+}
+
+.langBtn:active {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+.langBtnIcon {
+  font-size: 0.85rem;
+  opacity: 0.95;
+}
+
+.langBtnLabel {
+  white-space: nowrap;
+}
+
+@media (max-width: 639px) {
+  .langBtn {
+    padding: 0.5rem 0.7rem;
+    font-size: 0.75rem;
+  }
+
+  .langBtnIcon {
+    display: none;
+  }
 }
 
 .iconBtn {

@@ -475,7 +475,7 @@ export function AuthProvider({ children }) {
     userLoggedIn,          // Is user authenticated?
     loading,               // Are we still checking auth?
     anonymousUserName,     // Guest user name (if applicable)
-    setAnonymousUserName   // Function to update anonymous name
+    setAnonymousUserName,  // Function to update anonymous name
   };
 
   // ============================================

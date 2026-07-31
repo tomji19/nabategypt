@@ -4,25 +4,22 @@ import { toast } from 'react-toastify';
 import { useCart } from '../CartContext/CartContext';
 import { Link } from 'react-router-dom';
 import pageBanner from '../../assets/images/pagebanner.png';
+import { calcOrderTotals, formatEGP } from '../../utils/money';
+import { useLanguage } from '../LanguageContext/LanguageContext';
 
 export default function CartPage() {
   const { cartItems, updateQuantity, removeFromCart } = useCart();
+  const { t } = useLanguage();
 
   const handleRemoveItem = (id) => {
     const itemToRemove = cartItems.find((item) => item.id === id);
     if (itemToRemove) {
       removeFromCart(id);
-      toast.success(`${itemToRemove.name} removed from cart!`);
+      toast.success(`${itemToRemove.name}`);
     }
   };
 
-  const subtotal = cartItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
-  const shipping = 35.0;
-  const tax = subtotal * 0.08;
-  const total = subtotal + shipping + tax;
+  const { subtotal, shipping, total } = calcOrderTotals(cartItems);
 
   return (
     <>
@@ -33,7 +30,7 @@ export default function CartPage() {
           className="absolute inset-0 h-full w-full object-cover"
         />
         <div className="absolute inset-0 bg-nabat-primary/60" />
-        <h1 className="page-banner-title">Cart</h1>
+        <h1 className="page-banner-title">{t('cartTitle')}</h1>
       </section>
 
       <div className="section-pad py-12 md:py-16">
@@ -41,9 +38,9 @@ export default function CartPage() {
           <div className="space-y-4 lg:col-span-8">
             {cartItems.length === 0 ? (
               <div className="border border-nabat-border bg-white p-10 text-center">
-                <p className="font-body text-nabat-muted">Your cart is empty.</p>
+                <p className="font-body text-nabat-muted">{t('cartEmpty')}</p>
                 <Link to="/shop" className="btn-primary mt-6 inline-flex">
-                  Continue shopping
+                  {t('continueShopping')}
                 </Link>
               </div>
             ) : (
@@ -64,15 +61,17 @@ export default function CartPage() {
                           {item.name}
                         </h3>
                         <p className="mt-1 font-nav text-xs text-nabat-muted">
-                          {item.color} {item.size && `/ ${item.size}`}
+                          {item.category}
                         </p>
-                        <p className="mt-2 font-nav text-sm">${item.price.toFixed(2)}</p>
+                        <p className="mt-2 font-nav text-sm">
+                          {formatEGP(item.price)}
+                        </p>
                       </div>
                       <button
                         type="button"
                         onClick={() => handleRemoveItem(item.id)}
                         className="text-nabat-muted hover:text-nabat-text"
-                        aria-label="Remove"
+                        aria-label={t('remove')}
                       >
                         <X size={18} />
                       </button>
@@ -81,6 +80,7 @@ export default function CartPage() {
                       value={item.quantity}
                       onChange={(e) => updateQuantity(item.id, e.target.value)}
                       className="input-box mt-4 w-20 py-2"
+                      aria-label={t('quantity')}
                     >
                       {[1, 2, 3, 4, 5].map((num) => (
                         <option key={num} value={num}>
@@ -96,27 +96,25 @@ export default function CartPage() {
 
           <div className="lg:col-span-4">
             <div className="border border-nabat-border bg-nabat-mist p-6 md:p-8">
-              <h2 className="font-heading text-xl font-medium">Order summary</h2>
+              <h2 className="font-heading text-xl font-medium">
+                {t('orderSummary')}
+              </h2>
               <div className="mt-6 space-y-3 font-nav text-sm">
                 <div className="flex justify-between text-nabat-muted">
-                  <span>Subtotal</span>
-                  <span className="text-nabat-text">${subtotal.toFixed(2)}</span>
+                  <span>{t('subtotal')}</span>
+                  <span className="text-nabat-text">{formatEGP(subtotal)}</span>
                 </div>
                 <div className="flex justify-between text-nabat-muted">
-                  <span>Shipping</span>
-                  <span className="text-nabat-text">${shipping.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-nabat-muted">
-                  <span>Tax</span>
-                  <span className="text-nabat-text">${tax.toFixed(2)}</span>
+                  <span>{t('shippingAlex')}</span>
+                  <span className="text-nabat-text">{formatEGP(shipping)}</span>
                 </div>
                 <div className="flex justify-between border-t border-nabat-border pt-4 font-heading text-lg font-medium text-nabat-text">
-                  <span>Total</span>
-                  <span>${total.toFixed(2)}</span>
+                  <span>{t('total')}</span>
+                  <span>{formatEGP(total)}</span>
                 </div>
               </div>
               <Link to="/checkout" className="btn-primary mt-8 w-full">
-                Checkout
+                {t('checkout')}
               </Link>
             </div>
           </div>

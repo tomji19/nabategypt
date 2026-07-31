@@ -13,6 +13,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { doSignInWithEmailAndPassword, doSignInWithGoogle } from '../../supabase/auth';
 import { supabase } from '../../supabase/supabase';
+import BrandLogo from '../BrandLogo/BrandLogo';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -150,7 +151,7 @@ export default function LoginPage() {
         <div className={`${classes.backgroundimage} relative hidden min-h-[20rem] lg:block`}>
           <div className="absolute inset-0 bg-nabat-primary/50" />
           <div className="relative z-10 flex h-full flex-col justify-end p-12 text-white">
-            <p className="font-heading text-5xl font-medium tracking-tight">Nabat</p>
+            <BrandLogo imgClassName="h-14 w-auto object-contain brightness-0 invert" />
             <p className="mt-3 max-w-sm font-body text-white/80">
               Delivering life to your doorstep
             </p>

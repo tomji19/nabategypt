@@ -3,9 +3,13 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import pageBanner from '../../assets/images/pagebanner.png';
 import indoorImg from '../../assets/images/indoor.png';
-import logo from '../../assets/images/logocolored.png';
+import BrandLogo from '../BrandLogo/BrandLogo';
+import { useSiteContent } from '../SiteContentContext/SiteContentContext';
 
 export default function AboutPage() {
+  const { content } = useSiteContent();
+  const about = content?.about || {};
+
   return (
     <>
       <section className="page-banner min-h-[16rem] md:min-h-[20rem]">
@@ -19,7 +23,7 @@ export default function AboutPage() {
           <p className="mb-2 font-nav text-[11px] uppercase tracking-[0.2em] text-white/70">
             Our story
           </p>
-          <h1 className="page-banner-title">About Nabat</h1>
+          <h1 className="page-banner-title">About</h1>
         </div>
       </section>
 
@@ -30,31 +34,45 @@ export default function AboutPage() {
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <img
-            src={logo}
-            alt="Nabat"
-            className="mb-8 h-14 w-auto object-contain"
+          <BrandLogo
+            className="mb-8"
+            imgClassName="h-14 w-auto object-contain"
           />
-          <p className="section-label">Egypt&apos;s plant atelier</p>
+          <p className="section-label">
+            {about.eyebrow || "Egypt's plant atelier"}
+          </p>
           <h2 className="section-title">
-            Delivering life to your doorstep
+            {about.title || 'Delivering life to your doorstep'}
           </h2>
           <p className="mt-6 font-body text-base leading-relaxed text-nabat-muted">
-            Nabat brings thoughtfully chosen plants into modern homes —
-            from quiet indoor greens to sun-loving outdoor companions.
-            We curate with care so every plant arrives ready to thrive.
+            {about.body ||
+              'Thoughtfully chosen plants for modern homes — from quiet indoor greens to sun-loving outdoor companions. We curate with care so every plant arrives ready to thrive.'}
           </p>
+          {about.bodyAr && (
+            <p
+              className="mt-4 font-body text-base leading-relaxed text-nabat-muted"
+              dir="rtl"
+            >
+              {about.bodyAr}
+            </p>
+          )}
           <Link to="/shop" className="btn-primary mt-10 inline-flex">
             Shop plants
           </Link>
         </motion.div>
-        <div className="relative aspect-[4/5] overflow-hidden bg-nabat-mist">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="overflow-hidden bg-nabat-mist"
+        >
           <img
             src={indoorImg}
             alt=""
             className="h-full w-full object-cover"
           />
-        </div>
+        </motion.div>
       </section>
     </>
   );

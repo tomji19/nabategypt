@@ -107,6 +107,20 @@
   margin: 1.5rem 0;
 }
 
+.brandLogoWrap {
+  position: relative;
+  z-index: 1;
+  margin: 1.5rem 0;
+  align-self: flex-start;
+}
+
+.brandLogo {
+  height: clamp(3.25rem, 8vw, 4.5rem);
+  width: auto;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+}
+
 @media (min-width: 768px) {
   .brandWord {
     writing-mode: vertical-rl;
@@ -114,6 +128,14 @@
     font-size: clamp(3.75rem, 6.5vw, 6.25rem);
     align-self: flex-start;
     margin: 1rem 0 auto;
+  }
+
+  .brandLogoWrap {
+    margin: 1rem 0 auto;
+  }
+
+  .brandLogo {
+    height: clamp(3.5rem, 5.5vw, 5.25rem);
   }
 }
 

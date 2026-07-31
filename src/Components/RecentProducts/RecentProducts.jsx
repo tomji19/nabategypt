@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
-import { getProducts } from '../ProductData/ProductData';
 import { useNavigate } from 'react-router-dom';
 import AddToCartButton from '../AddToCartButton/AddToCartButton';
+import { useProducts } from '../ProductsContext/ProductsContext';
+import { formatEGP } from '../../utils/money';
+import { useSiteContent } from '../SiteContentContext/SiteContentContext';
+import { useLanguage } from '../LanguageContext/LanguageContext';
 
 function ProductRail({ products }) {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -69,22 +72,13 @@ function ProductRail({ products }) {
                   </h3>
                   <div className="flex items-baseline gap-2 pt-1">
                     <span className="font-nav text-sm text-nabat-text">
-                      ${product.price.toFixed(2)}
+                      {formatEGP(product.price)}
                     </span>
                     {product.originalPrice && (
                       <span className="font-nav text-xs text-nabat-muted line-through">
-                        ${product.originalPrice.toFixed(2)}
+                        {formatEGP(product.originalPrice)}
                       </span>
                     )}
-                  </div>
-                  <div className="flex gap-1.5 pt-2">
-                    {product.colorOptions?.map((color, index) => (
-                      <div
-                        key={index}
-                        className="h-3 w-3 border border-nabat-border"
-                        style={{ backgroundColor: color }}
-                      />
-                    ))}
                   </div>
                 </div>
               </article>
@@ -114,17 +108,22 @@ function ProductRail({ products }) {
 }
 
 export default function RecentProducts() {
-  const { recentProducts } = getProducts();
+  const { recentProducts } = useProducts();
+  const { content } = useSiteContent();
+  const { t } = useLanguage();
+  const home = content?.home || {};
 
   return (
     <section className="section-pad bg-white py-20 md:py-28">
       <div className="mb-12 flex flex-col gap-4 md:mb-16 md:flex-row md:items-end md:justify-between">
         <div>
-          <p className="section-label">Just in</p>
-          <h2 className="section-title">Recent plants</h2>
+          <p className="section-label">{t('justIn')}</p>
+          <h2 className="section-title">
+            {home.recentTitle || t('recentTitle')}
+          </h2>
         </div>
         <p className="max-w-xs font-body text-sm text-nabat-muted md:text-right">
-          Fresh arrivals for your space
+          {home.recentSubtitle || t('recentSubtitle')}
         </p>
       </div>
       <ProductRail products={recentProducts} />

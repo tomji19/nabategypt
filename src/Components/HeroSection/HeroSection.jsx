@@ -2,7 +2,9 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import styles from './HeroSection.module.css';
-
+import BrandLogo from '../BrandLogo/BrandLogo';
+import { useSiteContent } from '../SiteContentContext/SiteContentContext';
+import { useLanguage } from '../LanguageContext/LanguageContext';
 import bamboo from '../../assets/images/hero-bamboo.jpeg';
 import leather from '../../assets/images/leather-1-hero.jpeg';
 import succulent1 from '../../assets/images/succulent-1-hero.png';
@@ -19,15 +21,18 @@ const enter = {
   }),
 };
 
-const marqueeText = 'Indoor · Outdoor · Succulents · Nabat Egypt · ';
-
 const trioItems = [
-  { src: succulent1, alt: 'Succulent one', to: '/shop' },
-  { src: succulent2, alt: 'Succulent two', to: '/shop' },
-  { src: succulent3, alt: 'Succulent three', to: '/shop' },
+  { src: succulent1, altKey: 'heroDesertTrio', to: '/shop' },
+  { src: succulent2, altKey: 'heroDesertTrio', to: '/shop' },
+  { src: succulent3, altKey: 'heroDesertTrio', to: '/shop' },
 ];
 
 export default function HeroSection() {
+  const { content } = useSiteContent();
+  const { t } = useLanguage();
+  const hero = content?.hero || {};
+  const marqueeText = t('marquee');
+
   return (
     <section className={`section-pad ${styles.hero}`}>
       <div className={styles.mosaic}>
@@ -38,12 +43,19 @@ export default function HeroSection() {
           initial="hidden"
           animate="show"
         >
-          <p className={styles.brandMeta}>Est. greenhouse</p>
-          <h1 className={styles.brandWord}>Nabat</h1>
+          <p className={styles.brandMeta}>
+            {hero.eyebrow || t('heroEyebrow')}
+          </p>
+          <BrandLogo
+            className={styles.brandLogoWrap}
+            imgClassName={styles.brandLogo}
+          />
           <div>
-            <p className={styles.brandCopy}>Delivering life to your doorstep.</p>
+            <p className={styles.brandCopy}>
+              {hero.tagline || t('heroTagline')}
+            </p>
             <Link to="/shop" className={styles.cta}>
-              Enter the shop
+              {hero.cta || t('heroCta')}
               <span aria-hidden>↗</span>
             </Link>
           </div>
@@ -57,7 +69,7 @@ export default function HeroSection() {
           animate="show"
         >
           <Link to="/shop" className={`${styles.tile} ${styles.tileBamboo}`}>
-            <img src={bamboo} alt="Lucky bamboo" className={styles.tileImg} />
+            <img src={bamboo} alt={t('heroLuckyBamboo')} className={styles.tileImg} />
             <div className={styles.marquee} aria-hidden>
               <div className={styles.marqueeBar}>
                 <div className={styles.marqueeTrack}>
@@ -67,8 +79,8 @@ export default function HeroSection() {
               </div>
             </div>
             <div className={styles.label}>
-              <p className={styles.labelEyebrow}>Signature</p>
-              <p className={styles.labelTitle}>Lucky bamboo</p>
+              <p className={styles.labelEyebrow}>{t('heroSignature')}</p>
+              <p className={styles.labelTitle}>{t('heroLuckyBamboo')}</p>
             </div>
           </Link>
         </motion.div>
@@ -81,10 +93,10 @@ export default function HeroSection() {
           animate="show"
         >
           <Link to="/shop" className={`${styles.tile} ${styles.tileFern}`}>
-            <img src={leather} alt="Leatherleaf fern" className={styles.tileImg} />
+            <img src={leather} alt={t('heroLeatherleaf')} className={styles.tileImg} />
             <div className={styles.label}>
-              <p className={styles.labelEyebrow}>Indoor</p>
-              <p className={styles.labelTitle}>Leatherleaf fern</p>
+              <p className={styles.labelEyebrow}>{t('heroIndoor')}</p>
+              <p className={styles.labelTitle}>{t('heroLeatherleaf')}</p>
             </div>
           </Link>
         </motion.div>
@@ -98,19 +110,19 @@ export default function HeroSection() {
         >
           <div className={`${styles.tile} ${styles.tileTrio}`}>
             <div className={styles.trioRow}>
-              {trioItems.map((item) => (
+              {trioItems.map((item, i) => (
                 <Link
-                  key={item.alt}
+                  key={i}
                   to={item.to}
                   className={styles.trioItem}
                 >
-                  <img src={item.src} alt={item.alt} />
+                  <img src={item.src} alt={t(item.altKey)} />
                 </Link>
               ))}
             </div>
             <div className={styles.label}>
-              <p className={styles.labelEyebrow}>Trending Bundle</p>
-              <p className={styles.labelTitle}>Desert trio</p>
+              <p className={styles.labelEyebrow}>{t('heroTrending')}</p>
+              <p className={styles.labelTitle}>{t('heroDesertTrio')}</p>
             </div>
           </div>
         </motion.div>
@@ -123,10 +135,10 @@ export default function HeroSection() {
           animate="show"
         >
           <Link to="/shop" className={`${styles.tile} ${styles.tileFern}`}>
-            <img src={pothos} alt="Hanging pothos" className={styles.tileImg} />
+            <img src={pothos} alt={t('heroHangingPothos')} className={styles.tileImg} />
             <div className={styles.label}>
-              <p className={styles.labelEyebrow}>Collection</p>
-              <p className={styles.labelTitle}>Hanging pothos</p>
+              <p className={styles.labelEyebrow}>{t('heroCollection')}</p>
+              <p className={styles.labelTitle}>{t('heroHangingPothos')}</p>
             </div>
           </Link>
         </motion.div>

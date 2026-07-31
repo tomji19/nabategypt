@@ -1,21 +1,29 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import logoNoBackground from '../../assets/images/logocolored.png';
 import cartIcon from '../../assets/images/cart.svg';
 import userIcon from '../../assets/images/user.svg';
 import { useCart } from '../CartContext/CartContext';
 import { useAuth } from '../AuthContext/AuthContext';
+import { useProducts } from '../ProductsContext/ProductsContext';
+import { useWishlist } from '../WishlistContext/WishlistContext';
 import { doSignOut } from '../../supabase/auth';
-import { getProducts } from '../ProductData/ProductData';
+import BrandLogo from '../BrandLogo/BrandLogo';
+import { useLanguage } from '../LanguageContext/LanguageContext';
 import styles from './Navbar.module.css';
 
-const categories = ['Succulents', 'Indoor Plants', 'Outdoor Plants'];
+const categoryLinks = [
+  { to: '/shop', labelKey: 'catSucculent' },
+  { to: '/shop', labelKey: 'catIndoor' },
+  { to: '/shop', labelKey: 'catOutdoor' },
+];
 
 export default function Navbar() {
   const navigate = useNavigate();
   const { cartCount, clearCart, openCart } = useCart();
   const { currentUser, userDetails, userLoggedIn, anonymousUserName } = useAuth();
-  const { products } = getProducts();
+  const { products } = useProducts();
+  const { wishlistCount } = useWishlist();
+  const { t, toggle } = useLanguage();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -135,7 +143,7 @@ export default function Navbar() {
           ))}
         </ul>
       ) : (
-        <p className={styles.searchEmpty}>No plants found</p>
+        <p className={styles.searchEmpty}>{t('noPlantsFound')}</p>
       )}
       {searchTerm.trim() && (
         <button
@@ -156,25 +164,27 @@ export default function Navbar() {
     <header className={styles.header}>
       <div className={styles.promo}>
         <div className={`section-pad ${styles.promoInner}`}>
-          <p className={styles.promoText}>Get 30% off your first order</p>
+          <p className={styles.promoText}>{t('promoFirstOrder')}</p>
           <div className={styles.promoAuth}>
             {userLoggedIn ? (
               <>
-                <span className={styles.promoHello}>Hello, {displayName}</span>
+                <span className={styles.promoHello}>
+                  {t('hello')}, {displayName}
+                </span>
                 <button type="button" onClick={handleLogout} className={styles.promoLink}>
-                  Logout
+                  {t('logout')}
                 </button>
               </>
             ) : (
               <>
                 <Link to="/login" className={styles.promoLink}>
-                  Login
+                  {t('login')}
                 </Link>
                 <span className={styles.promoSep} aria-hidden>
                   /
                 </span>
                 <Link to="/register" className={styles.promoLink}>
-                  Register
+                  {t('register')}
                 </Link>
               </>
             )}
@@ -187,7 +197,7 @@ export default function Navbar() {
           type="button"
           className={styles.menuBtn}
           onClick={() => setMobileOpen((o) => !o)}
-          aria-label="Menu"
+          aria-label={t('menu')}
           aria-expanded={mobileOpen}
         >
           <i className={`fa-solid ${mobileOpen ? 'fa-xmark' : 'fa-bars'}`} />
@@ -201,22 +211,22 @@ export default function Navbar() {
               onClick={() => setCategoriesOpen((o) => !o)}
               aria-expanded={categoriesOpen}
             >
-              <span className={styles.catEyebrow}>Shop by</span>
+              <span className={styles.catEyebrow}>{t('shopBy')}</span>
               <span className={styles.catLabel}>
-                Categories
+                {t('categories')}
                 <i className={`fa-solid fa-chevron-down ${styles.catChevron}`} />
               </span>
             </button>
             {categoriesOpen && (
               <ul className={styles.dropdown}>
-                {categories.map((cat) => (
-                  <li key={cat}>
+                {categoryLinks.map((cat) => (
+                  <li key={cat.labelKey}>
                     <NavLink
-                      to={`/category/${cat.toLowerCase().replace(' ', '-')}`}
+                      to={cat.to}
                       className={styles.dropdownLink}
                       onClick={() => setCategoriesOpen(false)}
                     >
-                      {cat}
+                      {t(cat.labelKey)}
                     </NavLink>
                   </li>
                 ))}
@@ -225,24 +235,35 @@ export default function Navbar() {
           </div>
 
           <NavLink to="/" end className={linkClass}>
-            Home
+            {t('home')}
           </NavLink>
           <NavLink to="/shop" className={linkClass}>
-            Shop
+            {t('shop')}
           </NavLink>
           <NavLink to="/about" className={linkClass}>
-            About
+            {t('about')}
           </NavLink>
           <NavLink to="/contact" className={linkClass}>
-            Contact
+            {t('contact')}
           </NavLink>
         </nav>
 
-        <Link to="/" className={styles.logo}>
-          <img src={logoNoBackground} alt="Nabat" />
-        </Link>
+        <BrandLogo to="/" className={styles.logo} imgClassName="" />
 
         <div className={styles.actions}>
+          <button
+            type="button"
+            className={styles.langBtn}
+            onClick={toggle}
+            aria-label={t('switchToLangHint')}
+            title={t('switchToLangHint')}
+          >
+            <i className={`fa-solid fa-globe ${styles.langBtnIcon}`} aria-hidden />
+            <span className={styles.langBtnLabel}>
+              {t('switchToLang')}
+            </span>
+          </button>
+
           <div
             ref={searchRef}
             className={`${styles.search} ${searchOpen ? styles.searchOpen : ''}`}
@@ -250,7 +271,7 @@ export default function Navbar() {
             <button
               type="button"
               className={styles.iconBtn}
-              aria-label="Search"
+              aria-label={t('search')}
               onClick={() => setSearchOpen((o) => !o)}
             >
               <i className="fa-solid fa-magnifying-glass" />
@@ -260,7 +281,7 @@ export default function Navbar() {
                 <input
                   ref={searchInputRef}
                   type="search"
-                  placeholder="Search plants..."
+                  placeholder={t('searchPlants')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   autoComplete="off"
@@ -273,8 +294,20 @@ export default function Navbar() {
           <button
             type="button"
             className={styles.iconBtn}
+            onClick={() => navigate('/wishlist')}
+            aria-label={t('openWishlist')}
+          >
+            <i className="fa-regular fa-heart" />
+            {wishlistCount > 0 && (
+              <span className={styles.badge}>{wishlistCount}</span>
+            )}
+          </button>
+
+          <button
+            type="button"
+            className={styles.iconBtn}
             onClick={() => navigate('/accountdetails')}
-            aria-label="Account"
+            aria-label={t('account')}
           >
             <img src={userIcon} alt="" />
           </button>
@@ -283,7 +316,7 @@ export default function Navbar() {
             type="button"
             className={styles.iconBtn}
             onClick={openCart}
-            aria-label="Cart"
+            aria-label={t('openCart')}
           >
             <img src={cartIcon} alt="" />
             {cartCount > 0 && (
@@ -299,12 +332,12 @@ export default function Navbar() {
             <form onSubmit={handleSearch} className={styles.mobileSearch}>
               <input
                 type="search"
-                placeholder="Search plants..."
+                placeholder={t('searchPlants')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 autoComplete="off"
               />
-              <button type="submit" aria-label="Search">
+              <button type="submit" aria-label={t('search')}>
                 <i className="fa-solid fa-magnifying-glass" />
               </button>
             </form>
@@ -318,19 +351,19 @@ export default function Navbar() {
                 className={`${styles.mobileLink} ${styles.mobileCat}`}
                 onClick={() => setCategoriesOpen((o) => !o)}
               >
-                <span className={styles.catEyebrow}>Shop by</span>
-                Categories
+                <span className={styles.catEyebrow}>{t('shopBy')}</span>
+                {t('categories')}
               </button>
               {categoriesOpen && (
                 <ul className={styles.mobileCats}>
-                  {categories.map((cat) => (
-                    <li key={cat}>
+                  {categoryLinks.map((cat) => (
+                    <li key={cat.labelKey}>
                       <NavLink
-                        to={`/category/${cat.toLowerCase().replace(' ', '-')}`}
+                        to={cat.to}
                         className={styles.mobileSubLink}
                         onClick={() => setMobileOpen(false)}
                       >
-                        {cat}
+                        {t(cat.labelKey)}
                       </NavLink>
                     </li>
                   ))}
@@ -338,10 +371,11 @@ export default function Navbar() {
               )}
             </li>
             {[
-              ['/', 'Home', true],
-              ['/shop', 'Shop', false],
-              ['/about', 'About', false],
-              ['/contact', 'Contact', false],
+              ['/', t('home'), true],
+              ['/shop', t('shop'), false],
+              ['/wishlist', t('wishlist'), false],
+              ['/about', t('about'), false],
+              ['/contact', t('contact'), false],
             ].map(([to, label, end]) => (
               <li key={to}>
                 <NavLink

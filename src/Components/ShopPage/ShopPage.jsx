@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { getProducts } from '../ProductData/ProductData';
 import PlantCard from '../PlantCard/PlantCard';
 import pageBanner from '../../assets/images/pagebanner.png';
 import styles from './ShopPage.module.css';
+import { useProducts } from '../ProductsContext/ProductsContext';
 
 const CATEGORIES = [
   { value: '', label: 'All plants' },
@@ -23,13 +23,6 @@ const CARE_OPTIONS = [
   { value: 'easy', label: 'Easy care' },
   { value: 'moderate', label: 'Moderate' },
   { value: 'expert', label: 'Expert' },
-];
-
-const SIZE_OPTIONS = [
-  { value: '', label: 'Any size' },
-  { value: 'S', label: 'Small' },
-  { value: 'M', label: 'Medium' },
-  { value: 'L', label: 'Large' },
 ];
 
 const SORT_OPTIONS = [
@@ -92,12 +85,11 @@ function FilterDropdown({ id, label, value, options, openId, setOpenId, onChange
 }
 
 export default function ShopPage() {
-  const { products } = getProducts();
+  const { products } = useProducts();
   const [openId, setOpenId] = useState(null);
   const [category, setCategory] = useState('');
   const [light, setLight] = useState('');
   const [care, setCare] = useState('');
-  const [size, setSize] = useState('');
   const [sort, setSort] = useState('featured');
   const [onSale, setOnSale] = useState(false);
   const [minPrice, setMinPrice] = useState('');
@@ -119,9 +111,7 @@ export default function ShopPage() {
         : true;
       const matchesLight = light ? product.light === light : true;
       const matchesCare = care ? product.care === care : true;
-      const matchesSize = size
-        ? Array.isArray(product.sizeOptions) && product.sizeOptions.includes(size)
-        : true;
+      const inStock = product.stock == null || product.stock > 0;
 
       return (
         withinPrice &&
@@ -130,7 +120,7 @@ export default function ShopPage() {
         matchesSearch &&
         matchesLight &&
         matchesCare &&
-        matchesSize
+        inStock
       );
     });
 
@@ -139,13 +129,12 @@ export default function ShopPage() {
     if (sort === 'price-desc') next.sort((a, b) => b.price - a.price);
     if (sort === 'name-asc') next.sort((a, b) => a.name.localeCompare(b.name));
     return next;
-  }, [list, category, light, care, size, sort, onSale, minPrice, maxPrice, searchTerm]);
+  }, [list, category, light, care, sort, onSale, minPrice, maxPrice, searchTerm]);
 
   const activeCount = [
     category,
     light,
     care,
-    size,
     onSale,
     minPrice !== '',
     maxPrice !== '',
@@ -156,7 +145,6 @@ export default function ShopPage() {
     setCategory('');
     setLight('');
     setCare('');
-    setSize('');
     setSort('featured');
     setOnSale(false);
     setMinPrice('');
@@ -258,15 +246,6 @@ export default function ShopPage() {
               openId={openId}
               setOpenId={setOpenId}
               onChange={setCare}
-            />
-            <FilterDropdown
-              id="size"
-              label="Size"
-              value={size}
-              options={SIZE_OPTIONS}
-              openId={openId}
-              setOpenId={setOpenId}
-              onChange={setSize}
             />
           </div>
 

@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../AuthContext/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import pageBanner from '../../assets/images/pagebanner.png';
 import PlantLoader from '../PlantLoader/PlantLoader';
+import { fetchOrdersForUser } from '../../supabase/orders';
+import { PAYMENT_METHODS } from '../../config/store';
+import { formatEGP } from '../../utils/money';
 
 export default function OrderHistoryPage() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { userLoggedIn, loading: authLoading } = useAuth();
+  const { userLoggedIn, loading: authLoading, currentUser } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -18,28 +21,35 @@ export default function OrderHistoryPage() {
       return;
     }
 
-    try {
-      const storedOrders = JSON.parse(localStorage.getItem('orders')) || [];
-      const uniqueOrders = Array.from(
-        new Set(storedOrders.map((order) => order.orderId))
-      ).map((id) => storedOrders.find((order) => order.orderId === id));
-      setOrders(
-        uniqueOrders.filter(
-          (order) => order.cartItems && order.cartItems.length > 0
-        )
-      );
-      setLoading(false);
-    } catch (err) {
-      setError(err.message);
-      setLoading(false);
-    }
-  }, [userLoggedIn, navigate, authLoading]);
+    let cancelled = false;
 
-  const removeOrder = (orderId) => {
-    const updatedOrders = orders.filter((order) => order.orderId !== orderId);
-    setOrders(updatedOrders);
-    localStorage.setItem('orders', JSON.stringify(updatedOrders));
-  };
+    (async () => {
+      try {
+        const data = await fetchOrdersForUser(
+          currentUser?.uid,
+          currentUser?.email
+        );
+        if (!cancelled) {
+          setOrders(data);
+          setError(null);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(
+            err?.message?.includes('relation') || err?.code === '42P01'
+              ? 'Orders table not ready. Run supabase_schema.sql in Supabase.'
+              : err.message || 'Failed to load orders'
+          );
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [userLoggedIn, navigate, authLoading, currentUser]);
 
   if (loading) {
     return <PlantLoader variant="overlay" />;
@@ -47,8 +57,11 @@ export default function OrderHistoryPage() {
 
   if (error) {
     return (
-      <div className="flex min-h-[50vh] items-center justify-center font-nav text-red-500">
-        Error: {error}
+      <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3 px-4 text-center font-nav text-nabat-muted">
+        <p className="text-red-600">{error}</p>
+        <Link to="/shop" className="btn-primary">
+          Back to shop
+        </Link>
       </div>
     );
   }
@@ -81,91 +94,101 @@ export default function OrderHistoryPage() {
         <div className="mx-auto max-w-4xl">
           {orders.length === 0 ? (
             <div className="border border-nabat-border bg-white p-12 text-center">
-              <p className="font-body text-nabat-muted">No orders found</p>
+              <p className="font-body text-nabat-muted">No orders yet</p>
+              <Link to="/shop" className="btn-primary mt-6 inline-flex">
+                Start shopping
+              </Link>
             </div>
           ) : (
             <div className="space-y-5">
-              {orders.map((order, index) => (
-                <div
-                  key={index}
-                  className="overflow-hidden border border-nabat-border bg-white"
-                >
-                  <div className="p-6 md:p-8">
-                    <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
-                      <div>
-                        <h2 className="font-heading text-xl font-medium">
-                          Order {order.orderId}
-                        </h2>
-                        <p className="mt-1 font-nav text-sm text-nabat-muted">
-                          Placed on {order.date}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-heading text-lg font-medium text-nabat-accent">
-                          ${order.total ? order.total.toFixed(2) : ''}
-                        </p>
-                        <p className="font-nav text-xs uppercase tracking-wider text-nabat-muted">
-                          {order.status || 'Pending'}
-                        </p>
-                        <button
-                          type="button"
-                          className="mt-2 font-nav text-xs text-red-600 hover:underline"
-                          onClick={() => removeOrder(order.orderId)}
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    </div>
+              {orders.map((order) => {
+                const paymentLabel =
+                  PAYMENT_METHODS.find((m) => m.id === order.payment_method)
+                    ?.label || order.payment_method;
+                const items = order.order_items || [];
 
-                    <div className="border-t border-nabat-border pt-5">
-                      <h3 className="section-label">Items</h3>
-                      {order.cartItems?.length > 0 ? (
-                        <div className="mt-4 space-y-4">
-                          {order.cartItems.map((item, itemIndex) => (
-                            <div
-                              key={itemIndex}
-                              className="flex items-center justify-between gap-4"
-                            >
-                              <div className="flex items-center gap-4">
-                                <img
-                                  src={item.image}
-                                  alt={item.name}
-                                  className="h-16 w-16 object-cover bg-nabat-mist"
-                                />
-                                <div>
-                                  <p className="font-nav text-sm font-medium">
-                                    {item.name}
-                                  </p>
-                                  <p className="font-nav text-xs text-nabat-muted">
-                                    Qty {item.quantity}
-                                  </p>
-                                </div>
-                              </div>
-                              <p className="font-nav text-sm">
-                                ${(item.price * item.quantity).toFixed(2)}
-                              </p>
-                            </div>
-                          ))}
+                return (
+                  <div
+                    key={order.id}
+                    className="overflow-hidden border border-nabat-border bg-white"
+                  >
+                    <div className="p-6 md:p-8">
+                      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+                        <div>
+                          <h2 className="font-heading text-xl font-medium">
+                            {order.order_number || order.id}
+                          </h2>
+                          <p className="mt-1 font-nav text-sm text-nabat-muted">
+                            Placed on{' '}
+                            {new Date(order.created_at).toLocaleDateString()}
+                          </p>
+                          <p className="mt-1 font-nav text-xs text-nabat-muted">
+                            {paymentLabel}
+                          </p>
                         </div>
-                      ) : (
-                        <p className="font-nav text-sm text-nabat-muted">
-                          No items in this order.
-                        </p>
-                      )}
-                    </div>
+                        <div className="text-right">
+                          <p className="font-heading text-lg font-medium text-nabat-accent">
+                            {formatEGP(order.total)}
+                          </p>
+                          <p className="font-nav text-xs uppercase tracking-wider text-nabat-muted">
+                            {order.status || 'Processing'}
+                          </p>
+                        </div>
+                      </div>
 
-                    {order.formData && (
+                      <div className="border-t border-nabat-border pt-5">
+                        <h3 className="section-label">Items</h3>
+                        {items.length > 0 ? (
+                          <div className="mt-4 space-y-4">
+                            {items.map((item) => (
+                              <div
+                                key={item.id}
+                                className="flex items-center justify-between gap-4"
+                              >
+                                <div className="flex items-center gap-4">
+                                  {item.product_image && (
+                                    <img
+                                      src={item.product_image}
+                                      alt={item.product_name}
+                                      className="h-16 w-16 object-cover bg-nabat-mist"
+                                    />
+                                  )}
+                                  <div>
+                                    <p className="font-nav text-sm font-medium">
+                                      {item.product_name}
+                                    </p>
+                                    <p className="font-nav text-xs text-nabat-muted">
+                                      Qty {item.quantity}
+                                    </p>
+                                  </div>
+                                </div>
+                                <p className="font-nav text-sm">
+                                  {formatEGP(item.line_total)}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="font-nav text-sm text-nabat-muted">
+                            No items in this order.
+                          </p>
+                        )}
+                      </div>
+
                       <div className="mt-5 border-t border-nabat-border pt-5">
                         <h3 className="section-label">Shipping</h3>
                         <p className="mt-2 font-nav text-sm text-nabat-muted">
-                          {order.formData.address}, {order.formData.apartment},{' '}
-                          {order.formData.city}, {order.formData.country}
+                          {order.shipping_address}
+                          {order.shipping_apartment
+                            ? `, ${order.shipping_apartment}`
+                            : ''}
+                          , {order.shipping_city}, {order.shipping_country}
                         </p>
                       </div>
-                    )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
