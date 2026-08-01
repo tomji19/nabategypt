@@ -10,10 +10,12 @@ The app is already wired to Supabase. Until you run the schema, checkout will sh
 
 ```
 VITE_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
-VITE_SUPABASE_ANON_KEY=your_anon_key
+VITE_SUPABASE_ANON_KEY=your_publishable_or_anon_key
 ```
 
-4. Restart `npm run dev`.
+Use the **publishable** key (`sb_publishable_…`) or the legacy **anon** JWT from Dashboard → **Settings → API Keys**. Do not use a secret / `service_role` key in the browser.
+
+4. **Restart** `npm run dev` after any `.env` change (Vite only reads env on startup).
 
 ## 2. Run the database schema
 
@@ -29,15 +31,23 @@ No login account is required. The password unlock lasts for the browser tab sess
 
 Email alerts still go to `youssefashour19@gmail.com` when the notify function is deployed.
 
-## 4. Product images in the database
+## 4. Product & site images
 
-The seed stores products **without** local Vite image imports. Until you upload images to Supabase Storage and set `image_url` in the admin products tab, the shop will keep falling back to the local `ProductData.jsx` catalog (which has images).
+In Admin → **Products**, **Categories**, and **Site content** you can:
 
-**Recommended flow after schema is live:**
+1. **Drag & drop** or browse a file (uploads to the public `products` Storage bucket under `catalog/` or `cms/…`), or  
+2. Paste an **image URL**.
 
-1. Create a Storage bucket `product-images` (public).
-2. Upload plant photos.
-3. In Admin → Products, set each product’s Image URL, or keep using local catalog until you migrate images.
+**Categories** (Supabase `categories` table) drive the homepage browse tiles, navbar, and shop filters. Add an image on each category for the homepage.
+
+**Site content** is split into panels — each **Save this section** button updates only that part in Supabase (`site_content`).
+
+For **Homepage sections** (Seasonal / Easy care / Gift ready / Bestsellers), use the dashboard tab **Homepage sections** and tick products. Also run **`scripts/ensure-dashboard-schema.sql`** so `is_gift` and `is_easy_care` columns exist.
+
+
+Optional hover image uses the same control.
+
+If upload fails with “Bucket not found”, create a public Storage bucket named **`products`** in Supabase (or re-run the storage section of `supabase_schema.sql`).
 
 ## 5. Order email notifications (Resend)
 

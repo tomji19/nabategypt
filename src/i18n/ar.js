@@ -1,15 +1,14 @@
 /** Arabic UI copy — no English text in this file */
 
 const ar = {
-  // زر التبديل إلى اللغة الأخرى
   switchToLang: 'الإنجليزية',
   switchToLangHint: 'التبديل إلى الإنجليزية',
 
-  // التنقل
   home: 'الرئيسية',
   shop: 'المتجر',
   about: 'عنّا',
   contact: 'تواصل',
+  contactUs: 'تواصل معنا',
   wishlist: 'المفضلة',
   cart: 'السلة',
   checkout: 'إتمام الطلب',
@@ -26,11 +25,13 @@ const ar = {
   categories: 'التصنيفات',
   menu: 'القائمة',
   hello: 'مرحباً',
-  promoFirstOrder: 'احصل على خصم ٣٠٪ على أول طلب',
+  promoFirstOrder: 'كود خصم · ١٠٪ مع MEH10',
+  promoLabel: 'كود الخصم',
+  promoOfferShort: 'خصم ١٠٪ على أول طلب',
+  promoCodeHint: 'انسخ هذا الكود عند إتمام الطلب',
   openCart: 'فتح الحقيبة',
   openWishlist: 'المفضلة',
 
-  // التصنيفات
   catAll: 'كل النباتات',
   catSucculent: 'صباريات',
   catIndoor: 'نباتات داخلية',
@@ -39,7 +40,6 @@ const ar = {
   catIndoorShort: 'داخلية',
   catOutdoorShort: 'خارجية',
 
-  // عام
   continueShopping: 'تابع التسوق',
   backToHome: 'العودة للرئيسية',
   backToAccount: 'العودة لحسابي',
@@ -68,66 +68,155 @@ const ar = {
   browsePlants: 'تصفح النباتات',
   orContinueShopping: 'أو تابع التسوق ←',
   sendMessage: 'إرسال الرسالة',
+  sending: 'جاري الإرسال…',
+  messageSent: 'تم إرسال رسالتك — سنعود إليك قريباً.',
+  messageFailed: 'تعذر إرسال الرسالة. حاول مرة أخرى.',
+  messageSchemaMissing:
+    'صندوق الرسائل غير مُعد بعد. نفّذ scripts/contact-messages.sql في Supabase.',
   required: 'مطلوب',
+  sale: 'تخفيض',
+  addedToBag: 'أُضيفت للحقيبة',
+  subscribe: 'اشترك',
+  yourEmail: 'بريدك الإلكتروني',
 
-  // البطل
-  heroEyebrow: 'من الصوبة',
-  heroTagline: 'نوصل الحياة لباب بيتك.',
-  heroCta: 'ادخل المتجر',
-  heroSignature: 'مميز',
+  heroEyebrow: 'صوبة الإسكندرية',
+  heroTagline: 'خضرة حيّة… بأناقة لبيتك.',
+  heroCta: 'تسوّق المجموعة',
+  heroSignature: 'الأكثر مبيعاً',
   heroLuckyBamboo: 'خيزران الحظ',
-  heroIndoor: 'داخلي',
-  heroLeatherleaf: 'سرخس جلدي',
-  heroTrending: 'باقة رائجة',
-  heroDesertTrio: 'ثلاثي الصحراء',
-  heroCollection: 'مجموعة',
+  heroIndoor: 'يصعب قتلها',
+  heroLeatherleaf: 'نبتة الثعبان',
+  heroTrending: 'باقة ووفّر',
+  heroDesertTrio: 'عرض ثلاثي الصباريات',
+  heroCollection: 'المفضل المتدلي',
   heroHangingPothos: 'بثوس معلّق',
-  marquee: 'داخلي · خارجي · صباريات · نباتات · مصر · ',
+  heroSnakePlant: 'نبتة الثعبان',
+  marquee: 'داخلي · خارجي · صباريات · طازج من الصوبة · الإسكندرية · ',
 
-  // الرئيسية
-  favorites: 'المفضلة',
-  featuredTitle: 'نباتات مميزة',
-  featuredSubtitle: 'الأكثر حبّاً من مجموعتنا',
-  justIn: 'وصل حديثاً',
-  recentTitle: 'نباتات حديثة',
-  recentSubtitle: 'وصلات جديدة لمساحتك',
+  favorites: 'الأكثر مبيعاً',
+  bestsellersEyebrow: 'الأكثر حباً',
+  featuredTitle: 'الأكثر مبيعاً من الصوبة',
+  featuredSubtitle: 'النباتات التي يعود لها أهل الإسكندرية مراراً',
+  justIn: 'وصل للتو',
+  recentTitle: 'جديد من المشتل',
+  recentSubtitle: 'مخزون طازج جاهز لمساحتك',
+  socialTitle: 'الحياة داخل الصوبة',
+  socialSubtitle:
+    'زيارات المشتل وإعادة الزراعة والتعبئة — العملية الحقيقية خلف كل نبتة نرسلها.',
   community: 'المجتمع',
-  socialTitle: 'تابع الصوبة',
-  socialSubtitle: 'نصائح عناية ووصولات جديدة وقصص نباتات من المشتل',
 
-  // التذييل
-  delivering: 'نوصل الحياة لباب بيتك',
+  browseLabel: 'المجموعات',
+  browseTitle: 'اعثر على نبتتك المثالية',
+  browseQuote:
+    'من الشرفات المشمسة إلى غرف المعيشة الهادئة — نبتة لكل ركن في البيت.',
+
+  offerEyebrow: 'ميزة الأعضاء',
+  offerTitle: 'خصم ١٠٪ على أول طلب',
+  offerSubtitle: 'أدخل بريدك وسنرسل لك كود الترحيب MEH10.',
+  offerFinePrint: 'استخدم الكود MEH10 · صالح على أول طلب مدفوع',
+
+  wordsEyebrow: 'من مزارعينا',
+  wordsTitle: 'محبوبة في بيوت الإسكندرية',
+
+  bundlesEyebrow: 'باقات وعروض',
+  bundlesTitle: 'خضرة أكثر بسعر أذكى',
+  bundlesSubtitle:
+    'عروض نباتية مختارة — مجموعات منسّقة مع توفير حقيقي عند الشراء معاً.',
+  bundleBadge: 'عرض',
+  bundleDesertName: 'هدوء الصحراء',
+  bundleDesertDesc: 'ثلاث صباريات قليلة الري للأرفف المحبّة للشمس.',
+  bundleIndoorName: 'نعومة الداخل',
+  bundleIndoorDesc: 'خضرة منقّية للهواء للزوايا الهادئة والغرف المضيئة.',
+  bundleHerbName: 'أعشاب المطبخ',
+  bundleHerbDesc: 'إكليل جبل وريحان ونعناع طازج لطاولة المطبخ.',
+  bundleSave: 'وفّر {pct}٪',
+  shopBundle: 'خذ هذا العرض',
+
+  easyCareEyebrow: 'مناسبة للمبتدئين',
+  easyCareTitle: 'عناية سهلة — يصعب قتلها',
+  easyCareSubtitle:
+    'نباتات متسامحة للمشغولين وأولياء النباتات الجدد. بلا ريّ يومي ولا دراما.',
+
+  giftReadyEyebrow: 'لمن تحب',
+  giftReadyTitle: 'هدية حيّة تقول أكثر من الكلمات',
+  giftReadySubtitle:
+    'نباتات أنيقة جاهزة لإسعاد أحبائك — منسّقة ومهيأة للإهداء ومزروعة بعناية.',
+  giftReadyBadge: 'جاهزة للهدايا',
+
+  scentEyebrow: 'ركن العطر',
+  scentTitle: 'املأ شرفتك بالعطر',
+  scentSubtitle: 'أعشاب ونباتات عطرية تعطّر الهواء مع كل ريّة.',
+  scentBadge: 'عطر',
+  scentMintName: 'نعناع الحديقة',
+  scentMintDesc: 'رائحة منعشة للمطبخ وشاي الصباح.',
+  scentBasilName: 'ريحان حلو',
+  scentBasilDesc: 'أوراق زاهية للطبخ وعطر صيفي على الحافة.',
+  scentRosemaryName: 'إكليل الجبل',
+  scentRosemaryDesc: 'عطر خشبي يحب الشمس ونسيم البحر.',
+
+  giftsEyebrow: 'هدايا',
+  giftsTitle: 'طقم هدايا جاهز للإهداء',
+  giftsSubtitle: 'هدايا جاهزة: نبتة وأصيص وبطاقة — بلا ارتباك في اللحظة الأخيرة.',
+  giftBadge: 'طقم هدية',
+  giftNewHomeName: 'هدية البيت الجديد',
+  giftNewHomeDesc: 'نبتة داخلية ترحيبية وأصيص خزفي وبطاقة تهنئة.',
+  giftDeskName: 'هدوء المكتب',
+  giftDeskDesc: 'صبار منحوت وأصيص وتغليف كرافت لمساحات العمل.',
+  giftBalconyName: 'زهرة الشرفة',
+  giftBalconyDesc: 'خضرة خارجية محبّة للشمس مع تغليف وبطاقة.',
+  giftPartPlant: 'نبتة',
+  giftPartPot: 'أصيص خزفي',
+  giftPartWrap: 'تغليف',
+  giftPartCard: 'بطاقة',
+
+  seasonalEyebrow: 'هذا الأسبوع',
+  seasonalTitle: 'مختارات الموسم لهذا الأسبوع',
+  seasonalSubtitle: 'طازج من زيارة المشتل — المخزون يتغيّر مع الموسم.',
+  seasonal: 'موسمي',
+  inStock: 'متوفر',
+
+  chatTitle: 'مساعد النباتات',
+  chatSubtitle: 'اختر سؤالاً — نرشدك للنبتة المناسبة.',
+  chatOpen: 'اسأل عن النباتات',
+  chatClose: 'إغلاق',
+  chatGreeting:
+    'مرحباً — تبحث عن عناية سهلة، عطر، أعشاب للمطبخ، أو هدية؟ اختر سؤالاً من الأسفل.',
+  chatBack: 'كل الأسئلة',
+  chatShopCta: 'تسوّق المجموعة',
+  chatEmpty: 'المزيد من النصائح قريباً.',
+
+  communityPoint1: 'زيارات مشتل واختيار دقيق قبل كل دفعة',
+  communityPoint2: 'إعادة زراعة وتنظيف ووسم بعناية نبات',
+  communityPoint3: 'تعبئة تصل بصحة جيدة — جاهزة لمساحتك',
+
+  delivering: 'خضرة حيّة… بتوصيل بعناية',
   explore: 'استكشف',
   visit: 'زورنا',
   alexandria: 'الإسكندرية، مصر',
   faq: 'الأسئلة الشائعة',
   copyright: 'جميع الحقوق محفوظة · تصميم وتطوير يوسف عاشور',
 
-  // عنّا
   ourStory: 'قصتنا',
   aboutTitle: 'عنّا',
   aboutEyebrow: 'مرسم نباتات مصر',
-  aboutHeading: 'نوصل الحياة لباب بيتك',
+  aboutHeading: 'نُزرع بصبر. ونُوصَل بعناية.',
   aboutBody:
-    'نباتات مختارة بعناية للمنازل العصرية — من الخضرة الداخلية الهادئة إلى نباتات الشمس الخارجية. نهتم بكل تفصيلة حتى تصل كل نبتة جاهزة للنمو.',
+    'بدأت نبات في الإسكندرية من إيمان بسيط: أن المنزل يجب أن يشعر وكأنه يتنفّس. نقضي كثيراً من حياتنا في الداخل — والهواء الذي نشاركه مع الخضرة الحيّة يشكّل هدوء الغرفة ووضوحها وحيويتها.\n\nلهذا أنشأنا مرسم صوبة صغير للمنازل المصرية العصرية. نباتات داخلية هادئة، رفقاء خارجيون يحبّون الشمس، وصباريات صحراوية — كلّها مختارة لا لجمالها فقط، بل لتستقر بلطف في يومياتنا.\n\nكل نبتة تغادر مشتلنا صحيحة ومُجهّزة بعناية وجاهزة لمساحتك. حين تنمو الخضرة بجانبك، ترقّ الغرفة — ويرقّ معها الهواء الذي نعيش فيه.',
   shopPlants: 'تسوق النباتات',
 
-  // تواصل
   reachOut: 'تواصل معنا',
   contactTitle: 'تواصل',
-  contactEyebrow: 'أهلاً',
-  contactHeading: 'يسعدنا سماعك',
-  contactSubtitle: 'أسئلة عن النباتات أو الطلبات أو العناية؟ راسلنا.',
+  contactEyebrow: 'قل مرحباً',
+  contactHeading: 'نحن هنا من أجل نباتاتك',
+  contactSubtitle: 'طلبات أو نصائح عناية أو اختيارات خاصة — راسلنا في أي وقت.',
   location: 'الموقع',
   phoneWhatsapp: 'هاتف / واتساب',
   email: 'البريد',
   name: 'الاسم',
   message: 'الرسالة',
   yourName: 'اسمك',
-  yourEmail: 'بريدك',
   howCanWeHelp: 'كيف نقدر نساعدك؟',
 
-  // المتجر
   collection: 'المجموعة',
   shopBanner: 'المتجر',
   filters: 'التصفية',
@@ -153,8 +242,12 @@ const ar = {
   onSale: 'تخفيضات',
   noResults: 'لا توجد نباتات مطابقة.',
   showing: 'عرض',
+  plantsCount: '{count} نباتات',
+  loadingPlants: 'جاري تحميل النباتات…',
+  shopLoadError: 'تعذّر تحميل المتجر من قاعدة البيانات.',
+  tryAgain: 'حاول مجدداً',
+  emptyCatalog: 'لا توجد منتجات في الكتالوج بعد.',
 
-  // المنتج
   productNotFound: 'المنتج غير موجود',
   aboutProduct: 'عن النبات',
   careTab: 'العناية',
@@ -168,8 +261,13 @@ const ar = {
   care2: 'يفضّل الضوء الساطع غير المباشر',
   care3: 'أبعدها عن شمس الظهيرة الحادة',
   care4: 'امسح الأوراق بلطف لإزالة الغبار',
+  review1Author: 'نور أ.',
+  review1Text: 'وصلت نضرة ومعبّأة بعناية. شرفتي اكتملت أخيراً.',
+  review2Author: 'مايا ح.',
+  review2Text: 'جذور صحيحة وحجم صادق وأوراق جميلة. صارت مفضلتي فوراً.',
+  review3Author: 'كريم س.',
+  review3Text: 'توصيل سريع في الإسكندرية ونباتات تنمو فعلاً. سأطلب مجدداً.',
 
-  // السلة
   cartTitle: 'السلة',
   cartEmpty: 'سلتك فارغة.',
   yourBag: 'حقيبتك',
@@ -177,13 +275,24 @@ const ar = {
   orderSummary: 'ملخص الطلب',
   shippingAlex: 'الشحن (الإسكندرية)',
 
-  // الدفع
   checkoutLabel: 'إتمام الطلب',
   checkoutTitle: 'أكمل طلبك',
-  checkoutHint: 'التوصيل داخل الإسكندرية فقط · الشحن ٥٠ ج.م · يلزم تسجيل الدخول',
+  checkoutHint: 'التوصيل داخل الإسكندرية فقط · الشحن ٥٠ ج.م · يمكن الطلب كزائر',
   loginRequiredCheckout: 'يرجى تسجيل الدخول لإتمام الطلب.',
   orderFailed: 'تعذر إتمام الطلب. حاول مرة أخرى.',
   signInToCheckout: 'سجّل الدخول لإتمام الطلب',
+  checkoutAsGuest: 'تابع كزائر',
+  promoSection: 'كود الخصم',
+  promoPlaceholder: 'أدخل كود الخصم',
+  promoApply: 'تطبيق',
+  promoApplied: 'تم تطبيق خصم {pct}٪ بالكود {code}',
+  promoInvalid: 'كود الخصم غير صالح.',
+  promoGuestHint: 'سجّل الدخول لاستبدال كود MEH10 على أول طلب لك.',
+  promoAlreadyUsed: 'كود MEH10 صالح لأول طلب فقط.',
+  promoSignInCta: 'سجّل الدخول للاستبدال',
+  discount: 'الخصم',
+  guestCheckoutNote:
+    'تطلب كزائر — أنشئ حساباً لاحقاً لتتبع الطلبات واستبدال MEH10.',
   contactSection: 'التواصل',
   shippingSection: 'الشحن',
   paymentSection: 'الدفع',
@@ -207,7 +316,6 @@ const ar = {
   defaultAddress: 'الافتراضي',
   usingSavedAddress: 'يتم استخدام عنوانك المحفوظ',
 
-  // طرق الدفع
   payCod: 'الدفع عند الاستلام',
   payVodafone: 'فودافون كاش',
   payInstapay: 'إنستاباي',
@@ -217,7 +325,6 @@ const ar = {
   payVisaHint: 'ادفع بفيزا أو ماستركارد عند وصول الطلب.',
   numberLabel: 'الرقم',
 
-  // التحقق
   invalidEmail: 'بريد إلكتروني غير صالح',
   emailRequired: 'البريد مطلوب',
   firstNameRequired: 'الاسم الأول مطلوب',
@@ -228,7 +335,6 @@ const ar = {
   phoneRequired: 'الهاتف مطلوب',
   paymentRequired: 'طريقة الدفع مطلوبة',
 
-  // شكراً
   confirmed: 'تم التأكيد',
   thankYou: 'شكراً',
   orderReceived: 'استلمنا طلبك. سنتواصل معك قريباً.',
@@ -239,12 +345,10 @@ const ar = {
   nextStep: 'الخطوة التالية',
   thankYouOrder: 'شكراً لطلبك',
 
-  // المفضلة
   wishlistTitle: 'المفضلة',
   wishlistEmpty: 'قائمة المفضلة فارغة.',
   addToBagShort: 'أضف للحقيبة',
 
-  // الطلبات
   orders: 'الطلبات',
   orderHistoryTitle: 'سجل الطلبات',
   noOrdersYet: 'لا توجد طلبات بعد',
@@ -253,7 +357,6 @@ const ar = {
   shippingLabel: 'الشحن',
   noItemsInOrder: 'لا توجد منتجات في هذا الطلب.',
 
-  // الحساب
   welcomeBack: 'مرحباً بعودتك',
   signIn: 'تسجيل الدخول',
   getStarted: 'ابدأ الآن',
@@ -273,16 +376,13 @@ const ar = {
   sendReset: 'إرسال رابط الاستعادة',
   password: 'كلمة المرور',
 
-  // خطأ
   error404: '٤٠٤',
   pathNoPlants: 'هذا المسار بلا نباتات',
   pageMissing: 'الصفحة غير موجودة أو تم نقلها.',
 
-  // بحث
   searchLabel: 'بحث',
   reachOutEyebrow: 'تواصل معنا',
 
-  // لوحة التحكم
   dashboard: 'لوحة التحكم',
   dashboardUnlock: 'أدخل كلمة مرور لوحة التحكم للمتابعة.',
   unlock: 'فتح',
@@ -308,6 +408,38 @@ const ar = {
   saveSettings: 'حفظ الإعدادات',
   searchProducts: 'ابحث في المنتجات…',
   manageStore: 'إدارة المتجر',
+
+  // أسماء المنتجات (عربي)
+  product_irishflower: 'زهرة أيرلندية',
+  product_bluechalksticks: 'أعواد الطباشير الزرقاء',
+  product_coppersedum: 'سيدوم نحاسي',
+  product_gollumjade: 'يشب غولوم',
+  product_haworthiafasciata: 'هاورثيا فاسياتا',
+  product_sedum: 'سيدوم',
+  product_auroraborealis: 'أورورا بورياليس',
+  product_pencilcactus: 'صبار القلم',
+  product_spooncactus: 'صبار الملعقة',
+  product_kalanchoemarmorata: 'كلانشو مرمري',
+  product_kleidostylis: 'كلايدوستيليس',
+  product_lawyerstongue: 'لسان المحامي',
+  product_paddleplant: 'نبتة المجداف',
+  product_thaiplant: 'النبتة التايلاندية',
+  product_handingpothos: 'بثوس معلّق',
+  product_bamboo: 'خيزران',
+  product_snakeplant: 'نبتة الثعبان',
+  product_dracaenadragon: 'دراسينا التنين',
+  product_lemoncypress: 'سرو ليموني',
+  product_sansevieria: 'سانسيفيريا',
+  product_schefflera: 'شفليرة',
+  product_rosemary: 'إكليل الجبل',
+  product_basil: 'ريحان',
+  product_williamsplant: 'نبتة ويليام',
+  product_sanguinaria: 'سانغويناريا',
+  product_pansy: 'بنفسج الزينة',
+  product_marjoram: 'مردقوش',
+  product_periwinkle: 'ونكا',
+  product_mint: 'نعناع',
+  product_rose: 'وردة',
 };
 
 export default ar;

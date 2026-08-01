@@ -14,10 +14,15 @@ export default {
           text: '#14201A',
           border: '#D5E0D8',
           soft: '#F4F7F4',
+          // Added: clay/terracotta accent + a warmer cream surface option
+          clay: '#B5602F',
+          'clay-soft': '#F5E6DA',
+          cream: '#FAF7F0',
         },
       },
       fontFamily: {
-        heading: ['Montserrat', 'sans-serif'],
+        // Changed from Montserrat -> Fraunces (serif) for headings
+        heading: ['Fraunces', 'serif'],
         body: ['Montserrat', 'sans-serif'],
         nav: ['Montserrat', 'sans-serif'],
       },

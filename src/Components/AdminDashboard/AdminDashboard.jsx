@@ -6,6 +6,11 @@ import { lockDashboard } from '../DashboardGate/DashboardGate';
 import BrandLogo from '../BrandLogo/BrandLogo';
 import { fetchAllOrders, updateOrderStatus } from '../../supabase/orders';
 import {
+  fetchContactMessages,
+  markContactMessageRead,
+  deleteContactMessage,
+} from '../../supabase/contactMessages';
+import {
   loadDashboardCatalog,
   saveDashboardProduct,
   deleteDashboardProduct,
@@ -13,21 +18,31 @@ import {
   saveCategory,
   deleteCategory,
   loadSiteContent,
-  saveSiteContent,
+  saveSiteContentSection,
+  probeDashboardSchema,
 } from '../../supabase/cms';
 import { ORDER_STATUSES, PAYMENT_METHODS } from '../../config/store';
 import { formatEGP } from '../../utils/money';
 import { useProducts } from '../ProductsContext/ProductsContext';
+import { useSiteContent } from '../SiteContentContext/SiteContentContext';
+import { useCategories } from '../CategoriesContext/CategoriesContext';
+import ImageField from '../ImageField/ImageField';
+import SiteContentEditor from './SiteContentEditor';
+import HomepageSectionsPanel, {
+  HOMEPAGE_SECTIONS,
+} from './HomepageSectionsPanel';
 
 const TABS = [
   { id: 'orders', label: 'Orders' },
+  { id: 'messages', label: 'Messages' },
   { id: 'products', label: 'Products' },
+  { id: 'homepage', label: 'Homepage sections' },
   { id: 'categories', label: 'Categories' },
-  { id: 'content', label: 'Site texts' },
+  { id: 'content', label: 'Site content' },
   { id: 'settings', label: 'Store settings' },
 ];
 
-const emptyProduct = (category = 'Succulent') => ({
+const emptyProduct = (category = '') => ({
   id: '',
   name: '',
   nameAr: '',
@@ -37,12 +52,15 @@ const emptyProduct = (category = 'Succulent') => ({
   description: '',
   descriptionAr: '',
   image: '',
+  hoverImage: '',
   care: '',
   light: '',
   sortOrder: 0,
   isActive: true,
   isFeatured: false,
   isRecent: false,
+  isGift: false,
+  isEasyCare: false,
 });
 
 const emptyCategory = () => ({
@@ -51,6 +69,7 @@ const emptyCategory = () => ({
   nameAr: '',
   description: '',
   descriptionAr: '',
+  image: '',
   sortOrder: 0,
   isActive: true,
 });
@@ -66,30 +85,42 @@ function Field({ label, children }) {
 
 export default function AdminDashboard() {
   const { refreshProducts } = useProducts();
+  const { patchContent } = useSiteContent();
+  const { refreshCategories } = useCategories();
   const [tab, setTab] = useState('products');
   const [orders, setOrders] = useState([]);
+  const [messages, setMessages] = useState([]);
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [content, setContent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [savingKey, setSavingKey] = useState(null);
   const [editing, setEditing] = useState(null);
   const [editingCat, setEditingCat] = useState(null);
   const [productFilter, setProductFilter] = useState('');
+  const [schemaWarning, setSchemaWarning] = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [catalog, cats, site, ords] = await Promise.all([
+      const [catalog, cats, site, ords, msgs, schema] = await Promise.all([
         loadDashboardCatalog(),
         loadCategories(),
         loadSiteContent(),
         fetchAllOrders().catch(() => []),
+        fetchContactMessages().catch(() => []),
+        probeDashboardSchema().catch(() => ({
+          ok: true,
+          message: '',
+        })),
       ]);
       setProducts(catalog.products);
       setCategories(cats.categories);
       setContent(site.content);
       setOrders(ords);
+      setMessages(msgs);
+      setSchemaWarning(schema?.ok === false ? schema.message || '' : '');
     } catch (err) {
       toast.error(err.message || 'Failed to load dashboard');
     } finally {
@@ -118,10 +149,36 @@ export default function AdminDashboard() {
     }
   };
 
+  const onToggleMessageRead = async (id, isRead) => {
+    try {
+      await markContactMessageRead(id, isRead);
+      setMessages((prev) =>
+        prev.map((m) => (m.id === id ? { ...m, is_read: isRead } : m))
+      );
+    } catch (err) {
+      toast.error(err.message || 'Update failed');
+    }
+  };
+
+  const onDeleteMessage = async (id) => {
+    if (!window.confirm('Delete this message?')) return;
+    try {
+      await deleteContactMessage(id);
+      setMessages((prev) => prev.filter((m) => m.id !== id));
+      toast.success('Message deleted');
+    } catch (err) {
+      toast.error(err.message || 'Delete failed');
+    }
+  };
+
   const saveProduct = async (e) => {
     e.preventDefault();
     if (!editing?.id || !editing?.name) {
       toast.error('Slug and name are required');
+      return;
+    }
+    if (!editing.category) {
+      toast.error('Choose a category for this product');
       return;
     }
     setSaving(true);
@@ -133,23 +190,36 @@ export default function AdminDashboard() {
           editing._localImage ||
           editing.image ||
           '',
+        hoverImage:
+          (typeof editing.hoverImage === 'string' &&
+            editing.hoverImage.trim()) ||
+          editing.hoverImage ||
+          '',
+        isEasyCare: !!editing.isEasyCare,
+        care:
+          editing.isEasyCare && !editing.care
+            ? 'easy'
+            : editing.care || '',
       };
       delete payload._localImage;
-      const saved = await saveDashboardProduct(payload);
-      setProducts((prev) => {
-        const i = prev.findIndex((p) => p.id === saved.id);
-        if (i >= 0) {
-          const next = [...prev];
-          next[i] = saved;
-          return next;
+      try {
+        await saveDashboardProduct(payload);
+      } catch (err) {
+        if (err.code === 'SCHEMA_DRIFT' && err.saved) {
+          toast.warn(err.message);
+        } else {
+          throw err;
         }
-        return [...prev, saved];
-      });
+      }
+      const catalog = await loadDashboardCatalog();
+      setProducts(catalog.products);
       setEditing(null);
       await refreshProducts?.();
-      toast.success('Product saved');
+      const schema = await probeDashboardSchema().catch(() => null);
+      setSchemaWarning(schema?.ok === false ? schema.message || '' : '');
+      toast.success('Product saved to Supabase');
     } catch (err) {
-      toast.error(err.message || 'Save failed');
+      toast.error(err.message || 'Save failed — nothing was stored');
     } finally {
       setSaving(false);
     }
@@ -175,20 +245,24 @@ export default function AdminDashboard() {
     }
     setSaving(true);
     try {
-      const saved = await saveCategory(editingCat);
-      setCategories((prev) => {
-        const i = prev.findIndex((c) => c.id === saved.id);
-        if (i >= 0) {
-          const next = [...prev];
-          next[i] = saved;
-          return next;
+      try {
+        await saveCategory(editingCat);
+      } catch (err) {
+        if (err.code === 'SCHEMA_DRIFT' && err.saved) {
+          toast.warn(err.message);
+        } else {
+          throw err;
         }
-        return [...prev, saved];
-      });
+      }
+      const cats = await loadCategories();
+      setCategories(cats.categories);
       setEditingCat(null);
-      toast.success('Category saved');
+      await refreshCategories?.();
+      const schema = await probeDashboardSchema().catch(() => null);
+      setSchemaWarning(schema?.ok === false ? schema.message || '' : '');
+      toast.success('Category saved to Supabase');
     } catch (err) {
-      toast.error(err.message || 'Save failed');
+      toast.error(err.message || 'Save failed — nothing was stored');
     } finally {
       setSaving(false);
     }
@@ -199,6 +273,7 @@ export default function AdminDashboard() {
     try {
       await deleteCategory(cat);
       setCategories((prev) => prev.filter((c) => c.id !== cat.id));
+      await refreshCategories?.();
       toast.success('Deleted');
     } catch (err) {
       toast.error(err.message || 'Delete failed');
@@ -208,12 +283,34 @@ export default function AdminDashboard() {
   const saveContentSection = async () => {
     setSaving(true);
     try {
-      await saveSiteContent(content);
-      toast.success('Site texts saved');
+      await saveSiteContentSection('store', content.store || {});
+      patchContent?.('store', content.store || {});
+      toast.success('Store settings saved');
     } catch (err) {
       toast.error(err.message || 'Save failed');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const saveEditorSection = async (contentKey, partial, uiKey = contentKey) => {
+    setSavingKey(uiKey);
+    try {
+      const next = await saveSiteContentSection(contentKey, partial);
+      setContent((prev) => ({
+        ...prev,
+        [contentKey]: next,
+      }));
+      patchContent?.(contentKey, next);
+      // Confirm it is still in Supabase
+      const site = await loadSiteContent();
+      setContent(site.content);
+      patchContent?.(contentKey, site.content[contentKey]);
+      toast.success('Section saved to Supabase');
+    } catch (err) {
+      toast.error(err.message || 'Save failed');
+    } finally {
+      setSavingKey(null);
     }
   };
 
@@ -227,7 +324,9 @@ export default function AdminDashboard() {
   if (loading || !content) return <PlantLoader variant="overlay" />;
 
   const pendingCount = orders.filter((o) => o.status === 'Processing').length;
-  const categoryNames = categories.filter((c) => c.isActive).map((c) => c.name);
+  const unreadMessages = messages.filter((m) => !m.is_read).length;
+  const activeCategoryOptions = categories.filter((c) => c.isActive !== false);
+  const categoryNames = activeCategoryOptions.map((c) => c.name);
   const filteredProducts = products.filter((p) => {
     const q = productFilter.trim().toLowerCase();
     if (!q) return true;
@@ -238,6 +337,44 @@ export default function AdminDashboard() {
     );
   });
 
+  const openProductEditor = (product) => {
+    const fallbackCategory = categoryNames[0] || '';
+    const next = product
+      ? {
+          ...product,
+          category: product.category || fallbackCategory,
+          image: typeof product.image === 'string' ? product.image : '',
+          hoverImage:
+            typeof product.hoverImage === 'string' ? product.hoverImage : '',
+          isEasyCare: !!product.isEasyCare,
+          _localImage: product.image,
+        }
+      : emptyProduct(fallbackCategory);
+    setEditing(next);
+    requestAnimationFrame(() => {
+      document.getElementById('dashboard-product-editor')?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    });
+  };
+
+  const openCategoryEditor = (cat) => {
+    const next = cat
+      ? {
+          ...cat,
+          image: typeof cat.image === 'string' ? cat.image : '',
+        }
+      : emptyCategory();
+    setEditingCat(next);
+    requestAnimationFrame(() => {
+      document.getElementById('dashboard-category-editor')?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    });
+  };
+
   return (
     <div className="leaf-wash min-h-screen">
       <div className="border-b border-nabat-border bg-nabat-primary text-white">
@@ -247,9 +384,6 @@ export default function AdminDashboard() {
             <p className="font-nav text-[11px] uppercase tracking-[0.2em] text-white/70">
               Dashboard · Connected to Supabase
             </p>
-            <h1 className="font-heading text-2xl font-medium md:text-3xl">
-              إدارة المتجر
-            </h1>
           </div>
           <div className="flex flex-wrap gap-3">
             <button type="button" onClick={load} className="btn-ghost !px-5 !py-2.5">
@@ -266,6 +400,17 @@ export default function AdminDashboard() {
       </div>
 
       <div className="section-pad py-8 md:py-12">
+        {schemaWarning ? (
+          <div className="mb-6 border border-amber-300 bg-amber-50 px-4 py-3 font-nav text-sm text-amber-950">
+            <p className="font-semibold">Supabase schema update required</p>
+            <p className="mt-1">{schemaWarning}</p>
+            <p className="mt-2 text-xs text-amber-900/80">
+              Open Supabase → SQL Editor → paste and run{' '}
+              <code className="bg-white/80 px-1">scripts/ensure-dashboard-schema.sql</code>
+              , then click Refresh here and save your images/flags again.
+            </p>
+          </div>
+        ) : null}
         <div className="mb-8 grid gap-4 sm:grid-cols-3">
           <div className="border border-nabat-border bg-white p-5">
             <p className="font-nav text-[10px] uppercase tracking-[0.14em] text-nabat-muted">
@@ -285,10 +430,10 @@ export default function AdminDashboard() {
           </div>
           <div className="border border-nabat-border bg-white p-5">
             <p className="font-nav text-[10px] uppercase tracking-[0.14em] text-nabat-muted">
-              Categories
+              Messages / Unread
             </p>
             <p className="mt-2 font-heading text-3xl text-nabat-primary">
-              {categories.length}
+              {messages.length} / {unreadMessages}
             </p>
           </div>
         </div>
@@ -306,6 +451,9 @@ export default function AdminDashboard() {
               }`}
             >
               {t.label}
+              {t.id === 'messages' && unreadMessages > 0
+                ? ` (${unreadMessages})`
+                : ''}
             </button>
           ))}
         </div>
@@ -388,6 +536,77 @@ export default function AdminDashboard() {
           </div>
         )}
 
+        {/* MESSAGES */}
+        {tab === 'messages' && (
+          <div className="space-y-4">
+            {messages.length === 0 ? (
+              <div className="border border-nabat-border bg-white p-10 text-center font-body text-nabat-muted">
+                No contact messages yet. They appear here when someone submits the
+                contact form. If submit fails, run{' '}
+                <code className="bg-nabat-mist px-1">scripts/contact-messages.sql</code>{' '}
+                in Supabase.
+              </div>
+            ) : (
+              messages.map((msg) => (
+                <article
+                  key={msg.id}
+                  className={`border bg-white p-5 md:p-6 ${
+                    msg.is_read
+                      ? 'border-nabat-border'
+                      : 'border-nabat-accent/40 bg-nabat-mist/40'
+                  }`}
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h2 className="font-heading text-lg font-medium">
+                          {msg.name}
+                        </h2>
+                        {!msg.is_read ? (
+                          <span className="font-nav text-[10px] uppercase tracking-[0.14em] text-nabat-accent">
+                            New
+                          </span>
+                        ) : null}
+                      </div>
+                      <a
+                        href={`mailto:${msg.email}`}
+                        className="mt-1 block font-nav text-sm text-nabat-accent hover:underline"
+                        dir="ltr"
+                      >
+                        {msg.email}
+                      </a>
+                      <p className="mt-1 font-nav text-xs text-nabat-muted">
+                        {new Date(msg.created_at).toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        className="btn-outline !px-4 !py-2"
+                        onClick={() =>
+                          onToggleMessageRead(msg.id, !msg.is_read)
+                        }
+                      >
+                        {msg.is_read ? 'Mark unread' : 'Mark read'}
+                      </button>
+                      <button
+                        type="button"
+                        className="border border-nabat-border px-4 py-2 font-nav text-xs uppercase tracking-[0.14em] text-nabat-muted hover:border-red-400 hover:text-red-600"
+                        onClick={() => onDeleteMessage(msg.id)}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                  <p className="mt-4 whitespace-pre-wrap border-t border-nabat-border pt-4 font-body text-sm leading-relaxed text-nabat-text">
+                    {msg.message}
+                  </p>
+                </article>
+              ))
+            )}
+          </div>
+        )}
+
         {/* PRODUCTS */}
         {tab === 'products' && (
           <div>
@@ -401,9 +620,7 @@ export default function AdminDashboard() {
               <button
                 type="button"
                 className="btn-primary"
-                onClick={() =>
-                  setEditing(emptyProduct(categoryNames[0] || 'Succulent'))
-                }
+                onClick={() => openProductEditor(null)}
               >
                 Add product
               </button>
@@ -411,6 +628,8 @@ export default function AdminDashboard() {
 
             {editing && (
               <form
+                id="dashboard-product-editor"
+                key={editing.dbId || editing.id || 'new-product'}
                 onSubmit={saveProduct}
                 className="mb-8 border border-nabat-border bg-white p-6"
               >
@@ -425,32 +644,43 @@ export default function AdminDashboard() {
                       className="input-box"
                       value={editing.id}
                       onChange={(e) =>
-                        setEditing({
-                          ...editing,
+                        setEditing((prev) => ({
+                          ...prev,
                           id: e.target.value
                             .toLowerCase()
                             .replace(/\s+/g, ''),
-                        })
+                        }))
                       }
                       required
                     />
                   </Field>
-                  <Field label="Category">
+                  <Field label="Category (from Categories tab)">
                     <select
                       className="input-box"
-                      value={editing.category}
+                      value={editing.category || ''}
                       onChange={(e) =>
-                        setEditing({ ...editing, category: e.target.value })
+                        setEditing((prev) => ({
+                          ...prev,
+                          category: e.target.value,
+                        }))
                       }
+                      required
                     >
-                      {(categoryNames.length
-                        ? categoryNames
-                        : ['Succulent', 'Indoor Plants', 'Outdoor Plants']
-                      ).map((c) => (
-                        <option key={c} value={c}>
-                          {c}
+                      <option value="" disabled>
+                        Select a category…
+                      </option>
+                      {activeCategoryOptions.length ? (
+                        activeCategoryOptions.map((c) => (
+                          <option key={c.id} value={c.name}>
+                            {c.name}
+                            {c.nameAr ? ` · ${c.nameAr}` : ''}
+                          </option>
+                        ))
+                      ) : (
+                        <option value="" disabled>
+                          Add a category first
                         </option>
-                      ))}
+                      )}
                     </select>
                   </Field>
                   <Field label="Name (EN)">
@@ -458,7 +688,10 @@ export default function AdminDashboard() {
                       className="input-box"
                       value={editing.name}
                       onChange={(e) =>
-                        setEditing({ ...editing, name: e.target.value })
+                        setEditing((prev) => ({
+                          ...prev,
+                          name: e.target.value,
+                        }))
                       }
                       required
                     />
@@ -469,7 +702,10 @@ export default function AdminDashboard() {
                       dir="rtl"
                       value={editing.nameAr || ''}
                       onChange={(e) =>
-                        setEditing({ ...editing, nameAr: e.target.value })
+                        setEditing((prev) => ({
+                          ...prev,
+                          nameAr: e.target.value,
+                        }))
                       }
                     />
                   </Field>
@@ -480,7 +716,10 @@ export default function AdminDashboard() {
                       className="input-box"
                       value={editing.price}
                       onChange={(e) =>
-                        setEditing({ ...editing, price: e.target.value })
+                        setEditing((prev) => ({
+                          ...prev,
+                          price: e.target.value,
+                        }))
                       }
                       required
                     />
@@ -492,7 +731,10 @@ export default function AdminDashboard() {
                       className="input-box"
                       value={editing.stock}
                       onChange={(e) =>
-                        setEditing({ ...editing, stock: e.target.value })
+                        setEditing((prev) => ({
+                          ...prev,
+                          stock: e.target.value,
+                        }))
                       }
                     />
                   </Field>
@@ -502,39 +744,74 @@ export default function AdminDashboard() {
                       placeholder="e.g. bright indirect"
                       value={editing.light || ''}
                       onChange={(e) =>
-                        setEditing({ ...editing, light: e.target.value })
+                        setEditing((prev) => ({
+                          ...prev,
+                          light: e.target.value,
+                        }))
                       }
                     />
                   </Field>
-                  <Field label="Care level">
-                    <input
+                  <Field label="Care level (shop filter)">
+                    <select
                       className="input-box"
-                      placeholder="e.g. easy"
                       value={editing.care || ''}
                       onChange={(e) =>
-                        setEditing({ ...editing, care: e.target.value })
+                        setEditing((prev) => ({
+                          ...prev,
+                          care: e.target.value,
+                          isEasyCare:
+                            e.target.value === 'easy'
+                              ? true
+                              : prev.isEasyCare,
+                        }))
                       }
-                    />
+                    >
+                      <option value="">Not set</option>
+                      <option value="easy">easy</option>
+                      <option value="moderate">moderate</option>
+                      <option value="expert">expert</option>
+                    </select>
                   </Field>
-                  <Field label="Image URL (or keep existing)">
-                    <input
-                      className="input-box"
+                  <div className="md:col-span-2">
+                    <ImageField
+                      key={`img-${editing.dbId || editing.id || 'new'}`}
+                      label="Product image"
                       value={
                         typeof editing.image === 'string' ? editing.image : ''
                       }
-                      onChange={(e) =>
-                        setEditing({ ...editing, image: e.target.value })
+                      onChange={(url) =>
+                        setEditing((prev) => ({ ...prev, image: url }))
                       }
-                      placeholder="https://… or leave blank to keep local image"
+                      folder="catalog"
+                      hint="Drag & drop, browse, or paste a URL"
                     />
-                  </Field>
+                  </div>
+                  <div className="md:col-span-2">
+                    <ImageField
+                      key={`hover-${editing.dbId || editing.id || 'new'}`}
+                      label="Hover image (optional)"
+                      value={
+                        typeof editing.hoverImage === 'string'
+                          ? editing.hoverImage
+                          : ''
+                      }
+                      onChange={(url) =>
+                        setEditing((prev) => ({ ...prev, hoverImage: url }))
+                      }
+                      folder="catalog"
+                      hint="Shown when hovering a product card"
+                    />
+                  </div>
                   <Field label="Sort order">
                     <input
                       type="number"
                       className="input-box"
                       value={editing.sortOrder || 0}
                       onChange={(e) =>
-                        setEditing({ ...editing, sortOrder: e.target.value })
+                        setEditing((prev) => ({
+                          ...prev,
+                          sortOrder: e.target.value,
+                        }))
                       }
                     />
                   </Field>
@@ -545,10 +822,10 @@ export default function AdminDashboard() {
                         rows={4}
                         value={editing.description || ''}
                         onChange={(e) =>
-                          setEditing({
-                            ...editing,
+                          setEditing((prev) => ({
+                            ...prev,
                             description: e.target.value,
-                          })
+                          }))
                         }
                       />
                     </Field>
@@ -561,47 +838,68 @@ export default function AdminDashboard() {
                         dir="rtl"
                         value={editing.descriptionAr || ''}
                         onChange={(e) =>
-                          setEditing({
-                            ...editing,
+                          setEditing((prev) => ({
+                            ...prev,
                             descriptionAr: e.target.value,
-                          })
+                          }))
                         }
                       />
                     </Field>
                   </div>
                 </div>
-                <div className="mt-4 flex flex-wrap gap-4 font-nav text-sm">
-                  {[
-                    ['isFeatured', 'Featured'],
-                    ['isRecent', 'Recent'],
-                    ['isActive', 'Active / visible'],
-                  ].map(([key, label]) => (
-                    <label key={key} className="flex items-center gap-2">
+                <div className="mt-6 border border-nabat-border bg-nabat-soft/40 p-4">
+                  <p className="font-nav text-[10px] uppercase tracking-[0.14em] text-nabat-muted">
+                    Homepage sections
+                  </p>
+                  <p className="mt-1 font-nav text-xs text-nabat-muted">
+                    Or manage all plants at once under the{' '}
+                    <button
+                      type="button"
+                      className="text-nabat-accent underline"
+                      onClick={() => setTab('homepage')}
+                    >
+                      Homepage sections
+                    </button>{' '}
+                    tab.
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-4 font-nav text-sm">
+                    {HOMEPAGE_SECTIONS.map((s) => (
+                      <label key={s.flag} className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={!!editing[s.flag]}
+                          onChange={(e) =>
+                            setEditing((prev) => ({
+                              ...prev,
+                              [s.flag]: e.target.checked,
+                              ...(s.flag === 'isEasyCare' && e.target.checked
+                                ? { care: prev.care || 'easy' }
+                                : {}),
+                            }))
+                          }
+                        />
+                        {s.label}
+                      </label>
+                    ))}
+                    <label className="flex items-center gap-2">
                       <input
                         type="checkbox"
-                        checked={!!editing[key]}
+                        checked={editing.isActive !== false}
                         onChange={(e) =>
-                          setEditing({
-                            ...editing,
-                            [key]: e.target.checked,
-                          })
+                          setEditing((prev) => ({
+                            ...prev,
+                            isActive: e.target.checked,
+                          }))
                         }
                       />
-                      {label}
+                      Active / visible in shop
                     </label>
-                  ))}
+                  </div>
                 </div>
                 {editing.image && typeof editing.image !== 'string' && (
                   <p className="mt-3 font-nav text-xs text-nabat-muted">
-                    Using bundled local image for this plant.
+                    Using bundled local image for this plant until you upload or paste a URL.
                   </p>
-                )}
-                {typeof editing.image === 'string' && editing.image && (
-                  <img
-                    src={editing.image}
-                    alt=""
-                    className="mt-3 h-24 w-24 object-cover bg-nabat-mist"
-                  />
                 )}
                 <div className="mt-5 flex gap-3">
                   <button type="submit" className="btn-primary" disabled={saving}>
@@ -656,8 +954,10 @@ export default function AdminDashboard() {
                       <td className="p-4">{product.stock}</td>
                       <td className="p-4 text-xs text-nabat-muted">
                         {[
-                          product.isFeatured && 'Featured',
-                          product.isRecent && 'Recent',
+                          product.isRecent && 'Seasonal',
+                          product.isEasyCare && 'Easy care',
+                          product.isGift && 'Gift',
+                          product.isFeatured && 'Bestseller',
                           !product.isActive && 'Hidden',
                           product.stock <= 0 && 'OOS',
                         ]
@@ -668,16 +968,7 @@ export default function AdminDashboard() {
                         <button
                           type="button"
                           className="text-nabat-accent hover:underline"
-                          onClick={() =>
-                            setEditing({
-                              ...product,
-                              image:
-                                typeof product.image === 'string'
-                                  ? product.image
-                                  : '',
-                              _localImage: product.image,
-                            })
-                          }
+                          onClick={() => openProductEditor(product)}
                         >
                           Edit
                         </button>
@@ -697,6 +988,15 @@ export default function AdminDashboard() {
           </div>
         )}
 
+        {/* HOMEPAGE SECTIONS */}
+        {tab === 'homepage' && (
+          <HomepageSectionsPanel
+            products={products}
+            onProductsChange={setProducts}
+            onStorefrontRefresh={refreshProducts}
+          />
+        )}
+
         {/* CATEGORIES */}
         {tab === 'categories' && (
           <div>
@@ -704,31 +1004,49 @@ export default function AdminDashboard() {
               <button
                 type="button"
                 className="btn-primary"
-                onClick={() => setEditingCat(emptyCategory())}
+                onClick={() => openCategoryEditor(null)}
               >
                 Add category
               </button>
             </div>
             {editingCat && (
               <form
+                id="dashboard-category-editor"
+                key={editingCat.dbId || editingCat.id || 'new-category'}
                 onSubmit={saveCat}
                 className="mb-8 border border-nabat-border bg-white p-6"
               >
                 <h3 className="font-heading text-lg font-medium">
-                  Category details
+                  {editingCat.dbId ? 'Edit category' : 'New category'}
                 </h3>
+                <p className="mt-1 font-nav text-xs text-nabat-muted">
+                  Active categories appear on the homepage, navbar, and shop
+                  filters. Use the same English name when assigning products.
+                </p>
                 <div className="mt-4 grid gap-4 md:grid-cols-2">
+                  <div className="md:col-span-2">
+                    <ImageField
+                      key={`cat-img-${editingCat.dbId || editingCat.id || 'new'}`}
+                      label="Category image (homepage browse)"
+                      value={editingCat.image || ''}
+                      onChange={(url) =>
+                        setEditingCat((prev) => ({ ...prev, image: url }))
+                      }
+                      folder="cms/categories"
+                      hint="Drag & drop, browse, or paste a URL — shown on homepage tiles"
+                    />
+                  </div>
                   <Field label="Slug">
                     <input
                       className="input-box"
                       value={editingCat.id}
                       onChange={(e) =>
-                        setEditingCat({
-                          ...editingCat,
+                        setEditingCat((prev) => ({
+                          ...prev,
                           id: e.target.value
                             .toLowerCase()
                             .replace(/\s+/g, '-'),
-                        })
+                        }))
                       }
                       required
                     />
@@ -739,10 +1057,10 @@ export default function AdminDashboard() {
                       className="input-box"
                       value={editingCat.sortOrder}
                       onChange={(e) =>
-                        setEditingCat({
-                          ...editingCat,
+                        setEditingCat((prev) => ({
+                          ...prev,
                           sortOrder: e.target.value,
-                        })
+                        }))
                       }
                     />
                   </Field>
@@ -751,7 +1069,10 @@ export default function AdminDashboard() {
                       className="input-box"
                       value={editingCat.name}
                       onChange={(e) =>
-                        setEditingCat({ ...editingCat, name: e.target.value })
+                        setEditingCat((prev) => ({
+                          ...prev,
+                          name: e.target.value,
+                        }))
                       }
                       required
                     />
@@ -762,10 +1083,10 @@ export default function AdminDashboard() {
                       dir="rtl"
                       value={editingCat.nameAr || ''}
                       onChange={(e) =>
-                        setEditingCat({
-                          ...editingCat,
+                        setEditingCat((prev) => ({
+                          ...prev,
                           nameAr: e.target.value,
-                        })
+                        }))
                       }
                     />
                   </Field>
@@ -776,10 +1097,10 @@ export default function AdminDashboard() {
                         rows={3}
                         value={editingCat.description || ''}
                         onChange={(e) =>
-                          setEditingCat({
-                            ...editingCat,
+                          setEditingCat((prev) => ({
+                            ...prev,
                             description: e.target.value,
-                          })
+                          }))
                         }
                       />
                     </Field>
@@ -792,10 +1113,10 @@ export default function AdminDashboard() {
                         dir="rtl"
                         value={editingCat.descriptionAr || ''}
                         onChange={(e) =>
-                          setEditingCat({
-                            ...editingCat,
+                          setEditingCat((prev) => ({
+                            ...prev,
                             descriptionAr: e.target.value,
-                          })
+                          }))
                         }
                       />
                     </Field>
@@ -806,10 +1127,10 @@ export default function AdminDashboard() {
                     type="checkbox"
                     checked={editingCat.isActive !== false}
                     onChange={(e) =>
-                      setEditingCat({
-                        ...editingCat,
+                      setEditingCat((prev) => ({
+                        ...prev,
                         isActive: e.target.checked,
-                      })
+                      }))
                     }
                   />
                   Active
@@ -831,31 +1152,44 @@ export default function AdminDashboard() {
             <div className="space-y-3">
               {categories.map((cat) => (
                 <div
-                  key={cat.id}
+                  key={cat.dbId || cat.id}
                   className="flex flex-wrap items-start justify-between gap-4 border border-nabat-border bg-white p-5"
                 >
-                  <div>
-                    <h3 className="font-heading text-lg font-medium">
-                      {cat.name}
-                      {cat.nameAr ? (
-                        <span className="ml-2 font-nav text-sm text-nabat-muted">
-                          · {cat.nameAr}
-                        </span>
-                      ) : null}
-                    </h3>
-                    <p className="mt-1 font-nav text-sm text-nabat-muted">
-                      {cat.description || 'No description'}
-                    </p>
-                    <p className="mt-1 font-nav text-xs text-nabat-muted">
-                      slug: {cat.id} · sort {cat.sortOrder}
-                      {!cat.isActive ? ' · hidden' : ''}
-                    </p>
+                  <div className="flex min-w-0 flex-1 gap-4">
+                    {cat.image ? (
+                      <img
+                        src={cat.image}
+                        alt=""
+                        className="h-16 w-16 shrink-0 object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-16 w-16 shrink-0 items-center justify-center bg-nabat-soft font-nav text-[10px] uppercase tracking-wider text-nabat-muted">
+                        No img
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <h3 className="font-heading text-lg font-medium">
+                        {cat.name}
+                        {cat.nameAr ? (
+                          <span className="ml-2 font-nav text-sm text-nabat-muted">
+                            · {cat.nameAr}
+                          </span>
+                        ) : null}
+                      </h3>
+                      <p className="mt-1 font-nav text-sm text-nabat-muted">
+                        {cat.description || 'No description'}
+                      </p>
+                      <p className="mt-1 font-nav text-xs text-nabat-muted">
+                        slug: {cat.id} · sort {cat.sortOrder}
+                        {!cat.isActive ? ' · hidden' : ''}
+                      </p>
+                    </div>
                   </div>
                   <div className="flex gap-3 font-nav text-sm">
                     <button
                       type="button"
                       className="text-nabat-accent hover:underline"
-                      onClick={() => setEditingCat(cat)}
+                      onClick={() => openCategoryEditor(cat)}
                     >
                       Edit
                     </button>
@@ -873,85 +1207,15 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* SITE TEXTS */}
+        {/* SITE CONTENT (partitioned, per-section save) */}
         {tab === 'content' && (
-          <div className="space-y-8">
-            {[
-              ['hero', 'Hero', ['eyebrow', 'tagline', 'cta']],
-              [
-                'home',
-                'Home sections',
-                [
-                  'featuredTitle',
-                  'featuredSubtitle',
-                  'recentTitle',
-                  'recentSubtitle',
-                  'socialTitle',
-                  'socialSubtitle',
-                ],
-              ],
-              ['about', 'About page', ['eyebrow', 'title', 'body', 'bodyAr']],
-              [
-                'contact',
-                'Contact page',
-                ['eyebrow', 'title', 'subtitle', 'locationLabel', 'location'],
-              ],
-              ['footer', 'Footer', ['tagline']],
-              ['shop', 'Shop banner', ['bannerEyebrow', 'bannerTitle']],
-            ].map(([section, title, fields]) => (
-              <div
-                key={section}
-                className="border border-nabat-border bg-white p-6"
-              >
-                <h3 className="font-heading text-lg font-medium">{title}</h3>
-                <div className="mt-4 grid gap-4 md:grid-cols-2">
-                  {fields.map((field) => (
-                    <div
-                      key={field}
-                      className={
-                        field === 'body' || field === 'bodyAr' || field === 'subtitle'
-                          ? 'md:col-span-2'
-                          : ''
-                      }
-                    >
-                      <Field label={field}>
-                        {field === 'body' ||
-                        field === 'bodyAr' ||
-                        field === 'subtitle' ||
-                        field.includes('Subtitle') ? (
-                          <textarea
-                            className="input-box"
-                            rows={field.startsWith('body') ? 4 : 2}
-                            dir={field.endsWith('Ar') ? 'rtl' : undefined}
-                            value={content[section]?.[field] || ''}
-                            onChange={(e) =>
-                              updateContent(section, field, e.target.value)
-                            }
-                          />
-                        ) : (
-                          <input
-                            className="input-box"
-                            dir={field.endsWith('Ar') ? 'rtl' : undefined}
-                            value={content[section]?.[field] || ''}
-                            onChange={(e) =>
-                              updateContent(section, field, e.target.value)
-                            }
-                          />
-                        )}
-                      </Field>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-            <button
-              type="button"
-              className="btn-primary"
-              disabled={saving}
-              onClick={saveContentSection}
-            >
-              {saving ? 'Saving…' : 'Save all site texts'}
-            </button>
+          <div className="space-y-6">
+            <SiteContentEditor
+              content={content}
+              onChange={setContent}
+              onSaveSection={saveEditorSection}
+              savingKey={savingKey}
+            />
           </div>
         )}
 

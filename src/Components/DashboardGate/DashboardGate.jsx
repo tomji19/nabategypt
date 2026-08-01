@@ -56,9 +56,6 @@ export default function DashboardGate({ children }) {
         <p className="font-nav text-[11px] uppercase tracking-[0.2em] text-nabat-muted">
           Dashboard
         </p>
-        <h1 className="mt-2 font-heading text-2xl font-medium text-nabat-primary">
-          إدارة المتجر
-        </h1>
         <p className="mt-2 font-nav text-sm text-nabat-muted">
           Enter the dashboard password to continue.
         </p>

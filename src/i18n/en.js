@@ -1,15 +1,14 @@
 /** English UI copy — no Arabic text in this file */
 
 const en = {
-  // Language switcher (label of the language you switch TO — English words only in this file)
   switchToLang: 'Arabic',
   switchToLangHint: 'Switch to Arabic',
 
-  // Nav
   home: 'Home',
   shop: 'Shop',
   about: 'About',
   contact: 'Contact',
+  contactUs: 'Contact us',
   wishlist: 'Wishlist',
   cart: 'Cart',
   checkout: 'Checkout',
@@ -26,11 +25,13 @@ const en = {
   categories: 'Categories',
   menu: 'Menu',
   hello: 'Hello',
-  promoFirstOrder: 'Get 30% off your first order',
+  promoFirstOrder: 'Promocode · 10% off with MEH10',
+  promoLabel: 'Promocode',
+  promoOfferShort: '10% off your first order',
+  promoCodeHint: 'Copy this code at checkout',
   openCart: 'Open bag',
   openWishlist: 'Wishlist',
 
-  // Categories
   catAll: 'All plants',
   catSucculent: 'Succulents',
   catIndoor: 'Indoor Plants',
@@ -39,7 +40,6 @@ const en = {
   catIndoorShort: 'Indoor',
   catOutdoorShort: 'Outdoor',
 
-  // Common
   continueShopping: 'Continue shopping',
   backToHome: 'Back to home',
   backToAccount: 'Back to My Account',
@@ -68,35 +68,131 @@ const en = {
   browsePlants: 'Browse plants',
   orContinueShopping: 'Or continue shopping →',
   sendMessage: 'Send message',
+  sending: 'Sending…',
+  messageSent: 'Message sent — we will get back to you soon.',
+  messageFailed: 'Could not send your message. Please try again.',
+  messageSchemaMissing:
+    'Contact inbox is not set up yet. Run scripts/contact-messages.sql in Supabase.',
   required: 'Required',
+  sale: 'Sale',
+  addedToBag: 'Added to bag',
+  subscribe: 'Subscribe',
+  yourEmail: 'Your email',
 
   // Hero
-  heroEyebrow: 'Est. greenhouse',
-  heroTagline: 'Delivering life to your doorstep.',
-  heroCta: 'Enter the shop',
-  heroSignature: 'Signature',
+  heroEyebrow: 'Alexandria greenhouse',
+  heroTagline: 'Living greens, styled for your home.',
+  heroCta: 'Shop the collection',
+  heroSignature: 'Best seller',
   heroLuckyBamboo: 'Lucky bamboo',
-  heroIndoor: 'Indoor',
-  heroLeatherleaf: 'Leatherleaf fern',
-  heroTrending: 'Trending Bundle',
-  heroDesertTrio: 'Desert trio',
-  heroCollection: 'Collection',
+  heroIndoor: 'Almost unkillable',
+  heroLeatherleaf: 'Snake plant',
+  heroTrending: 'Bundle & save',
+  heroDesertTrio: 'Succulent Trio Deal',
+  heroCollection: 'Trailing favorite',
   heroHangingPothos: 'Hanging pothos',
-  marquee: 'Indoor · Outdoor · Succulents · Plants · Egypt · ',
+  heroSnakePlant: 'Snake plant',
+  marquee: 'Indoor · Outdoor · Succulents · Fresh from our greenhouse · Alexandria · ',
 
   // Home sections
-  favorites: 'Favorites',
-  featuredTitle: 'Featured plants',
-  featuredSubtitle: 'Our most loved greenery',
-  justIn: 'Just in',
-  recentTitle: 'Recent plants',
-  recentSubtitle: 'Fresh arrivals for your space',
+  favorites: 'Bestsellers',
+  bestsellersEyebrow: 'Bestsellers',
+  featuredTitle: 'Bestsellers from the greenhouse',
+  featuredSubtitle: 'The plants Alexandria keeps coming back for',
+  justIn: 'Just arrived',
+  recentTitle: 'New from the nursery',
+  recentSubtitle: 'Fresh stock, ready for your space',
+  socialTitle: 'Life inside the greenhouse',
+  socialSubtitle:
+    'Nursery visits, careful repotting, and packing — the real process behind every plant we send.',
   community: 'Community',
-  socialTitle: 'Follow the greenhouse',
-  socialSubtitle: 'Care tips, new arrivals, and plant stories from our nursery',
+
+  browseLabel: 'Collections',
+  browseTitle: 'Find your green match',
+  browseQuote: 'From sun-drenched balconies to soft-lit living rooms — a plant for every corner of home.',
+
+  offerEyebrow: 'Member perk',
+  offerTitle: '10% off your first order',
+  offerSubtitle: 'Enter your email and we’ll send your welcome code MEH10.',
+  offerFinePrint: 'Use code MEH10 · Valid on your first paid order',
+
+  wordsEyebrow: 'From our growers',
+  wordsTitle: 'Loved in Alexandria homes',
+
+  bundlesEyebrow: 'Bundles & offers',
+  bundlesTitle: 'More green, smarter price',
+  bundlesSubtitle:
+    'Curated plant deals — styled sets with real savings when you take them together.',
+  bundleBadge: 'Offer',
+  bundleDesertName: 'Desert Calm Trio',
+  bundleDesertDesc: 'Three low-water succulents for shelves that love the sun.',
+  bundleIndoorName: 'Indoor Softness',
+  bundleIndoorDesc: 'Air-purifying greens for calm corners and bright rooms.',
+  bundleHerbName: 'Kitchen Herb Kit',
+  bundleHerbDesc: 'Fresh rosemary, basil & mint for the counter that cooks.',
+  bundleSave: 'Save {pct}%',
+  shopBundle: 'Take this offer',
+
+  easyCareEyebrow: 'First-time friendly',
+  easyCareTitle: 'Easy care — almost unkillable',
+  easyCareSubtitle:
+    'Forgiving greens for busy people and new plant parents. No everyday watering drama.',
+
+  giftReadyEyebrow: 'For someone you love',
+  giftReadyTitle: 'A living gift that says more than words',
+  giftReadySubtitle:
+    'Thoughtful plants ready to surprise your beloved ones — styled, giftable, and grown with care.',
+  giftReadyBadge: 'Gift ready',
+
+  scentEyebrow: 'Scented corner',
+  scentTitle: 'Fill your balcony with scent',
+  scentSubtitle: 'Fragrant herbs and greens that perfume the air the moment you water them.',
+  scentBadge: 'Scent',
+  scentMintName: 'Garden Mint',
+  scentMintDesc: 'Cool, clean aroma for kitchens and morning tea.',
+  scentBasilName: 'Sweet Basil',
+  scentBasilDesc: 'Bright leaves for cooking — and a summer scent on the sill.',
+  scentRosemaryName: 'Rosemary',
+  scentRosemaryDesc: 'Woody fragrance that loves sun and sea air.',
+
+  giftsEyebrow: 'Gifts',
+  giftsTitle: 'Gift sets, ready to give',
+  giftsSubtitle: 'Pre-built presents with plant, pot, and a handwritten-feel card — no last-minute scramble.',
+  giftBadge: 'Gift set',
+  giftNewHomeName: 'New home gift set',
+  giftNewHomeDesc: 'A welcoming indoor plant, ceramic pot, and greeting card.',
+  giftDeskName: 'Desk calm set',
+  giftDeskDesc: 'A sculptural succulent, pot, and kraft wrap for workspaces.',
+  giftBalconyName: 'Balcony bloom set',
+  giftBalconyDesc: 'Sun-loving outdoor green with wrap and a note card.',
+  giftPartPlant: 'Plant',
+  giftPartPot: 'Ceramic pot',
+  giftPartWrap: 'Gift wrap',
+  giftPartCard: 'Card',
+
+  seasonalEyebrow: 'This week',
+  seasonalTitle: "This week's seasonal picks",
+  seasonalSubtitle: 'Fresh from our nursery visit — stock rotates with the season.',
+  seasonal: 'Seasonal',
+
+  // Chatbot
+  chatTitle: 'Plant helper',
+  chatSubtitle: 'Tap a question — we’ll guide you to the right green.',
+  chatOpen: 'Ask about plants',
+  chatClose: 'Close',
+  chatGreeting:
+    'Hi — looking for easy care, scent, kitchen herbs, or a gift? Pick a question below.',
+  chatBack: 'All questions',
+  chatShopCta: 'Browse the shop',
+  chatEmpty: 'More tips coming soon.',
+  inStock: 'In stock',
+
+  communityPoint1: 'Nursery visits & careful selection before every drop',
+  communityPoint2: 'Repotted, cleaned, and labeled with نبات care',
+  communityPoint3: 'Packed to arrive healthy — ready for your space',
 
   // Footer
-  delivering: 'Delivering life to your doorstep',
+  delivering: 'Living greens, delivered with care',
   explore: 'Explore',
   visit: 'Visit',
   alexandria: 'Alexandria, Egypt',
@@ -107,28 +203,27 @@ const en = {
   ourStory: 'Our story',
   aboutTitle: 'About',
   aboutEyebrow: "Egypt's plant atelier",
-  aboutHeading: 'Delivering life to your doorstep',
+  aboutHeading: 'Grown with patience. Delivered with care.',
   aboutBody:
-    'Thoughtfully chosen plants for modern homes — from quiet indoor greens to sun-loving outdoor companions. We curate with care so every plant arrives ready to thrive.',
+    'Nabat began in Alexandria with a simple belief: a home should feel like it can breathe. We spend so much of life indoors — and the air we share with living greens shapes how calm, clear, and alive a room feels.\n\nSo we built a small greenhouse atelier for modern Egyptian homes. Quiet indoor plants, sun-loving outdoor companions, and desert succulents — each chosen not only for beauty, but to settle gently into everyday life.\n\nEvery plant leaves our nursery healthy, carefully prepared, and ready for your space. When greens thrive beside you, the room softens — and so does the air you live in.',
   shopPlants: 'Shop plants',
 
   // Contact
   reachOut: 'Reach out',
   contactTitle: 'Contact',
-  contactEyebrow: 'Hello',
-  contactHeading: "We'd love to hear from you",
-  contactSubtitle: 'Questions about plants, orders, or care? Send us a note.',
+  contactEyebrow: 'Say hello',
+  contactHeading: "We're here for your plants",
+  contactSubtitle: 'Orders, care tips, or custom picks — write us anytime.',
   location: 'Location',
   phoneWhatsapp: 'Phone / WhatsApp',
   email: 'Email',
   name: 'Name',
   message: 'Message',
   yourName: 'Your name',
-  yourEmail: 'Your email',
   howCanWeHelp: 'How can we help?',
 
   // Shop
-  collection: 'Collection',
+  collection: 'The collection',
   shopBanner: 'Shop',
   filters: 'Filters',
   category: 'Category',
@@ -153,6 +248,11 @@ const en = {
   onSale: 'On sale',
   noResults: 'No plants match your filters.',
   showing: 'Showing',
+  plantsCount: '{count} plants',
+  loadingPlants: 'Loading plants…',
+  shopLoadError: 'Couldn’t load the shop from Supabase.',
+  tryAgain: 'Try again',
+  emptyCatalog: 'No products in the catalog yet.',
 
   // Product
   productNotFound: 'Product not found',
@@ -169,6 +269,12 @@ const en = {
   care2: 'Bright, indirect light preferred',
   care3: 'Keep away from harsh midday sun',
   care4: 'Wipe leaves gently to keep them dust-free',
+  review1Author: 'Nour A.',
+  review1Text: 'Arrived lush and perfectly packed. My balcony finally feels finished.',
+  review2Author: 'Maya H.',
+  review2Text: 'Healthy roots, honest sizing, and beautiful foliage. Instant favorite.',
+  review3Author: 'Karim S.',
+  review3Text: 'Fast delivery in Alex and plants that actually thrive. Ordering again.',
 
   // Cart
   cartTitle: 'Cart',
@@ -182,10 +288,21 @@ const en = {
   checkoutLabel: 'Checkout',
   checkoutTitle: 'Complete your order',
   checkoutHint:
-    'Delivery in Alexandria only · Shipping 50 EGP · Sign in required',
+    'Delivery in Alexandria only · Shipping 50 EGP · Guests welcome',
   loginRequiredCheckout: 'Please sign in to place your order.',
   orderFailed: 'Could not place your order. Please try again.',
   signInToCheckout: 'Sign in to checkout',
+  checkoutAsGuest: 'Continue as guest',
+  promoSection: 'Promocode',
+  promoPlaceholder: 'Enter promocode',
+  promoApply: 'Apply',
+  promoApplied: '{pct}% off applied with {code}',
+  promoInvalid: 'That promocode is not valid.',
+  promoGuestHint: 'Sign in to redeem your promocode MEH10 on your first order.',
+  promoAlreadyUsed: 'MEH10 is only valid on your first order.',
+  promoSignInCta: 'Sign in to redeem',
+  discount: 'Discount',
+  guestCheckoutNote: 'Ordering as a guest — create an account later to track orders & redeem MEH10.',
   contactSection: 'Contact',
   shippingSection: 'Shipping',
   paymentSection: 'Payment',
@@ -209,7 +326,6 @@ const en = {
   defaultAddress: 'Default',
   usingSavedAddress: 'Using your saved address',
 
-  // Payment methods
   payCod: 'Cash On Delivery',
   payVodafone: 'Vodafone Cash',
   payInstapay: 'Instapay',
@@ -218,11 +334,9 @@ const en = {
     'Transfer the total to Vodafone Cash. Include your order number in the note.',
   payInstapayHint:
     'Transfer the total via Instapay. Include your order number in the note.',
-  payVisaHint:
-    'Pay by Visa or Mastercard when your order arrives.',
+  payVisaHint: 'Pay by Visa or Mastercard when your order arrives.',
   numberLabel: 'Number',
 
-  // Validation
   invalidEmail: 'Invalid email address',
   emailRequired: 'Email is required',
   firstNameRequired: 'First name is required',
@@ -233,7 +347,6 @@ const en = {
   phoneRequired: 'Phone is required',
   paymentRequired: 'Payment method is required',
 
-  // Thank you
   confirmed: 'Confirmed',
   thankYou: 'Thank you',
   orderReceived: 'We received your order. You will hear from us soon.',
@@ -244,12 +357,10 @@ const en = {
   nextStep: 'Next step',
   thankYouOrder: 'Thank you for your order',
 
-  // Wishlist
   wishlistTitle: 'Wishlist',
   wishlistEmpty: 'Your wishlist is empty.',
   addToBagShort: 'Add to bag',
 
-  // Orders
   orders: 'Orders',
   orderHistoryTitle: 'Order history',
   noOrdersYet: 'No orders yet',
@@ -258,7 +369,6 @@ const en = {
   shippingLabel: 'Shipping',
   noItemsInOrder: 'No items in this order.',
 
-  // Auth
   welcomeBack: 'Welcome back',
   signIn: 'Sign in',
   getStarted: 'Get started',
@@ -278,18 +388,13 @@ const en = {
   sendReset: 'Send reset link',
   password: 'Password',
 
-  // Error
   error404: '404',
   pathNoPlants: 'This path has no plants',
   pageMissing: "The page you're looking for doesn't exist or has been moved.",
 
-  // Search
   searchLabel: 'Search',
-
-  // Discount / misc sections (if present)
   reachOutEyebrow: 'Reach out',
 
-  // Dashboard (admin UI — English only in EN mode)
   dashboard: 'Dashboard',
   dashboardUnlock: 'Enter the dashboard password to continue.',
   unlock: 'Unlock',
@@ -315,6 +420,38 @@ const en = {
   saveSettings: 'Save settings',
   searchProducts: 'Search products…',
   manageStore: 'Store management',
+
+  // Product names (EN)
+  product_irishflower: 'Irish Flower',
+  product_bluechalksticks: 'Blue Chalk Sticks',
+  product_coppersedum: 'Copper Sedum',
+  product_gollumjade: 'Gollum Jade',
+  product_haworthiafasciata: 'Haworthia Fasciata',
+  product_sedum: 'Sedum',
+  product_auroraborealis: 'Aurora Borealis',
+  product_pencilcactus: 'Pencil Cactus',
+  product_spooncactus: 'Spoon Cactus',
+  product_kalanchoemarmorata: 'Kalanchoe Marmorata',
+  product_kleidostylis: 'Kleidostylis',
+  product_lawyerstongue: "Lawyer's Tongue",
+  product_paddleplant: 'Paddle Plant',
+  product_thaiplant: 'Thai Plant',
+  product_handingpothos: 'Hanging Pothos',
+  product_bamboo: 'Bamboo',
+  product_snakeplant: 'Snake Plant',
+  product_dracaenadragon: 'Dracaena Dragon',
+  product_lemoncypress: 'Lemon Cypress',
+  product_sansevieria: 'Sansevieria',
+  product_schefflera: 'Schefflera',
+  product_rosemary: 'Rosemary',
+  product_basil: 'Basil',
+  product_williamsplant: "William's Plant",
+  product_sanguinaria: 'Sanguinaria',
+  product_pansy: 'Pansy',
+  product_marjoram: 'Marjoram',
+  product_periwinkle: 'Periwinkle',
+  product_mint: 'Mint',
+  product_rose: 'Rose',
 };
 
 export default en;

@@ -150,6 +150,8 @@ CREATE TABLE IF NOT EXISTS public.products (
   is_active BOOLEAN NOT NULL DEFAULT TRUE,
   is_featured BOOLEAN NOT NULL DEFAULT FALSE,
   is_recent BOOLEAN NOT NULL DEFAULT FALSE,
+  is_gift BOOLEAN NOT NULL DEFAULT FALSE,
+  is_easy_care BOOLEAN NOT NULL DEFAULT FALSE,
   sort_order INTEGER NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -223,6 +225,8 @@ CREATE TABLE IF NOT EXISTS public.orders (
   total NUMERIC(10, 2) NOT NULL DEFAULT 0,
   currency TEXT NOT NULL DEFAULT 'EGP',
   notes TEXT,
+  discount_amount NUMERIC(10, 2) NOT NULL DEFAULT 0,
+  promo_code TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -262,6 +266,12 @@ CREATE POLICY "Authenticated users create own orders"
   ON public.orders FOR INSERT
   TO authenticated
   WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Guests create orders" ON public.orders;
+CREATE POLICY "Guests create orders"
+  ON public.orders FOR INSERT
+  TO anon
+  WITH CHECK (user_id IS NULL);
 
 -- Customers see their own orders
 DROP POLICY IF EXISTS "Users read own orders" ON public.orders;
@@ -318,6 +328,17 @@ CREATE POLICY "Authenticated insert order items"
     )
   );
 
+DROP POLICY IF EXISTS "Guests insert order items" ON public.order_items;
+CREATE POLICY "Guests insert order items"
+  ON public.order_items FOR INSERT
+  TO anon
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.orders o
+      WHERE o.id = order_id AND o.user_id IS NULL
+    )
+  );
+
 DROP POLICY IF EXISTS "Users read own order items" ON public.order_items;
 CREATE POLICY "Users read own order items"
   ON public.order_items FOR SELECT
@@ -357,38 +378,74 @@ WHERE LOWER(email) = 'youssefashour19@gmail.com';
 -- PRODUCT SEED (prices in EGP — edit from admin later)
 -- image_url left as slug path hint; upload to Storage and update in admin
 -- ============================================
-INSERT INTO public.products (slug, name, category, price, stock, is_featured, is_recent, sort_order, description) VALUES
-  ('irishflower', 'Irish Flower', 'Succulent', 35, 10, false, false, 1, ''),
-  ('bluechalksticks', 'Bluechalk Sticks', 'Succulent', 45, 10, true, false, 2, ''),
-  ('coppersedum', 'Copper Sedum', 'Succulent', 45, 10, true, false, 3, ''),
-  ('gollumjade', 'Gollum Jade', 'Succulent', 45, 10, false, false, 4, ''),
-  ('haworthiafasciata', 'Haworthia Fasciata', 'Succulent', 45, 10, false, true, 5, ''),
-  ('sedum', 'Sedum', 'Succulent', 45, 10, false, false, 6, ''),
-  ('auroraborealis', 'Aurora Borealis', 'Succulent', 45, 10, false, false, 7, ''),
-  ('pencilcactus', 'Pencil Cactus', 'Succulent', 45, 10, false, false, 8, ''),
-  ('spooncactus', 'Spoon Cactus', 'Succulent', 45, 10, false, false, 9, ''),
-  ('kalanchoemarmorata', 'Kalanchoe Marmorata', 'Succulent', 45, 10, false, false, 10, ''),
-  ('kleidostylis', 'Kleidostylis', 'Succulent', 45, 10, false, false, 11, ''),
-  ('lawyerstongue', 'Lawyer''s Tongue', 'Succulent', 45, 10, false, false, 12, ''),
-  ('paddleplant', 'Paddle Plant', 'Succulent', 45, 10, false, false, 13, ''),
-  ('thaiplant', 'Thai Plant', 'Indoor Plants', 45, 10, false, false, 14, ''),
-  ('handingpothos', 'Handing Pothos', 'Indoor Plants', 45, 10, false, false, 15, ''),
-  ('bamboo', 'Bamboo', 'Indoor Plants', 45, 10, true, false, 16, ''),
-  ('snakeplant', 'Snake Plant', 'Indoor Plants', 45, 10, true, true, 17, ''),
-  ('dracaenadragon', 'Dracaena Dragon', 'Indoor Plants', 45, 10, false, false, 18, ''),
-  ('lemoncypress', 'Lemon Cypress', 'Indoor Plants', 45, 10, false, false, 19, ''),
-  ('sansevieria', 'Sansevieria', 'Indoor Plants', 45, 10, false, false, 20, ''),
-  ('schefflera', 'Schefflera', 'Indoor Plants', 45, 10, false, false, 21, ''),
-  ('rosemary', 'Rosemary', 'Outdoor Plants', 45, 10, false, false, 22, ''),
-  ('basil', 'Basil', 'Outdoor Plants', 45, 10, false, false, 23, ''),
-  ('williamsplant', 'William''s Plant', 'Outdoor Plants', 45, 10, false, false, 24, ''),
-  ('sanguinaria', 'Sanguinaria', 'Outdoor Plants', 45, 10, false, false, 25, ''),
-  ('pansy', 'Pansy', 'Outdoor Plants', 45, 10, false, false, 26, ''),
-  ('marjoram', 'Marjoram', 'Outdoor Plants', 45, 10, true, false, 27, ''),
-  ('periwinkle', 'Periwinkle', 'Outdoor Plants', 45, 10, true, true, 28, ''),
-  ('mint', 'Mint', 'Outdoor Plants', 45, 10, true, true, 29, ''),
-  ('rose', 'Rose', 'Outdoor Plants', 45, 10, false, false, 30, '')
+INSERT INTO public.products (slug, name, name_ar, category, price, stock, is_featured, is_recent, sort_order, description) VALUES
+  ('irishflower', 'Irish Flower', 'زهرة أيرلندية', 'Succulent', 35, 10, false, false, 1, ''),
+  ('bluechalksticks', 'Blue Chalk Sticks', 'أعواد الطباشير الزرقاء', 'Succulent', 45, 10, true, false, 2, ''),
+  ('coppersedum', 'Copper Sedum', 'سيدوم نحاسي', 'Succulent', 45, 10, true, false, 3, ''),
+  ('gollumjade', 'Gollum Jade', 'يشب غولوم', 'Succulent', 45, 10, false, false, 4, ''),
+  ('haworthiafasciata', 'Haworthia Fasciata', 'هاورثيا فاسياتا', 'Succulent', 45, 10, false, true, 5, ''),
+  ('sedum', 'Sedum', 'سيدوم', 'Succulent', 45, 10, false, false, 6, ''),
+  ('auroraborealis', 'Aurora Borealis', 'أورورا بورياليس', 'Succulent', 45, 10, false, false, 7, ''),
+  ('pencilcactus', 'Pencil Cactus', 'صبار القلم', 'Succulent', 45, 10, false, false, 8, ''),
+  ('spooncactus', 'Spoon Cactus', 'صبار الملعقة', 'Succulent', 45, 10, false, false, 9, ''),
+  ('kalanchoemarmorata', 'Kalanchoe Marmorata', 'كلانشو مرمري', 'Succulent', 45, 10, false, false, 10, ''),
+  ('kleidostylis', 'Kleidostylis', 'كلايدوستيليس', 'Succulent', 45, 10, false, false, 11, ''),
+  ('lawyerstongue', 'Lawyer''s Tongue', 'لسان المحامي', 'Succulent', 45, 10, false, false, 12, ''),
+  ('paddleplant', 'Paddle Plant', 'نبتة المجداف', 'Succulent', 45, 10, false, false, 13, ''),
+  ('thaiplant', 'Thai Plant', 'النبتة التايلاندية', 'Indoor Plants', 45, 10, false, false, 14, ''),
+  ('handingpothos', 'Hanging Pothos', 'بثوس معلّق', 'Indoor Plants', 45, 10, false, false, 15, ''),
+  ('bamboo', 'Bamboo', 'خيزران', 'Indoor Plants', 45, 10, true, false, 16, ''),
+  ('snakeplant', 'Snake Plant', 'نبتة الثعبان', 'Indoor Plants', 45, 10, true, true, 17, ''),
+  ('dracaenadragon', 'Dracaena Dragon', 'دراسينا التنين', 'Indoor Plants', 45, 10, false, false, 18, ''),
+  ('lemoncypress', 'Lemon Cypress', 'سرو ليموني', 'Indoor Plants', 45, 10, false, false, 19, ''),
+  ('sansevieria', 'Sansevieria', 'سانسيفيريا', 'Indoor Plants', 45, 10, false, false, 20, ''),
+  ('schefflera', 'Schefflera', 'شفليرة', 'Indoor Plants', 45, 10, false, false, 21, ''),
+  ('rosemary', 'Rosemary', 'إكليل الجبل', 'Outdoor Plants', 45, 10, false, false, 22, ''),
+  ('basil', 'Basil', 'ريحان', 'Outdoor Plants', 45, 10, false, false, 23, ''),
+  ('williamsplant', 'William''s Plant', 'نبتة ويليام', 'Outdoor Plants', 45, 10, false, false, 24, ''),
+  ('sanguinaria', 'Sanguinaria', 'سانغويناريا', 'Outdoor Plants', 45, 10, false, false, 25, ''),
+  ('pansy', 'Pansy', 'بنفسج الزينة', 'Outdoor Plants', 45, 10, false, false, 26, ''),
+  ('marjoram', 'Marjoram', 'مردقوش', 'Outdoor Plants', 45, 10, true, false, 27, ''),
+  ('periwinkle', 'Periwinkle', 'ونكا', 'Outdoor Plants', 45, 10, true, true, 28, ''),
+  ('mint', 'Mint', 'نعناع', 'Outdoor Plants', 45, 10, true, true, 29, ''),
+  ('rose', 'Rose', 'وردة', 'Outdoor Plants', 45, 10, false, false, 30, '')
 ON CONFLICT (slug) DO NOTHING;
+
+-- Backfill Arabic names for existing rows (safe to re-run)
+UPDATE public.products SET name_ar = v.name_ar
+FROM (VALUES
+  ('irishflower', 'زهرة أيرلندية'),
+  ('bluechalksticks', 'أعواد الطباشير الزرقاء'),
+  ('coppersedum', 'سيدوم نحاسي'),
+  ('gollumjade', 'يشب غولوم'),
+  ('haworthiafasciata', 'هاورثيا فاسياتا'),
+  ('sedum', 'سيدوم'),
+  ('auroraborealis', 'أورورا بورياليس'),
+  ('pencilcactus', 'صبار القلم'),
+  ('spooncactus', 'صبار الملعقة'),
+  ('kalanchoemarmorata', 'كلانشو مرمري'),
+  ('kleidostylis', 'كلايدوستيليس'),
+  ('lawyerstongue', 'لسان المحامي'),
+  ('paddleplant', 'نبتة المجداف'),
+  ('thaiplant', 'النبتة التايلاندية'),
+  ('handingpothos', 'بثوس معلّق'),
+  ('bamboo', 'خيزران'),
+  ('snakeplant', 'نبتة الثعبان'),
+  ('dracaenadragon', 'دراسينا التنين'),
+  ('lemoncypress', 'سرو ليموني'),
+  ('sansevieria', 'سانسيفيريا'),
+  ('schefflera', 'شفليرة'),
+  ('rosemary', 'إكليل الجبل'),
+  ('basil', 'ريحان'),
+  ('williamsplant', 'نبتة ويليام'),
+  ('sanguinaria', 'سانغويناريا'),
+  ('pansy', 'بنفسج الزينة'),
+  ('marjoram', 'مردقوش'),
+  ('periwinkle', 'ونكا'),
+  ('mint', 'نعناع'),
+  ('rose', 'وردة')
+) AS v(slug, name_ar)
+WHERE products.slug = v.slug AND (products.name_ar IS NULL OR products.name_ar = '');
 
 -- Extra product fields for care / light / sale / hover
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS care TEXT;
@@ -496,6 +553,7 @@ CREATE TABLE IF NOT EXISTS public.categories (
   name_ar TEXT,
   description TEXT DEFAULT '',
   description_ar TEXT DEFAULT '',
+  image_url TEXT,
   sort_order INTEGER NOT NULL DEFAULT 0,
   is_active BOOLEAN NOT NULL DEFAULT TRUE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -544,4 +602,44 @@ CREATE POLICY "Dashboard write site content"
   WITH CHECK (true);
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.site_content TO anon, authenticated;
+
+-- ============================================
+-- CONTACT MESSAGES (contact form → dashboard)
+-- ============================================
+CREATE TABLE IF NOT EXISTS public.contact_messages (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  message TEXT NOT NULL,
+  is_read BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS contact_messages_created_at_idx
+  ON public.contact_messages (created_at DESC);
+
+ALTER TABLE public.contact_messages ENABLE ROW LEVEL SECURITY;
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.contact_messages TO anon, authenticated;
+
+DROP POLICY IF EXISTS "Anyone can insert contact messages" ON public.contact_messages;
+CREATE POLICY "Anyone can insert contact messages"
+  ON public.contact_messages FOR INSERT
+  WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Dashboard read contact messages" ON public.contact_messages;
+CREATE POLICY "Dashboard read contact messages"
+  ON public.contact_messages FOR SELECT
+  USING (true);
+
+DROP POLICY IF EXISTS "Dashboard update contact messages" ON public.contact_messages;
+CREATE POLICY "Dashboard update contact messages"
+  ON public.contact_messages FOR UPDATE
+  USING (true)
+  WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Dashboard delete contact messages" ON public.contact_messages;
+CREATE POLICY "Dashboard delete contact messages"
+  ON public.contact_messages FOR DELETE
+  USING (true);
 

@@ -1,10 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import pageBanner from '../../assets/images/pagebanner.png';
 import BrandLogo from '../BrandLogo/BrandLogo';
 import { STORE } from '../../config/store';
 import { useLanguage } from '../LanguageContext/LanguageContext';
 import { useSiteContent } from '../SiteContentContext/SiteContentContext';
+import { submitContactMessage } from '../../supabase/contactMessages';
+
+const emptyForm = { name: '', email: '', message: '' };
 
 export default function ContactPage() {
   const { t } = useLanguage();
@@ -13,6 +17,31 @@ export default function ContactPage() {
   const phone = content?.store?.phone || STORE.phone;
   const email = content?.store?.email || STORE.adminEmail;
   const wa = `https://wa.me/2${String(phone).replace(/^0/, '')}`;
+  const [form, setForm] = useState(emptyForm);
+  const [sending, setSending] = useState(false);
+
+  const setField = (key) => (e) =>
+    setForm((prev) => ({ ...prev, [key]: e.target.value }));
+
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    if (sending) return;
+    setSending(true);
+    try {
+      await submitContactMessage(form);
+      toast.success(t('messageSent'));
+      setForm(emptyForm);
+    } catch (err) {
+      const msg = err?.message || '';
+      if (/contact_messages|schema cache|does not exist/i.test(msg)) {
+        toast.error(t('messageSchemaMissing'));
+      } else {
+        toast.error(msg || t('messageFailed'));
+      }
+    } finally {
+      setSending(false);
+    }
+  };
 
   return (
     <>
@@ -94,32 +123,56 @@ export default function ContactPage() {
           </div>
 
           <div className="border border-nabat-border bg-white p-8 md:p-10">
-            <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
+            <form className="space-y-6" onSubmit={onSubmit}>
               <div>
-                <label className="section-label !mb-2">{t('name')}</label>
+                <label className="section-label !mb-2" htmlFor="contact-name">
+                  {t('name')}
+                </label>
                 <input
+                  id="contact-name"
                   type="text"
+                  required
+                  value={form.name}
+                  onChange={setField('name')}
                   className="input-field"
                   placeholder={t('yourName')}
+                  autoComplete="name"
                 />
               </div>
               <div>
-                <label className="section-label !mb-2">{t('email')}</label>
+                <label className="section-label !mb-2" htmlFor="contact-email">
+                  {t('email')}
+                </label>
                 <input
+                  id="contact-email"
                   type="email"
+                  required
+                  value={form.email}
+                  onChange={setField('email')}
                   className="input-field"
                   placeholder={t('yourEmail')}
+                  autoComplete="email"
                 />
               </div>
               <div>
-                <label className="section-label !mb-2">{t('message')}</label>
+                <label className="section-label !mb-2" htmlFor="contact-message">
+                  {t('message')}
+                </label>
                 <textarea
+                  id="contact-message"
+                  required
+                  value={form.message}
+                  onChange={setField('message')}
                   className="input-field min-h-[8rem] resize-y"
                   placeholder={t('howCanWeHelp')}
                 />
               </div>
-              <button type="submit" className="btn-primary w-full">
-                {t('sendMessage')}
+              <button
+                type="submit"
+                className="btn-primary w-full disabled:opacity-60"
+                disabled={sending}
+              >
+                {sending ? t('sending') : t('sendMessage')}
               </button>
             </form>
             <Link

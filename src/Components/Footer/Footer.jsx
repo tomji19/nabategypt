@@ -6,10 +6,31 @@ import { useLanguage } from '../LanguageContext/LanguageContext';
 import { useSiteContent } from '../SiteContentContext/SiteContentContext';
 
 export default function Footer() {
-  const { t } = useLanguage();
+  const { t, isAr } = useLanguage();
   const { content } = useSiteContent();
   const phone = content?.store?.phone || STORE.phone;
   const wa = `https://wa.me/2${String(phone).replace(/^0/, '')}`;
+  const tagline = isAr
+    ? t('delivering')
+    : content?.footer?.tagline || t('delivering');
+  const social = content?.store?.social || STORE.social || {};
+  const socialLinks = [
+    {
+      id: 'facebook',
+      icon: 'facebook',
+      href: social.facebook || '#',
+    },
+    {
+      id: 'instagram',
+      icon: 'instagram',
+      href: social.instagram || '#',
+    },
+    {
+      id: 'whatsapp',
+      icon: 'whatsapp',
+      href: wa,
+    },
+  ];
 
   return (
     <footer className="leaf-wash mt-auto border-t border-nabat-border">
@@ -20,24 +41,7 @@ export default function Footer() {
             className="mx-auto mb-3 justify-center"
             imgClassName="h-10 w-auto object-contain md:h-11"
           />
-          <p className="font-body text-sm text-nabat-muted">
-            {content?.footer?.tagline || t('delivering')}
-          </p>
-
-          <div className="mt-5 flex justify-center gap-1.5">
-            {['facebook', 'instagram', 'youtube', 'whatsapp'].map((network) => (
-              <a
-                key={network}
-                href={network === 'whatsapp' ? wa : '#'}
-                target={network === 'whatsapp' ? '_blank' : undefined}
-                rel={network === 'whatsapp' ? 'noopener noreferrer' : undefined}
-                aria-label={network}
-                className="flex h-9 w-9 items-center justify-center text-nabat-primary transition-colors hover:bg-nabat-primary hover:text-white"
-              >
-                <i className={`fa-brands fa-${network}`} />
-              </a>
-            ))}
-          </div>
+          <p className="font-body text-sm text-nabat-muted">{tagline}</p>
         </div>
 
         <div className="mt-8 grid gap-6 border-t border-nabat-border pt-8 sm:grid-cols-2 md:grid-cols-3">
@@ -104,6 +108,23 @@ export default function Footer() {
                 {phone}
               </a>
             </p>
+            <div className="mt-4 flex gap-1.5 sm:justify-start md:justify-end">
+              {socialLinks.map((item) => {
+                const external = item.href && item.href !== '#';
+                return (
+                  <a
+                    key={item.id}
+                    href={item.href}
+                    target={external ? '_blank' : undefined}
+                    rel={external ? 'noopener noreferrer' : undefined}
+                    aria-label={item.id}
+                    className="flex h-9 w-9 items-center justify-center border border-nabat-border text-nabat-primary transition-colors hover:bg-nabat-primary hover:text-white"
+                  >
+                    <i className={`fa-brands fa-${item.icon}`} />
+                  </a>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>

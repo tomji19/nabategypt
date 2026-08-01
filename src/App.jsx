@@ -10,6 +10,7 @@ import { ProductsProvider } from './Components/ProductsContext/ProductsContext';
 import { WishlistProvider } from './Components/WishlistContext/WishlistContext';
 import { LanguageProvider } from './Components/LanguageContext/LanguageContext';
 import { SiteContentProvider } from './Components/SiteContentContext/SiteContentContext';
+import { CategoriesProvider } from './Components/CategoriesContext/CategoriesContext';
 import ProtectedRoute from './Components/ProtectedRoute/ProtectedRoute';
 import DashboardGate from './Components/DashboardGate/DashboardGate';
 
@@ -99,22 +100,24 @@ export default function App() {
     <AuthProvider>
       <LanguageProvider>
         <SiteContentProvider>
-          <ProductsProvider>
-            <WishlistProvider>
-              <CartProvider>
-                <ToastContainer
-                  position="top-right"
-                  autoClose={4500}
-                  hideProgressBar={false}
-                  newestOnTop
-                  closeOnClick
-                  pauseOnHover
-                  theme="colored"
-                />
-                <RouterProvider router={router} />
-              </CartProvider>
-            </WishlistProvider>
-          </ProductsProvider>
+          <CategoriesProvider>
+            <ProductsProvider>
+              <WishlistProvider>
+                <CartProvider>
+                  <ToastContainer
+                    position="top-right"
+                    autoClose={4500}
+                    hideProgressBar={false}
+                    newestOnTop
+                    closeOnClick
+                    pauseOnHover
+                    theme="colored"
+                  />
+                  <RouterProvider router={router} />
+                </CartProvider>
+              </WishlistProvider>
+            </ProductsProvider>
+          </CategoriesProvider>
         </SiteContentProvider>
       </LanguageProvider>
     </AuthProvider>

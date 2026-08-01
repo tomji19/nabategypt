@@ -38,9 +38,30 @@
   --text-muted: #5a6b60;
   --border: #d5e0d8;
   --secondary-color: #f4f7f4;
-  --font-heading: 'Montserrat', sans-serif;
+
+  /* CHANGED: Fraunces gives headings, quotes and prices an editorial,
+     boutique-nursery feel instead of the same UI sans everywhere.
+     Body/nav stay on Montserrat for readability and a clean bilingual UI. */
+  --font-heading: 'Fraunces', 'Montserrat', serif;
   --font-body: 'Montserrat', sans-serif;
   --font-nav: 'Montserrat', sans-serif;
+
+  /* NEW: clay/terracotta accent — echoes the pots themselves, used for the
+     seasonal badge, save-percent badge and any "warm" highlight.
+     FIX: --seasonal was previously referenced across PlantCard and
+     CollectionCards but never defined anywhere, so those badges rendered
+     invisible in production. It now resolves to this clay tone. */
+  --clay: #b5602f;
+  --clay-soft: #f5e6da;
+  --clay-text: #7a3f1c;
+  --seasonal: var(--clay);
+  --seasonal-text: #ffffff;
+
+  /* NEW/FIX: --price-size and --price-weight were also referenced but
+     undefined — shared price typography for bundle/gift/scent cards,
+     matching the price style already used on PlantCard. */
+  --price-size: 1.2rem;
+  --price-weight: 700;
 }
 
 @layer base {

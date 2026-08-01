@@ -21,6 +21,8 @@ export function ProductsProvider({ children }) {
   const [products, setProducts] = useState([]);
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [recentProducts, setRecentProducts] = useState([]);
+  const [giftProducts, setGiftProducts] = useState([]);
+  const [easyCareProducts, setEasyCareProducts] = useState([]);
   const [source, setSource] = useState('supabase');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -33,12 +35,16 @@ export function ProductsProvider({ children }) {
       setProducts(data.products || []);
       setFeaturedProducts(data.featuredProducts || []);
       setRecentProducts(data.recentProducts || []);
+      setGiftProducts(data.giftProducts || []);
+      setEasyCareProducts(data.easyCareProducts || []);
       setSource('supabase');
     } catch (err) {
       console.error('Failed to load products from Supabase:', err);
       setProducts([]);
       setFeaturedProducts([]);
       setRecentProducts([]);
+      setGiftProducts([]);
+      setEasyCareProducts([]);
       setError(err?.message || 'Failed to load products');
     } finally {
       setLoading(false);
@@ -60,6 +66,8 @@ export function ProductsProvider({ children }) {
         products,
         featuredProducts,
         recentProducts,
+        giftProducts,
+        easyCareProducts,
         getProductById,
         source,
         loading,

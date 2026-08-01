@@ -1,0 +1,219 @@
+.section {
+  padding-top: 5rem;
+  padding-bottom: 5rem;
+  background: #fff;
+}
+
+.sectionAlt {
+  background:
+    linear-gradient(180deg, #f4f7f4 0%, #ffffff 55%, #f4f7f4 100%);
+}
+
+.header {
+  max-width: 40rem;
+  margin-bottom: 2.5rem;
+}
+
+.grid {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 768px) {
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+.card {
+  background: #fff;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  transition: transform 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease;
+}
+
+.cardSoft {
+  border-color: var(--border);
+}
+
+/* CHANGED: warmer, tinted shadow (green-black, not flat black) and the
+   border now shifts to the brand green on hover instead of just lifting */
+.card:hover {
+  transform: translateY(-4px);
+  border-color: var(--main-color);
+  box-shadow: 0 20px 44px rgba(31, 61, 43, 0.14);
+}
+
+.link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+  height: 100%;
+}
+
+/* CHANGED: standardized to a 4:5 portrait crop to match
+   .product-card-image-wrap (index.css) — the previous 1:1 square broke
+   consistency with the rest of the product photography system and read
+   closer to a generic marketplace grid than a curated boutique catalog. */
+.media {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  background: var(--surface-muted);
+}
+
+.media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.7s ease;
+}
+
+.card:hover .media img {
+  transform: scale(1.05);
+}
+
+.badgeRow {
+  position: absolute;
+  top: 0.75rem;
+  inset-inline-start: 0.75rem;
+  inset-inline-end: 0.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5rem;
+  z-index: 2;
+}
+
+/* CHANGED: soft pill badges instead of solid rectangular blocks — pairs a
+   gentle detail against the sharp-edged card, a common premium-boutique
+   contrast pattern. */
+.typeBadge {
+  background: var(--clay-soft);
+  color: var(--clay-text);
+  font-family: var(--font-nav);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+}
+
+/* FIX: background: var(--seasonal) previously resolved to nothing since
+   --seasonal was undefined — this badge was invisible. Now resolves to
+   the clay accent defined in index.css. */
+.saveBadge {
+  background: var(--seasonal);
+  color: var(--seasonal-text);
+  font-family: var(--font-nav);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+}
+
+.body {
+  padding: 1.35rem 1.5rem 1.6rem;
+}
+
+.name {
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.desc {
+  margin: 0.5rem 0 0.9rem;
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+.parts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0 0 0.9rem;
+}
+
+.part {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: 1px solid var(--border);
+  background: var(--surface-muted);
+  padding: 0.25rem 0.55rem;
+  font-family: var(--font-nav);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.part i {
+  color: var(--accent);
+  font-size: 0.65rem;
+}
+
+.priceRow {
+  display: flex;
+  align-items: baseline;
+  gap: 0.55rem;
+  margin-bottom: 0.9rem;
+}
+
+/* CHANGED: bundle/gift/scented pricing now uses the clay accent rather
+   than the brand green used on standard product cards — a deliberate
+   color signal that this is a curated set, not a single plant, without
+   adding extra copy. Also FIX: var(--price-size)/var(--price-weight)
+   were previously undefined and now resolve correctly. */
+.price {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: var(--price-size);
+  font-weight: var(--price-weight);
+  letter-spacing: -0.01em;
+  color: var(--clay);
+}
+
+.compare {
+  margin: 0;
+  font-family: var(--font-nav);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-nav);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  transition: gap 0.25s ease, color 0.25s ease;
+}
+
+.card:hover .cta {
+  gap: 0.6rem;
+  color: var(--main-color);
+}
+
+@media (min-width: 768px) {
+  .section {
+    padding-top: 6.25rem;
+    padding-bottom: 6.25rem;
+  }
+}

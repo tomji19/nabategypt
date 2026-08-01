@@ -1,27 +1,86 @@
 import { supabase } from './supabase';
-import { STORE } from '../config/store';
+import { STORE, PROMO } from '../config/store';
+import { isWelcomePromoCode, normalizePromoCode } from '../utils/money';
+
+/**
+ * True when this account has never placed an order (eligible for MEH10).
+ */
+export async function userHasPriorOrders(userId) {
+  if (!userId) return false;
+  const { count, error } = await supabase
+    .from('orders')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId);
+
+  if (error) {
+    console.warn('Prior-order check failed:', error.message);
+    return true; // fail closed — don't grant promo if we can't verify
+  }
+  return (count || 0) > 0;
+}
+
+/**
+ * Validate promo for checkout UI.
+ * Guests cannot redeem. Signed-in users get MEH10 once (first order only).
+ */
+export async function validateWelcomePromo({ userId, code }) {
+  const normalized = normalizePromoCode(code);
+  if (!normalized) {
+    return { ok: false, reason: 'empty', discountPercent: 0 };
+  }
+  if (!isWelcomePromoCode(normalized)) {
+    return { ok: false, reason: 'invalid', discountPercent: 0 };
+  }
+  if (!userId) {
+    return { ok: false, reason: 'guest', discountPercent: 0 };
+  }
+  const used = await userHasPriorOrders(userId);
+  if (used) {
+    return { ok: false, reason: 'already_used', discountPercent: 0 };
+  }
+  return {
+    ok: true,
+    reason: 'applied',
+    discountPercent: PROMO.percent,
+    code: PROMO.code,
+  };
+}
 
 /**
  * Create an order + line items in Supabase.
- * Requires a signed-in account (userId).
+ * Guests: pass userId = null. Promo only applies for signed-in first orders.
  */
 export async function createOrder({
-  userId,
+  userId = null,
   formData,
   cartItems,
   subtotal,
   shipping,
   total,
+  discount = 0,
+  promoCode = null,
 }) {
-  if (!userId) {
-    throw new Error('You must be signed in to place an order.');
-  }
   if (!cartItems?.length) {
     throw new Error('Your cart is empty.');
   }
 
+  let appliedPromo = null;
+  let appliedDiscount = 0;
+
+  if (promoCode && isWelcomePromoCode(promoCode)) {
+    if (!userId) {
+      throw new Error('Sign in to redeem your promocode.');
+    }
+    const used = await userHasPriorOrders(userId);
+    if (used) {
+      throw new Error('This promocode is only valid on your first order.');
+    }
+    appliedPromo = PROMO.code;
+    appliedDiscount = Math.max(0, Number(discount) || 0);
+  }
+
   const orderPayload = {
-    user_id: userId,
+    user_id: userId || null,
     customer_email: formData.email,
     customer_first_name: formData.firstName,
     customer_last_name: formData.lastName,
@@ -37,6 +96,8 @@ export async function createOrder({
     subtotal,
     shipping_fee: shipping,
     tax: 0,
+    discount_amount: appliedDiscount,
+    promo_code: appliedPromo,
     total,
     currency: STORE.currency,
     notes: formData.notes || null,
@@ -49,9 +110,36 @@ export async function createOrder({
     .single();
 
   if (orderError) {
+    // Fallback if discount columns are not migrated yet
+    if (
+      /discount_amount|promo_code/i.test(orderError.message || '') ||
+      orderError.code === 'PGRST204'
+    ) {
+      delete orderPayload.discount_amount;
+      delete orderPayload.promo_code;
+      if (appliedPromo) {
+        orderPayload.notes = [
+          formData.notes,
+          `Promo ${appliedPromo} (−${appliedDiscount} EGP)`,
+        ]
+          .filter(Boolean)
+          .join(' · ');
+      }
+      const retry = await supabase
+        .from('orders')
+        .insert(orderPayload)
+        .select()
+        .single();
+      if (retry.error) throw retry.error;
+      return finishOrder(retry.data, cartItems);
+    }
     throw orderError;
   }
 
+  return finishOrder(order, cartItems);
+}
+
+async function finishOrder(order, cartItems) {
   const items = cartItems.map((item) => ({
     order_id: order.id,
     product_id: String(item.id),
@@ -65,12 +153,10 @@ export async function createOrder({
   const { error: itemsError } = await supabase.from('order_items').insert(items);
 
   if (itemsError) {
-    // Best-effort cleanup if items fail
     await supabase.from('orders').delete().eq('id', order.id);
     throw itemsError;
   }
 
-  // Best-effort stock decrement (works once products table is live)
   await Promise.all(
     cartItems.map(async (item) => {
       try {
@@ -83,7 +169,10 @@ export async function createOrder({
 
         if (!product) return;
 
-        const nextStock = Math.max(0, Number(product.stock || 0) - Number(item.quantity));
+        const nextStock = Math.max(
+          0,
+          Number(product.stock || 0) - Number(item.quantity)
+        );
         await supabase
           .from('products')
           .update({ stock: nextStock, updated_at: new Date().toISOString() })
@@ -94,7 +183,6 @@ export async function createOrder({
     })
   );
 
-  // Notify admin email (Edge Function + Resend). Order still succeeds if email fails.
   try {
     const { data: notifyData, error: notifyError } =
       await supabase.functions.invoke('notify-new-order', {
@@ -179,6 +267,7 @@ export function orderToReceiptState(order) {
     order,
     subtotal: Number(order.subtotal) || 0,
     shipping: Number(order.shipping_fee) || 0,
+    discount: Number(order.discount_amount) || 0,
     total: Number(order.total) || 0,
   };
 }

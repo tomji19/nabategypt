@@ -1,12 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { toast } from 'react-toastify';
 import { useCart } from '../CartContext/CartContext';
 import { useAuth } from '../AuthContext/AuthContext';
-import { createOrder } from '../../supabase/orders';
-import { STORE, PAYMENT_METHODS } from '../../config/store';
+import { createOrder, validateWelcomePromo } from '../../supabase/orders';
+import { STORE, PAYMENT_METHODS, PROMO } from '../../config/store';
 import { calcOrderTotals, formatEGP } from '../../utils/money';
 import { useLanguage } from '../LanguageContext/LanguageContext';
 import PhoneInput from '../PhoneInput/PhoneInput';
@@ -16,6 +16,8 @@ import {
   splitPhoneForForm,
   toE164,
 } from '../../utils/phone';
+import { getProductName } from '../../utils/productLocale';
+import { loginPathWithRedirect } from '../../utils/authRedirect';
 
 const PAY_LABEL = {
   cod: 'payCod',
@@ -63,6 +65,7 @@ const emptyValues = {
   phoneCountry: 'EG',
   phoneNational: '',
   paymentMethod: '',
+  promoCode: '',
 };
 
 const CheckoutForm = () => {
@@ -75,19 +78,40 @@ const CheckoutForm = () => {
     refreshProfile,
     loading: authLoading,
   } = useAuth();
-  const { t } = useLanguage();
+  const { t, isAr } = useLanguage();
   const [submitting, setSubmitting] = useState(false);
   const [selectedAddressId, setSelectedAddressId] = useState(null);
   const [profileReady, setProfileReady] = useState(false);
   const [seedValues, setSeedValues] = useState(null);
+  const [promoInput, setPromoInput] = useState('');
+  const [promoStatus, setPromoStatus] = useState({
+    applied: false,
+    percent: 0,
+    reason: null,
+  });
+  const [promoChecking, setPromoChecking] = useState(false);
 
-  const { subtotal, shipping, total } = calcOrderTotals(cartItems);
+  const { subtotal, shipping, discount, total } = calcOrderTotals(
+    cartItems,
+    STORE.shippingFee,
+    { discountPercent: promoStatus.applied ? promoStatus.percent : 0 }
+  );
 
   // Soft profile refresh — never block the form on network
   useEffect(() => {
+    setSeedValues(null);
+    setPromoStatus({ applied: false, percent: 0, reason: null });
+    setPromoInput('');
+  }, [userLoggedIn]);
+
+  useEffect(() => {
     if (authLoading) return undefined;
+
+    // Guests can checkout immediately
     if (!userLoggedIn || !currentUser?.uid) {
-      setProfileReady(false);
+      setProfileReady(true);
+      setSeedValues((prev) => prev || { ...emptyValues });
+      setPromoStatus({ applied: false, percent: 0, reason: 'guest' });
       return undefined;
     }
 
@@ -147,6 +171,7 @@ const CheckoutForm = () => {
       phoneCountry: phoneParts.country,
       phoneNational: phoneParts.national,
       paymentMethod: '',
+      promoCode: '',
     });
   }, [
     authLoading,
@@ -185,12 +210,6 @@ const CheckoutForm = () => {
     enableReinitialize: true,
     validationSchema,
     onSubmit: async (values) => {
-      if (!userLoggedIn || !currentUser?.uid) {
-        toast.error(t('loginRequiredCheckout'));
-        navigate('/login', { state: { from: '/checkout' } });
-        return;
-      }
-
       if (cartItems.length === 0) {
         toast.error(t('cartEmptyCheckout'));
         return;
@@ -198,20 +217,56 @@ const CheckoutForm = () => {
 
       setSubmitting(true);
       try {
+        // Re-validate promo at submit time (first-order only)
+        let discountPercent = 0;
+        let promoCode = null;
+        let discountAmount = 0;
+
+        if (promoStatus.applied && promoInput.trim()) {
+          const check = await validateWelcomePromo({
+            userId: currentUser?.uid || null,
+            code: promoInput,
+          });
+          if (!check.ok) {
+            setPromoStatus({
+              applied: false,
+              percent: 0,
+              reason: check.reason,
+            });
+            if (check.reason === 'guest') toast.info(t('promoGuestHint'));
+            else if (check.reason === 'already_used')
+              toast.info(t('promoAlreadyUsed'));
+            else toast.error(t('promoInvalid'));
+            setSubmitting(false);
+            return;
+          }
+          discountPercent = check.discountPercent;
+          promoCode = check.code;
+        }
+
+        const totals = calcOrderTotals(cartItems, STORE.shippingFee, {
+          discountPercent,
+        });
+        discountAmount = totals.discount;
+
         const phone = toE164(values.phoneCountry, values.phoneNational);
         const formData = {
           ...values,
-          email: currentUser.email || values.email,
+          email: userLoggedIn
+            ? currentUser?.email || values.email
+            : values.email,
           phone,
         };
 
         const order = await createOrder({
-          userId: currentUser.uid,
+          userId: userLoggedIn ? currentUser?.uid : null,
           formData,
           cartItems,
-          subtotal,
-          shipping,
-          total,
+          subtotal: totals.subtotal,
+          shipping: totals.shipping,
+          total: totals.total,
+          discount: discountAmount,
+          promoCode,
         });
 
         const snapshot = [...cartItems];
@@ -231,9 +286,10 @@ const CheckoutForm = () => {
               formData,
               cartItems: snapshot,
               order,
-              subtotal,
-              shipping,
-              total,
+              subtotal: totals.subtotal,
+              shipping: totals.shipping,
+              discount: discountAmount,
+              total: totals.total,
             },
           }
         );
@@ -245,6 +301,41 @@ const CheckoutForm = () => {
       }
     },
   });
+
+  const applyPromo = async () => {
+    if (!userLoggedIn || !currentUser?.uid) {
+      setPromoStatus({ applied: false, percent: 0, reason: 'guest' });
+      toast.info(t('promoGuestHint'));
+      return;
+    }
+    setPromoChecking(true);
+    try {
+      const check = await validateWelcomePromo({
+        userId: currentUser.uid,
+        code: promoInput,
+      });
+      if (!check.ok) {
+        setPromoStatus({
+          applied: false,
+          percent: 0,
+          reason: check.reason,
+        });
+        if (check.reason === 'already_used') toast.info(t('promoAlreadyUsed'));
+        else toast.error(t('promoInvalid'));
+        return;
+      }
+      setPromoStatus({
+        applied: true,
+        percent: check.discountPercent,
+        reason: 'applied',
+      });
+      toast.success(
+        t('promoApplied', { pct: check.discountPercent, code: check.code })
+      );
+    } finally {
+      setPromoChecking(false);
+    }
+  };
 
   const applyAddressSelection = (id) => {
     setSelectedAddressId(id);
@@ -320,6 +411,17 @@ const CheckoutForm = () => {
         <p className="mb-10 font-nav text-sm text-nabat-muted">
           {t('checkoutHint')}
         </p>
+        {!userLoggedIn && (
+          <p className="mb-8 border border-nabat-border bg-white px-4 py-3 font-nav text-sm text-nabat-muted">
+            {t('guestCheckoutNote')}{' '}
+            <Link
+              to={loginPathWithRedirect('/checkout')}
+              className="font-semibold text-nabat-accent underline-offset-2 hover:underline"
+            >
+              {t('promoSignInCta')}
+            </Link>
+          </p>
+        )}
 
         <form onSubmit={formik.handleSubmit}>
           <div className="grid gap-10 lg:grid-cols-2 lg:gap-14">
@@ -332,8 +434,10 @@ const CheckoutForm = () => {
                   type="email"
                   placeholder={t('emailAddress')}
                   {...formik.getFieldProps('email')}
-                  readOnly
-                  className={`mt-4 ${fieldClass('email')} bg-nabat-soft`}
+                  readOnly={userLoggedIn}
+                  className={`mt-4 ${fieldClass('email')} ${
+                    userLoggedIn ? 'bg-nabat-soft' : ''
+                  }`}
                 />
                 {formik.touched.email && formik.errors.email && (
                   <p className="mt-1 font-nav text-sm text-red-500">
@@ -526,6 +630,74 @@ const CheckoutForm = () => {
 
               <div>
                 <h2 className="font-heading text-xl font-medium">
+                  {t('promoSection')}
+                </h2>
+                {!userLoggedIn ? (
+                  <div className="mt-4 border border-dashed border-nabat-border bg-nabat-soft p-4">
+                    <p className="font-nav text-sm text-nabat-muted">
+                      {t('promoGuestHint')}
+                    </p>
+                    <Link
+                      to={loginPathWithRedirect('/checkout')}
+                      className="btn-outline mt-4 inline-flex !px-4 !py-2.5"
+                    >
+                      {t('promoSignInCta')}
+                    </Link>
+                    <p className="mt-3 font-nav text-[10px] uppercase tracking-[0.14em] text-nabat-muted">
+                      {t('promoLabel')}:{' '}
+                      <span className="font-heading text-sm tracking-[0.12em] text-nabat-primary">
+                        {PROMO.code}
+                      </span>
+                    </p>
+                  </div>
+                ) : (
+                  <div className="mt-4">
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={promoInput}
+                        onChange={(e) => {
+                          setPromoInput(e.target.value.toUpperCase());
+                          if (promoStatus.applied) {
+                            setPromoStatus({
+                              applied: false,
+                              percent: 0,
+                              reason: null,
+                            });
+                          }
+                        }}
+                        placeholder={t('promoPlaceholder')}
+                        className="input-box flex-1 uppercase tracking-[0.12em]"
+                        autoComplete="off"
+                      />
+                      <button
+                        type="button"
+                        className="btn-outline shrink-0 !px-4"
+                        onClick={applyPromo}
+                        disabled={promoChecking || !promoInput.trim()}
+                      >
+                        {promoChecking ? '…' : t('promoApply')}
+                      </button>
+                    </div>
+                    {promoStatus.applied && (
+                      <p className="mt-2 font-nav text-sm text-nabat-accent">
+                        {t('promoApplied', {
+                          pct: promoStatus.percent,
+                          code: PROMO.code,
+                        })}
+                      </p>
+                    )}
+                    {promoStatus.reason === 'already_used' && (
+                      <p className="mt-2 font-nav text-sm text-nabat-muted">
+                        {t('promoAlreadyUsed')}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <h2 className="font-heading text-xl font-medium">
                   {t('paymentSection')}
                 </h2>
                 <div className="mt-4 space-y-3">
@@ -579,12 +751,12 @@ const CheckoutForm = () => {
                       <div className="flex items-center gap-3">
                         <img
                           src={item.image}
-                          alt={item.name}
+                          alt={getProductName(item, { isAr, t })}
                           className="h-14 w-14 object-cover bg-nabat-mist"
                         />
                         <div>
                           <p className="font-nav text-sm font-medium">
-                            {item.name}
+                            {getProductName(item, { isAr, t })}
                           </p>
                           <p className="font-nav text-xs text-nabat-muted">
                             {t('qty')} {item.quantity}
@@ -606,6 +778,14 @@ const CheckoutForm = () => {
                     <span>{t('shippingAlex')}</span>
                     <span className="text-nabat-text">{formatEGP(shipping)}</span>
                   </div>
+                  {discount > 0 && (
+                    <div className="flex justify-between text-nabat-accent">
+                      <span>
+                        {t('discount')} ({PROMO.code})
+                      </span>
+                      <span>−{formatEGP(discount)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between pt-2 font-heading text-xl font-medium text-nabat-primary">
                     <span>{t('total')}</span>
                     <span>{formatEGP(total)}</span>

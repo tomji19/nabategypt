@@ -1,0 +1,2667 @@
+NABAT HOMEPAGE — FULL SECTION CODE EXPORT
+Order matches Home.jsx render order.
+Generated for sharing outside the project.
+
+========================================================================
+00 — Home.jsx (page shell / section order)
+FILE: c:\Users\TRUE TECH\Desktop\nabat\nabategypt\src\Components\Home\Home.jsx
+========================================================================
+
+import React from 'react';
+import HeroSection from '../HeroSection/HeroSection';
+import CategorySection from '../CategorySection/CategorySection';
+import RecentProducts from '../RecentProducts/RecentProducts';
+import SeasonalPicksSection from '../SeasonalPicksSection/SeasonalPicksSection';
+import BundlesSection from '../BundlesSection/BundlesSection';
+import ScentedCornerSection from '../ScentedCornerSection/ScentedCornerSection';
+import GiftSetsSection from '../GiftSetsSection/GiftSetsSection';
+import DiscountSection from '../DiscountSection/DiscountSection';
+import TestimonialSection from '../TestimonialSection/TestimonialSection';
+import SocialMediaSection from '../SocialMediaSection/SocialMediaSection';
+import FeaturedProducts from '../FeaturedProducts/FeaturedProducts';
+
+export default function Home() {
+  return (
+    <>
+      <HeroSection />
+      <CategorySection />
+      <SeasonalPicksSection />
+      <RecentProducts />
+      <BundlesSection />
+      <ScentedCornerSection />
+      <GiftSetsSection />
+      <DiscountSection />
+      <TestimonialSection />
+      <FeaturedProducts />
+      <SocialMediaSection />
+    </>
+  );
+}
+
+
+========================================================================
+01 — HeroSection.jsx
+FILE: c:\Users\TRUE TECH\Desktop\nabat\nabategypt\src\Components\HeroSection\HeroSection.jsx
+========================================================================
+
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import styles from './HeroSection.module.css';
+import BrandLogo from '../BrandLogo/BrandLogo';
+import { useSiteContent } from '../SiteContentContext/SiteContentContext';
+import { useLanguage } from '../LanguageContext/LanguageContext';
+import bamboo from '../../assets/images/hero-bamboo.jpeg';
+import leather from '../../assets/images/leather-1-hero.jpeg';
+import succulent1 from '../../assets/images/succulent-1-hero.png';
+import succulent2 from '../../assets/images/succulent-2-hero.png';
+import succulent3 from '../../assets/images/succulent-3-hero.png';
+import pothos from '../../assets/images/pothos-hero.jpeg';
+
+const enter = {
+  hidden: { opacity: 0, y: 16 },
+  show: (i) => ({
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.55, delay: 0.05 * i, ease: [0.22, 1, 0.36, 1] },
+  }),
+};
+
+const trioItems = [
+  { src: succulent1, altKey: 'heroDesertTrio', to: '/shop' },
+  { src: succulent2, altKey: 'heroDesertTrio', to: '/shop' },
+  { src: succulent3, altKey: 'heroDesertTrio', to: '/shop' },
+];
+
+export default function HeroSection() {
+  const { content } = useSiteContent();
+  const { t, isAr } = useLanguage();
+  const hero = content?.hero || {};
+  const marqueeText = t('marquee');
+  const eyebrow = isAr ? t('heroEyebrow') : hero.eyebrow || t('heroEyebrow');
+  const tagline = isAr ? t('heroTagline') : hero.tagline || t('heroTagline');
+  const cta = isAr ? t('heroCta') : hero.cta || t('heroCta');
+
+  return (
+    <section className={`section-pad ${styles.hero}`}>
+      <div className={styles.mosaic}>
+        <motion.div
+          className={styles.brand}
+          custom={0}
+          variants={enter}
+          initial="hidden"
+          animate="show"
+        >
+          <p className={styles.brandMeta}>{eyebrow}</p>
+          <BrandLogo
+            className={styles.brandLogoWrap}
+            imgClassName={styles.brandLogo}
+          />
+          <div>
+            <p className={styles.brandCopy}>{tagline}</p>
+            <Link to="/shop" className={styles.cta}>
+              {cta}
+              <span aria-hidden>â†—</span>
+            </Link>
+          </div>
+        </motion.div>
+
+        <motion.div
+          className={`${styles.cell} ${styles.cellFeat}`}
+          custom={1}
+          variants={enter}
+          initial="hidden"
+          animate="show"
+        >
+          <Link to="/shop" className={`${styles.tile} ${styles.tileBamboo}`}>
+            <img src={bamboo} alt={t('heroLuckyBamboo')} className={styles.tileImg} />
+            <div className={styles.marquee} aria-hidden>
+              <div className={styles.marqueeBar}>
+                <div className={styles.marqueeTrack}>
+                  <span>{marqueeText.repeat(4)}</span>
+                  <span>{marqueeText.repeat(4)}</span>
+                </div>
+              </div>
+            </div>
+            <div className={styles.label}>
+              <p className={styles.labelEyebrow}>{t('heroSignature')}</p>
+              <p className={styles.labelTitle}>{t('heroLuckyBamboo')}</p>
+            </div>
+          </Link>
+        </motion.div>
+
+        <motion.div
+          className={`${styles.cell} ${styles.cellFern}`}
+          custom={2}
+          variants={enter}
+          initial="hidden"
+          animate="show"
+        >
+          <Link to="/shop" className={`${styles.tile} ${styles.tileFern}`}>
+            <img src={leather} alt={t('heroLeatherleaf')} className={styles.tileImg} />
+            <div className={styles.label}>
+              <p className={styles.labelEyebrow}>{t('heroIndoor')}</p>
+              <p className={styles.labelTitle}>{t('heroLeatherleaf')}</p>
+            </div>
+          </Link>
+        </motion.div>
+
+        <motion.div
+          className={`${styles.cell} ${styles.cellTrio}`}
+          custom={3}
+          variants={enter}
+          initial="hidden"
+          animate="show"
+        >
+          <div className={`${styles.tile} ${styles.tileTrio}`}>
+            <div className={styles.trioRow}>
+              {trioItems.map((item, i) => (
+                <Link
+                  key={i}
+                  to={item.to}
+                  className={styles.trioItem}
+                >
+                  <img src={item.src} alt={t(item.altKey)} />
+                </Link>
+              ))}
+            </div>
+            <div className={styles.label}>
+              <p className={styles.labelEyebrow}>{t('heroTrending')}</p>
+              <p className={styles.labelTitle}>{t('heroDesertTrio')}</p>
+            </div>
+          </div>
+        </motion.div>
+
+        <motion.div
+          className={`${styles.cell} ${styles.cellStrip}`}
+          custom={4}
+          variants={enter}
+          initial="hidden"
+          animate="show"
+        >
+          <Link to="/shop" className={`${styles.tile} ${styles.tileFern}`}>
+            <img src={pothos} alt={t('heroHangingPothos')} className={styles.tileImg} />
+            <div className={styles.label}>
+              <p className={styles.labelEyebrow}>{t('heroCollection')}</p>
+              <p className={styles.labelTitle}>{t('heroHangingPothos')}</p>
+            </div>
+          </Link>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+
+========================================================================
+01 — HeroSection.module.css
+FILE: c:\Users\TRUE TECH\Desktop\nabat\nabategypt\src\Components\HeroSection\HeroSection.module.css
+========================================================================
+
+.hero {
+  padding-block: 1rem 1.5rem;
+}
+
+.mosaic {
+  display: grid;
+  gap: 0.65rem;
+  min-height: calc(100svh - 7.5rem);
+  grid-template-columns: 1fr;
+  grid-auto-rows: minmax(12rem, auto);
+}
+
+@media (min-width: 768px) {
+  .mosaic {
+    grid-template-columns: repeat(12, 1fr);
+    grid-template-rows: repeat(8, minmax(0, 1fr));
+  }
+
+  .brand {
+    grid-column: 1 / 4;
+    grid-row: 1 / 9;
+  }
+
+  .cellFeat {
+    grid-column: 4 / 9;
+    grid-row: 1 / 6;
+  }
+
+  .cellFern {
+    grid-column: 9 / 13;
+    grid-row: 1 / 6;
+  }
+
+  .cellTrio {
+    grid-column: 4 / 10;
+    grid-row: 6 / 9;
+  }
+
+  .cellStrip {
+    grid-column: 10 / 13;
+    grid-row: 6 / 9;
+  }
+}
+
+.cell {
+  min-height: 12rem;
+  height: 100%;
+  min-width: 0;
+}
+
+@media (min-width: 768px) {
+  .cell {
+    min-height: 0;
+  }
+}
+
+.brand {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: linear-gradient(165deg, #1f3d2b 0%, #2a5238 55%, #163024 100%);
+  color: #fff;
+  padding: 1.75rem 1.5rem;
+  position: relative;
+  overflow: hidden;
+  min-height: 22rem;
+}
+
+.brand::before {
+  content: '';
+  position: absolute;
+  inset: -40% -20% auto auto;
+  width: 18rem;
+  height: 18rem;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(91, 138, 106, 0.35), transparent 70%);
+  pointer-events: none;
+}
+
+@media (min-width: 768px) {
+  .brand {
+    padding: 2rem 1.35rem 2.25rem;
+    min-height: 0;
+  }
+}
+
+.brandMeta {
+  font-family: var(--font-nav);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(234, 243, 236, 0.75);
+  position: relative;
+  z-index: 1;
+}
+
+.brandWord {
+  position: relative;
+  z-index: 1;
+  color: #fff;
+  font-family: var(--font-heading);
+  font-size: clamp(3.5rem, 10vw, 4.75rem);
+  font-weight: 500;
+  line-height: 0.85;
+  letter-spacing: -0.03em;
+  margin: 1.5rem 0;
+}
+
+.brandLogoWrap {
+  position: relative;
+  z-index: 1;
+  margin: 1.5rem 0;
+  align-self: flex-start;
+}
+
+.brandLogo {
+  height: clamp(3.25rem, 8vw, 4.5rem);
+  width: auto;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+}
+
+@media (min-width: 768px) {
+  .brandWord {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    font-size: clamp(3.75rem, 6.5vw, 6.25rem);
+    align-self: flex-start;
+    margin: 1rem 0 auto;
+  }
+
+  .brandLogoWrap {
+    margin: 1rem 0 auto;
+  }
+
+  .brandLogo {
+    height: clamp(3.5rem, 5.5vw, 5.25rem);
+  }
+}
+
+.brandCopy {
+  position: relative;
+  z-index: 1;
+  max-width: 11rem;
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  align-self: flex-start;
+  margin-top: 1.25rem;
+  padding: 0.85rem 1.35rem;
+  font-family: var(--font-nav);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #1f3d2b;
+  background: #eaf3ec;
+  text-decoration: none;
+  transition: letter-spacing 0.35s ease, background 0.35s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.cta:hover {
+  letter-spacing: 0.22em;
+  background: #fff;
+}
+
+.tile {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  min-height: 12rem;
+  text-decoration: none;
+  color: inherit;
+  isolation: isolate;
+  background: #d5e0d8;
+}
+
+@media (min-width: 768px) {
+  .tile {
+    min-height: 100%;
+  }
+}
+
+.tileImg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Signature bamboo â€” scale only */
+.tileBamboo:hover .tileImg,
+.tileBamboo:focus-visible .tileImg {
+  transform: scale(1.04);
+}
+
+/* Leatherleaf / Pothos â€” single image, scale only */
+.tileFern:hover .tileImg,
+.tileFern:focus-visible .tileImg {
+  transform: scale(1.04);
+}
+
+/* Trending Bundle â€” three separately clickable items */
+.tileTrio {
+  background: #f3f6f3;
+}
+
+.trioRow {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.35rem;
+  padding: 0.5rem 0.5rem 0;
+  z-index: 1;
+}
+
+.trioItem {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  min-height: 0;
+  height: 100%;
+  text-decoration: none;
+  background: #e8eee9;
+}
+
+.trioItem img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transition: transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.trioItem:hover img,
+.trioItem:focus-visible img {
+  transform: scale(1.05);
+}
+
+@media (max-width: 767px) {
+  .cellFern {
+    min-height: 18rem;
+  }
+
+  .cellTrio {
+    min-height: 14rem;
+  }
+}
+
+.label {
+  position: absolute;
+  z-index: 5;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 1.15rem 1.2rem;
+  background: linear-gradient(transparent, rgba(20, 32, 26, 0.88));
+  color: #fff;
+}
+
+.tileTrio .label {
+  background: linear-gradient(transparent, rgba(20, 32, 26, 0.82));
+  pointer-events: none;
+}
+
+.labelEyebrow {
+  font-family: var(--font-nav);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  opacity: 0.72;
+}
+
+.labelTitle {
+  margin-top: 0.25rem;
+  font-family: var(--font-heading);
+  font-size: clamp(1.15rem, 2vw, 1.7rem);
+  font-weight: 500;
+}
+
+/* Marquee on dark bar for white studio photos */
+.marquee {
+  position: absolute;
+  top: 0.85rem;
+  left: 0.85rem;
+  right: 0.85rem;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.marqueeBar {
+  overflow: hidden;
+  padding: 0.45rem 0;
+  background: rgba(31, 61, 43, 0.88);
+  border-radius: 2px;
+}
+
+.marqueeTrack {
+  display: flex;
+  gap: 2.5rem;
+  width: max-content;
+  animation: scroll 24s linear infinite;
+  font-family: var(--font-nav);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: #eaf3ec;
+}
+
+@keyframes scroll {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+
+========================================================================
+02 — CategorySection.jsx
+FILE: c:\Users\TRUE TECH\Desktop\nabat\nabategypt\src\Components\CategorySection\CategorySection.jsx
+========================================================================
+
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { useLanguage } from '../LanguageContext/LanguageContext';
+import styles from './CategorySection.module.css';
+
+import outdoorImg from '../../assets/images/outdoorplants.png';
+import succulentsImg from '../../assets/images/succulents.png';
+import indoorImg from '../../assets/images/indoor.png';
+
+const categories = [
+  { key: 'catIndoorShort', image: indoorImg, to: '/shop?category=Indoor%20Plants' },
+  { key: 'catOutdoorShort', image: outdoorImg, to: '/shop?category=Outdoor%20Plants' },
+  { key: 'catSucculentShort', image: succulentsImg, to: '/shop?category=Succulent' },
+];
+
+export default function CategorySection() {
+  const { t } = useLanguage();
+
+  return (
+    <section className="section-pad bg-white py-20 md:py-28">
+      <div className="mb-12 md:mb-16">
+        <p className="section-label">{t('browseLabel')}</p>
+        <h2 className="section-title">{t('browseTitle')}</h2>
+      </div>
+
+      <div className={styles.layout}>
+        <motion.blockquote
+          className={styles.quote}
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-40px' }}
+          transition={{ duration: 0.45 }}
+        >
+          <span className={styles.quoteMark} aria-hidden>
+            â€œ
+          </span>
+          <p>{t('browseQuote')}</p>
+        </motion.blockquote>
+
+        <div className={styles.grid}>
+          {categories.map((cat, i) => (
+            <motion.div
+              key={cat.key}
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-40px' }}
+              transition={{ duration: 0.45, delay: 0.06 + i * 0.05 }}
+            >
+              <Link to={cat.to} className={styles.item}>
+                <div className={styles.stage}>
+                  <span className={styles.halo} aria-hidden />
+                  <img src={cat.image} alt="" className={styles.plant} />
+                </div>
+                <span className={styles.name}>{t(cat.key)}</span>
+              </Link>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+
+========================================================================
+02 — CategorySection.module.css
+FILE: c:\Users\TRUE TECH\Desktop\nabat\nabategypt\src\Components\CategorySection\CategorySection.module.css
+========================================================================
+
+/* Quote + categories share one row on desktop */
+.layout {
+  display: grid;
+  gap: 2.5rem;
+  align-items: stretch;
+  width: 100%;
+}
+
+@media (min-width: 900px) {
+  .layout {
+    grid-template-columns: minmax(14rem, 0.9fr) 2.4fr;
+    gap: 2rem 2.75rem;
+    align-items: center;
+  }
+}
+
+.quote {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin: 0;
+  padding: 2rem 1.75rem 2.15rem;
+  background: linear-gradient(165deg, #1f3d2b 0%, #2a5238 55%, #163024 100%);
+  color: #eaf3ec;
+  min-height: 12rem;
+}
+
+@media (min-width: 900px) {
+  .quote {
+    min-height: 100%;
+    padding: 2.5rem 1.85rem 2.75rem;
+  }
+}
+
+.quoteMark {
+  display: block;
+  font-family: var(--font-heading);
+  font-size: 4rem;
+  line-height: 0.55;
+  color: #8fb59a;
+  margin-bottom: 1rem;
+}
+
+.quote p {
+  font-family: var(--font-heading);
+  font-size: clamp(1.2rem, 2vw, 1.55rem);
+  font-weight: 500;
+  font-style: italic;
+  line-height: 1.4;
+  letter-spacing: -0.015em;
+  color: #f4faf5;
+  max-width: 14rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+@media (max-width: 639px) {
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 1.75rem;
+  }
+}
+
+@media (min-width: 640px) and (max-width: 899px) {
+  .grid {
+    gap: 1.5rem;
+  }
+}
+
+@media (min-width: 900px) {
+  .grid {
+    gap: 1.75rem 1.5rem;
+  }
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.1rem;
+  text-decoration: none;
+  color: inherit;
+  text-align: center;
+}
+
+/* Soft circle stage â€” photo crops, not illustrations */
+.stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: #ebe8e2;
+}
+
+.halo {
+  display: none;
+}
+
+.plant {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.item:hover .plant,
+.item:focus-visible .plant {
+  transform: scale(1.06);
+}
+
+.name {
+  font-family: var(--font-heading);
+  font-size: clamp(1rem, 1.4vw, 1.15rem);
+  font-weight: 500;
+  color: #1f3d2b;
+  letter-spacing: -0.01em;
+  transition: color 0.35s ease;
+}
+
+.item:hover .name,
+.item:focus-visible .name {
+  color: #5b8a6a;
+}
+
+
+========================================================================
+03 — SeasonalPicksSection.jsx
+FILE: c:\Users\TRUE TECH\Desktop\nabat\nabategypt\src\Components\SeasonalPicksSection\SeasonalPicksSection.jsx
+========================================================================
+
+import React, { useMemo } from 'react';
+import { Link } from 'react-router-dom';
+import PlantCard from '../PlantCard/PlantCard';
+import { useProducts } from '../ProductsContext/ProductsContext';
+import { useLanguage } from '../LanguageContext/LanguageContext';
+import styles from '../RecentProducts/RecentProducts.module.css';
+
+export default function SeasonalPicksSection() {
+  const { recentProducts, products, featuredProducts } = useProducts();
+  const { t } = useLanguage();
+
+  const cards = useMemo(() => {
+    const recent = Array.isArray(recentProducts) ? recentProducts : [];
+    if (recent.length) return recent.slice(0, 4);
+    const featured = Array.isArray(featuredProducts) ? featuredProducts : [];
+    if (featured.length) return featured.slice(0, 4);
+    return (Array.isArray(products) ? products : []).slice(0, 4);
+  }, [recentProducts, featuredProducts, products]);
+
+  if (!cards.length) return null;
+
+  return (
+    <section className={styles.section}>
+      <div className={`section-pad ${styles.inner}`}>
+        <div className={styles.header}>
+          <div>
+            <p className="section-label">{t('seasonalEyebrow')}</p>
+            <h2 className="section-title">{t('seasonalTitle')}</h2>
+          </div>
+          <div className={styles.headerAside}>
+            <p className={styles.subtitle}>{t('seasonalSubtitle')}</p>
+            <Link to="/shop" className={styles.shopLink}>
+              {t('browsePlants')}
+              <i className="fa-solid fa-arrow-right" aria-hidden />
+            </Link>
+          </div>
+        </div>
+
+        <div className={styles.grid}>
+          {cards.map((product) => (
+            <PlantCard
+              key={product.id}
+              product={{ ...product, isSeasonal: true, isRecent: true }}
+            />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+
+========================================================================
+04 — RecentProducts.jsx
+FILE: c:\Users\TRUE TECH\Desktop\nabat\nabategypt\src\Components\RecentProducts\RecentProducts.jsx
+========================================================================
+
+import React, { useMemo } from 'react';
+import { Link } from 'react-router-dom';
+import PlantCard from '../PlantCard/PlantCard';
+import { useProducts } from '../ProductsContext/ProductsContext';
+import { useSiteContent } from '../SiteContentContext/SiteContentContext';
+import { useLanguage } from '../LanguageContext/LanguageContext';
+import styles from './RecentProducts.module.css';
+
+export default function RecentProducts() {
+  const { recentProducts, products } = useProducts();
+  const { content } = useSiteContent();
+  const { t, isAr } = useLanguage();
+  const home = content?.home || {};
+  const recentTitle = isAr
+    ? t('recentTitle')
+    : home.recentTitle || t('recentTitle');
+  const recentSubtitle = isAr
+    ? t('recentSubtitle')
+    : home.recentSubtitle || t('recentSubtitle');
+
+  const cards = useMemo(() => {
+    const recent = Array.isArray(recentProducts) ? recentProducts : [];
+    if (recent.length >= 8) return recent.slice(0, 8);
+
+    const seen = new Set(recent.map((p) => p.id));
+    const filler = (Array.isArray(products) ? products : []).filter(
+      (p) => !seen.has(p.id)
+    );
+    return [...recent, ...filler].slice(0, 8);
+  }, [recentProducts, products]);
+
+  if (!cards.length) return null;
+
+  return (
+    <section className={styles.section}>
+      <div className={`section-pad ${styles.inner}`}>
+        <div className={styles.header}>
+          <div>
+            <p className="section-label">{t('justIn')}</p>
+            <h2 className="section-title">
+              {recentTitle}
+            </h2>
+          </div>
+          <div className={styles.headerAside}>
+            <p className={styles.subtitle}>
+              {recentSubtitle}
+            </p>
+            <Link to="/shop" className={styles.shopLink}>
+              {t('browsePlants')}
+              <i className="fa-solid fa-arrow-right" aria-hidden />
+            </Link>
+          </div>
+        </div>
+
+        <div className={styles.grid}>
+          {cards.map((product) => (
+            <PlantCard key={product.id} product={product} />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+
+========================================================================
+04 — RecentProducts.module.css
+FILE: c:\Users\TRUE TECH\Desktop\nabat\nabategypt\src\Components\RecentProducts\RecentProducts.module.css
+========================================================================
+
+.section {
+  background: #fff;
+  padding-top: 4.5rem;
+  padding-bottom: 4.5rem;
+}
+
+@media (min-width: 768px) {
+  .section {
+    padding-top: 6rem;
+    padding-bottom: 6rem;
+  }
+}
+
+.inner {
+  /* section-pad already applied */
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2.25rem;
+}
+
+@media (min-width: 768px) {
+  .header {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 3rem;
+  }
+}
+
+.headerAside {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  max-width: 18rem;
+}
+
+@media (min-width: 768px) {
+  .headerAside {
+    align-items: flex-end;
+    text-align: right;
+  }
+}
+
+.subtitle {
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: #5a6b60;
+}
+
+.shopLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: var(--font-nav);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #1f3d2b;
+  text-decoration: none;
+  transition: color 0.25s ease;
+}
+
+.shopLink i {
+  font-size: 0.65rem;
+  transition: transform 0.25s ease;
+}
+
+.shopLink:hover {
+  color: #5b8a6a;
+}
+
+.shopLink:hover i {
+  transform: translateX(3px);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem 1rem;
+}
+
+@media (min-width: 560px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 900px) {
+  .grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem 1.25rem;
+  }
+}
+
+
+========================================================================
+05 — BundlesSection.jsx
+FILE: c:\Users\TRUE TECH\Desktop\nabat\nabategypt\src\Components\BundlesSection\BundlesSection.jsx
+========================================================================
+
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { useLanguage } from '../LanguageContext/LanguageContext';
+import { formatEGP } from '../../utils/money';
+import styles from '../CollectionCards/CollectionCards.module.css';
+
+import succulentsImg from '../../assets/images/succulents.png';
+import indoorImg from '../../assets/images/indoor.png';
+import outdoorImg from '../../assets/images/outdoorplants.png';
+
+const BUNDLES = [
+  {
+    id: 'desert',
+    nameKey: 'bundleDesertName',
+    descKey: 'bundleDesertDesc',
+    image: succulentsImg,
+    price: 115,
+    compare: 135,
+    save: 15,
+    to: '/shop?category=Succulent',
+  },
+  {
+    id: 'indoor',
+    nameKey: 'bundleIndoorName',
+    descKey: 'bundleIndoorDesc',
+    image: indoorImg,
+    price: 120,
+    compare: 135,
+    save: 12,
+    to: '/shop?category=Indoor%20Plants',
+  },
+  {
+    id: 'herbs',
+    nameKey: 'bundleHerbName',
+    descKey: 'bundleHerbDesc',
+    image: outdoorImg,
+    price: 120,
+    compare: 135,
+    save: 10,
+    to: '/shop?category=Outdoor%20Plants',
+    flagship: true,
+  },
+];
+
+export default function BundlesSection() {
+  const { t } = useLanguage();
+
+  return (
+    <section className={`section-pad ${styles.section} ${styles.sectionAlt}`}>
+      <div className={styles.header}>
+        <p className="section-label">{t('bundlesEyebrow')}</p>
+        <h2 className="section-title">{t('bundlesTitle')}</h2>
+        <p className="section-subtitle">{t('bundlesSubtitle')}</p>
+      </div>
+
+      <div className={styles.grid}>
+        {BUNDLES.map((bundle, i) => (
+          <motion.article
+            key={bundle.id}
+            className={styles.card}
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-40px' }}
+            transition={{ duration: 0.5, delay: i * 0.08 }}
+          >
+            <Link to={bundle.to} className={styles.link}>
+              <div className={styles.media}>
+                <img src={bundle.image} alt="" />
+                <div className={styles.badgeRow}>
+                  <span className={styles.typeBadge}>{t('bundleBadge')}</span>
+                  <span className={styles.saveBadge}>
+                    {t('bundleSave', { pct: bundle.save })}
+                  </span>
+                </div>
+              </div>
+              <div className={styles.body}>
+                <h3 className={styles.name}>{t(bundle.nameKey)}</h3>
+                <p className={styles.desc}>{t(bundle.descKey)}</p>
+                <div className={styles.priceRow}>
+                  <p className={styles.price}>{formatEGP(bundle.price)}</p>
+                  <p className={styles.compare}>{formatEGP(bundle.compare)}</p>
+                </div>
+                <span className={styles.cta}>
+                  {t('shopBundle')}
+                  <span aria-hidden>â†—</span>
+                </span>
+              </div>
+            </Link>
+          </motion.article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+
+========================================================================
+06 — ScentedCornerSection.jsx
+FILE: c:\Users\TRUE TECH\Desktop\nabat\nabategypt\src\Components\ScentedCornerSection\ScentedCornerSection.jsx
+========================================================================
+
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { useLanguage } from '../LanguageContext/LanguageContext';
+import { formatEGP } from '../../utils/money';
+import styles from '../CollectionCards/CollectionCards.module.css';
+
+import outdoorImg from '../../assets/images/outdoorplants.png';
+import indoorImg from '../../assets/images/indoor.png';
+import mintish from '../../assets/images/succulents.png';
+
+const SCENTS = [
+  {
+    id: 'mint',
+    nameKey: 'scentMintName',
+    descKey: 'scentMintDesc',
+    image: outdoorImg,
+    price: 45,
+    to: '/shop?category=Outdoor%20Plants',
+  },
+  {
+    id: 'basil',
+    nameKey: 'scentBasilName',
+    descKey: 'scentBasilDesc',
+    image: indoorImg,
+    price: 45,
+    to: '/shop?category=Outdoor%20Plants',
+  },
+  {
+    id: 'rosemary',
+    nameKey: 'scentRosemaryName',
+    descKey: 'scentRosemaryDesc',
+    image: mintish,
+    price: 45,
+    to: '/shop?category=Outdoor%20Plants',
+  },
+];
+
+export default function ScentedCornerSection() {
+  const { t } = useLanguage();
+
+  return (
+    <section className={`section-pad ${styles.section}`}>
+      <div className={styles.header}>
+        <p className="section-label">{t('scentEyebrow')}</p>
+        <h2 className="section-title">{t('scentTitle')}</h2>
+        <p className="section-subtitle">{t('scentSubtitle')}</p>
+      </div>
+
+      <div className={styles.grid}>
+        {SCENTS.map((item, i) => (
+          <motion.article
+            key={item.id}
+            className={`${styles.card} ${styles.cardSoft}`}
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-40px' }}
+            transition={{ duration: 0.5, delay: i * 0.08 }}
+          >
+            <Link to={item.to} className={styles.link}>
+              <div className={styles.media}>
+                <img src={item.image} alt="" />
+                <div className={styles.badgeRow}>
+                  <span className={styles.typeBadge}>{t('scentBadge')}</span>
+                </div>
+              </div>
+              <div className={styles.body}>
+                <h3 className={styles.name}>{t(item.nameKey)}</h3>
+                <p className={styles.desc}>{t(item.descKey)}</p>
+                <div className={styles.priceRow}>
+                  <p className={styles.price}>{formatEGP(item.price)}</p>
+                </div>
+                <span className={styles.cta}>
+                  {t('browsePlants')}
+                  <span aria-hidden>â†—</span>
+                </span>
+              </div>
+            </Link>
+          </motion.article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+
+========================================================================
+07 — GiftSetsSection.jsx
+FILE: c:\Users\TRUE TECH\Desktop\nabat\nabategypt\src\Components\GiftSetsSection\GiftSetsSection.jsx
+========================================================================
+
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { useLanguage } from '../LanguageContext/LanguageContext';
+import { formatEGP } from '../../utils/money';
+import styles from '../CollectionCards/CollectionCards.module.css';
+
+import indoorImg from '../../assets/images/indoor.png';
+import succulentsImg from '../../assets/images/succulents.png';
+import outdoorImg from '../../assets/images/outdoorplants.png';
+
+const GIFTS = [
+  {
+    id: 'new-home',
+    nameKey: 'giftNewHomeName',
+    descKey: 'giftNewHomeDesc',
+    image: indoorImg,
+    price: 220,
+    compare: 260,
+    parts: ['giftPartPlant', 'giftPartPot', 'giftPartCard'],
+    to: '/shop',
+  },
+  {
+    id: 'desk-calm',
+    nameKey: 'giftDeskName',
+    descKey: 'giftDeskDesc',
+    image: succulentsImg,
+    price: 180,
+    compare: 210,
+    parts: ['giftPartPlant', 'giftPartPot', 'giftPartWrap'],
+    to: '/shop?category=Succulent',
+  },
+  {
+    id: 'balcony',
+    nameKey: 'giftBalconyName',
+    descKey: 'giftBalconyDesc',
+    image: outdoorImg,
+    price: 195,
+    compare: 230,
+    parts: ['giftPartPlant', 'giftPartWrap', 'giftPartCard'],
+    to: '/shop?category=Outdoor%20Plants',
+  },
+];
+
+export default function GiftSetsSection() {
+  const { t } = useLanguage();
+
+  return (
+    <section className={`section-pad ${styles.section} ${styles.sectionAlt}`}>
+      <div className={styles.header}>
+        <p className="section-label">{t('giftsEyebrow')}</p>
+        <h2 className="section-title">{t('giftsTitle')}</h2>
+        <p className="section-subtitle">{t('giftsSubtitle')}</p>
+      </div>
+
+      <div className={styles.grid}>
+        {GIFTS.map((gift, i) => (
+          <motion.article
+            key={gift.id}
+            className={styles.card}
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-40px' }}
+            transition={{ duration: 0.5, delay: i * 0.08 }}
+          >
+            <Link to={gift.to} className={styles.link}>
+              <div className={styles.media}>
+                <img src={gift.image} alt="" />
+                <div className={styles.badgeRow}>
+                  <span className={styles.typeBadge}>{t('giftBadge')}</span>
+                </div>
+              </div>
+              <div className={styles.body}>
+                <h3 className={styles.name}>{t(gift.nameKey)}</h3>
+                <p className={styles.desc}>{t(gift.descKey)}</p>
+                <div className={styles.parts}>
+                  {gift.parts.map((key) => (
+                    <span key={key} className={styles.part}>
+                      <i className="fa-solid fa-check" aria-hidden />
+                      {t(key)}
+                    </span>
+                  ))}
+                </div>
+                <div className={styles.priceRow}>
+                  <p className={styles.price}>{formatEGP(gift.price)}</p>
+                  <p className={styles.compare}>{formatEGP(gift.compare)}</p>
+                </div>
+                <span className={styles.cta}>
+                  {t('shopBundle')}
+                  <span aria-hidden>â†—</span>
+                </span>
+              </div>
+            </Link>
+          </motion.article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+
+========================================================================
+05-07 shared — CollectionCards.module.css
+FILE: c:\Users\TRUE TECH\Desktop\nabat\nabategypt\src\Components\CollectionCards\CollectionCards.module.css
+========================================================================
+
+.section {
+  padding-top: 5rem;
+  padding-bottom: 5rem;
+  background: #fff;
+}
+
+.sectionAlt {
+  background:
+    linear-gradient(180deg, #f4f7f4 0%, #ffffff 55%, #f4f7f4 100%);
+}
+
+.header {
+  max-width: 40rem;
+  margin-bottom: 2.5rem;
+}
+
+.grid {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 768px) {
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+.card {
+  background: #fff;
+  border: 1.5px solid var(--main-color);
+  overflow: hidden;
+  transition: transform 0.35s ease, box-shadow 0.35s ease;
+}
+
+.cardSoft {
+  border-color: var(--border);
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 40px rgba(20, 32, 26, 0.08);
+}
+
+.link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+  height: 100%;
+}
+
+.media {
+  position: relative;
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: #ebe8e2;
+}
+
+.media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.7s ease;
+}
+
+.card:hover .media img {
+  transform: scale(1.05);
+}
+
+.badgeRow {
+  position: absolute;
+  top: 0.75rem;
+  inset-inline-start: 0.75rem;
+  inset-inline-end: 0.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5rem;
+  z-index: 2;
+}
+
+.typeBadge {
+  background: var(--main-color);
+  color: #fff;
+  font-family: var(--font-nav);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0.35rem 0.55rem;
+}
+
+.saveBadge {
+  background: var(--seasonal);
+  color: #fff;
+  font-family: var(--font-nav);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0.35rem 0.55rem;
+}
+
+.body {
+  padding: 1.15rem 1.25rem 1.35rem;
+}
+
+.name {
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.desc {
+  margin: 0.4rem 0 0.85rem;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+.parts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0 0 0.9rem;
+}
+
+.part {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: 1px solid var(--border);
+  background: var(--surface-muted);
+  padding: 0.25rem 0.5rem;
+  font-family: var(--font-nav);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.part i {
+  color: var(--accent);
+  font-size: 0.65rem;
+}
+
+.priceRow {
+  display: flex;
+  align-items: baseline;
+  gap: 0.55rem;
+  margin-bottom: 0.85rem;
+}
+
+.price {
+  margin: 0;
+  font-family: var(--font-nav);
+  font-size: var(--price-size);
+  font-weight: var(--price-weight);
+  letter-spacing: -0.02em;
+  color: var(--main-color);
+}
+
+.compare {
+  margin: 0;
+  font-family: var(--font-nav);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-nav);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+@media (min-width: 768px) {
+  .section {
+    padding-top: 6.25rem;
+    padding-bottom: 6.25rem;
+  }
+}
+
+
+========================================================================
+08 — DiscountSection.jsx
+FILE: c:\Users\TRUE TECH\Desktop\nabat\nabategypt\src\Components\DiscountSection\DiscountSection.jsx
+========================================================================
+
+import React from 'react';
+import discountImage from '../../assets/images/discount.png';
+import { useLanguage } from '../LanguageContext/LanguageContext';
+
+export default function DiscountSection() {
+  const { t } = useLanguage();
+
+  return (
+    <section className="relative flex min-h-[28rem] items-center justify-center overflow-hidden md:min-h-[32rem]">
+      <img
+        src={discountImage}
+        alt=""
+        className="absolute inset-0 h-full w-full object-cover scale-105 transition-transform duration-[8s] ease-out hover:scale-110"
+      />
+      <div className="absolute inset-0 bg-gradient-to-b from-nabat-primary/55 via-nabat-primary/75 to-nabat-primary/85" />
+      <div className="relative z-10 section-pad mx-auto max-w-xl py-20 text-center">
+        <p className="mb-4 font-nav text-[11px] font-semibold uppercase tracking-[0.22em] text-nabat-mist/90">
+          {t('offerEyebrow')}
+        </p>
+        <h2 className="font-heading text-[clamp(2rem,5vw,3.5rem)] font-medium tracking-tight text-white">
+          {t('offerTitle')}
+        </h2>
+        <p className="mx-auto mt-4 max-w-md font-body text-sm leading-relaxed text-white/80">
+          {t('offerSubtitle')}
+        </p>
+        <form
+          className="mx-auto mt-10 flex max-w-md border border-white/40 bg-white/5 backdrop-blur-sm"
+          onSubmit={(e) => e.preventDefault()}
+        >
+          <input
+            type="email"
+            id="discount_email"
+            name="floating_email"
+            required
+            placeholder={t('yourEmail')}
+            className="w-full bg-transparent px-4 py-3.5 font-body text-sm text-white placeholder:text-white/55 focus:outline-none"
+          />
+          <button
+            type="submit"
+            className="shrink-0 bg-white px-6 py-3.5 font-nav text-[11px] font-semibold uppercase tracking-[0.14em] text-nabat-primary transition-colors hover:bg-nabat-mist"
+          >
+            {t('subscribe')}
+          </button>
+        </form>
+        <p className="mx-auto mt-4 max-w-md font-nav text-[10px] uppercase tracking-[0.14em] text-white/55">
+          {t('offerFinePrint')}
+        </p>
+      </div>
+    </section>
+  );
+}
+
+
+========================================================================
+09 — TestimonialSection.jsx
+FILE: c:\Users\TRUE TECH\Desktop\nabat\nabategypt\src\Components\TestimonialSection\TestimonialSection.jsx
+========================================================================
+
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useLanguage } from '../LanguageContext/LanguageContext';
+import styles from './TestimonialSection.module.css';
+
+const TESTIMONIAL_IDS = [1, 2, 3];
+
+function Stars({ count = 5 }) {
+  return (
+    <div className={styles.stars} aria-hidden>
+      {Array.from({ length: count }).map((_, i) => (
+        <i key={i} className="fa-solid fa-star" />
+      ))}
+    </div>
+  );
+}
+
+function Avatar({ name }) {
+  const initials = String(name || '')
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((p) => p[0])
+    .join('')
+    .toUpperCase();
+
+  return (
+    <span className={styles.avatar} aria-hidden>
+      {initials || 'â€¢'}
+    </span>
+  );
+}
+
+export default function TestimonialSection() {
+  const { t } = useLanguage();
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  const testimonials = TESTIMONIAL_IDS.map((n) => ({
+    id: n,
+    quote: t(`review${n}Text`),
+    name: t(`review${n}Author`),
+  }));
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % testimonials.length);
+    }, 9000);
+    return () => clearInterval(timer);
+  }, [testimonials.length]);
+
+  const current = testimonials[currentIndex];
+
+  return (
+    <section className={`section-pad ${styles.section}`}>
+      <div className={styles.inner}>
+        <p className="section-label">{t('wordsEyebrow')}</p>
+        <h2 className={styles.title}>{t('wordsTitle')}</h2>
+
+        <div className={styles.stage}>
+          <AnimatePresence mode="wait">
+            <motion.blockquote
+              key={`${currentIndex}-${current.name}`}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -16 }}
+              transition={{ duration: 0.45 }}
+              className={styles.quote}
+            >
+              <Stars />
+              <p className={styles.text}>&ldquo;{current.quote}&rdquo;</p>
+              <footer className={styles.footer}>
+                <Avatar name={current.name} />
+                <cite className={styles.name}>{current.name}</cite>
+              </footer>
+            </motion.blockquote>
+          </AnimatePresence>
+        </div>
+
+        <div className={styles.nav}>
+          <button
+            type="button"
+            aria-label="Previous"
+            className={styles.arrow}
+            onClick={() =>
+              setCurrentIndex((i) =>
+                i > 0 ? i - 1 : testimonials.length - 1
+              )
+            }
+          >
+            <i className="fa-solid fa-arrow-left" />
+          </button>
+          <div className={styles.dots}>
+            {testimonials.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                aria-label={`Go to testimonial ${i + 1}`}
+                onClick={() => setCurrentIndex(i)}
+                className={`${styles.dot} ${
+                  i === currentIndex ? styles.dotActive : ''
+                }`}
+              />
+            ))}
+          </div>
+          <button
+            type="button"
+            aria-label="Next"
+            className={styles.arrow}
+            onClick={() =>
+              setCurrentIndex((i) => (i + 1) % testimonials.length)
+            }
+          >
+            <i className="fa-solid fa-arrow-right" />
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+
+========================================================================
+09 — TestimonialSection.module.css
+FILE: c:\Users\TRUE TECH\Desktop\nabat\nabategypt\src\Components\TestimonialSection\TestimonialSection.module.css
+========================================================================
+
+.section {
+  position: relative;
+  overflow: hidden;
+  padding-top: 5rem;
+  padding-bottom: 5rem;
+  background: var(--surface-muted);
+}
+
+.section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 18% 20%, rgba(91, 138, 106, 0.14), transparent 42%),
+    radial-gradient(circle at 82% 80%, rgba(193, 122, 58, 0.08), transparent 40%);
+  pointer-events: none;
+}
+
+.inner {
+  position: relative;
+  max-width: 42rem;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.title {
+  margin: 0.35rem 0 0;
+  font-family: var(--font-heading);
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+.stage {
+  position: relative;
+  min-height: 14rem;
+  margin-top: 2.25rem;
+}
+
+.quote {
+  margin: 0;
+}
+
+.stars {
+  display: flex;
+  justify-content: center;
+  gap: 0.3rem;
+  color: var(--seasonal);
+  font-size: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.text {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: clamp(1.25rem, 3vw, 1.85rem);
+  font-weight: 500;
+  font-style: italic;
+  line-height: 1.4;
+  letter-spacing: -0.015em;
+  color: var(--text);
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 1.75rem;
+}
+
+.avatar {
+  width: 2.5rem;
+  height: 2.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--main-color);
+  color: #fff;
+  font-family: var(--font-nav);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.name {
+  font-family: var(--font-nav);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-style: normal;
+}
+
+.nav {
+  margin-top: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+}
+
+.arrow {
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.25s ease;
+}
+
+.arrow:hover {
+  color: var(--main-color);
+}
+
+.dots {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.dot {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  background: var(--border);
+  cursor: pointer;
+}
+
+.dotActive {
+  background: var(--accent);
+}
+
+@media (min-width: 768px) {
+  .section {
+    padding-top: 6.5rem;
+    padding-bottom: 6.5rem;
+  }
+}
+
+
+========================================================================
+10 — FeaturedProducts.jsx
+FILE: c:\Users\TRUE TECH\Desktop\nabat\nabategypt\src\Components\FeaturedProducts\FeaturedProducts.jsx
+========================================================================
+
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
+import PlantCard from '../PlantCard/PlantCard';
+import { useProducts } from '../ProductsContext/ProductsContext';
+import { useSiteContent } from '../SiteContentContext/SiteContentContext';
+import { useLanguage } from '../LanguageContext/LanguageContext';
+import styles from './FeaturedProducts.module.css';
+
+function useVisibleCount() {
+  const [count, setCount] = useState(1);
+
+  useEffect(() => {
+    const update = () => {
+      const w = window.innerWidth;
+      if (w >= 1100) setCount(4);
+      else if (w >= 720) setCount(2);
+      else setCount(1);
+    };
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
+
+  return count;
+}
+
+export default function FeaturedProducts() {
+  const { featuredProducts, products } = useProducts();
+  const { content } = useSiteContent();
+  const { t, isAr } = useLanguage();
+  const home = content?.home || {};
+  const featuredTitle = isAr
+    ? t('featuredTitle')
+    : home.featuredTitle || t('featuredTitle');
+  const featuredSubtitle = isAr
+    ? t('featuredSubtitle')
+    : home.featuredSubtitle || t('featuredSubtitle');
+  const visible = useVisibleCount();
+
+  const cards = useMemo(() => {
+    const featured = Array.isArray(featuredProducts) ? featuredProducts : [];
+    if (featured.length) return featured;
+    return (Array.isArray(products) ? products : []).slice(0, 8);
+  }, [featuredProducts, products]);
+
+  const maxIndex = Math.max(0, cards.length - visible);
+  const [index, setIndex] = useState(0);
+  const pageCount = maxIndex + 1;
+
+  useEffect(() => {
+    setIndex((i) => Math.min(i, maxIndex));
+  }, [maxIndex, visible]);
+
+  const goTo = useCallback(
+    (next) => {
+      if (pageCount <= 1) return;
+      const wrapped = ((next % pageCount) + pageCount) % pageCount;
+      setIndex(wrapped);
+    },
+    [pageCount]
+  );
+
+  const prev = () => goTo(index - 1);
+  const next = () => goTo(index + 1);
+
+  if (!cards.length) return null;
+
+  const slidePercent = 100 / visible;
+
+  return (
+    <section className={styles.section}>
+      <div className={`section-pad ${styles.inner}`}>
+        <div className={styles.header}>
+          <div>
+            <p className="section-label">{t('favorites')}</p>
+            <h2 className="section-title">
+              {featuredTitle}
+            </h2>
+          </div>
+          <div className={styles.headerAside}>
+            <p className={styles.subtitle}>
+              {featuredSubtitle}
+            </p>
+            <Link to="/shop" className={styles.shopLink}>
+              {t('browsePlants')}
+              <i className="fa-solid fa-arrow-right" aria-hidden />
+            </Link>
+          </div>
+        </div>
+
+        <div className={styles.slider}>
+          <div className={styles.viewport}>
+            <div
+              className={styles.track}
+              style={{
+                transform: `translateX(-${index * slidePercent}%)`,
+              }}
+            >
+              {cards.map((product) => (
+                <div
+                  key={product.id}
+                  className={styles.slide}
+                  style={{ flexBasis: `${slidePercent}%`, maxWidth: `${slidePercent}%` }}
+                >
+                  <PlantCard product={product} />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className={styles.controls}>
+            <div className={styles.arrows}>
+              <button
+                type="button"
+                className={styles.arrow}
+                onClick={prev}
+                disabled={pageCount <= 1}
+                aria-label="Previous featured plants"
+              >
+                <i className="fa-solid fa-arrow-left" aria-hidden />
+              </button>
+              <button
+                type="button"
+                className={styles.arrow}
+                onClick={next}
+                disabled={pageCount <= 1}
+                aria-label="Next featured plants"
+              >
+                <i className="fa-solid fa-arrow-right" aria-hidden />
+              </button>
+            </div>
+
+            <div className={styles.pagination} role="tablist" aria-label="Featured slides">
+              {Array.from({ length: pageCount }).map((_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  role="tab"
+                  aria-selected={i === index}
+                  aria-label={`Go to slide ${i + 1}`}
+                  className={`${styles.dot} ${i === index ? styles.dotActive : ''}`}
+                  onClick={() => goTo(i)}
+                >
+                  <span className={styles.dotFill} />
+                </button>
+              ))}
+            </div>
+
+            <p className={styles.counter}>
+              <span>{String(index + 1).padStart(2, '0')}</span>
+              <span className={styles.counterSep}>/</span>
+              <span>{String(pageCount).padStart(2, '0')}</span>
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+
+========================================================================
+10 — FeaturedProducts.module.css
+FILE: c:\Users\TRUE TECH\Desktop\nabat\nabategypt\src\Components\FeaturedProducts\FeaturedProducts.module.css
+========================================================================
+
+.section {
+  background:
+    linear-gradient(180deg, #f7faf7 0%, #ffffff 42%, #f3f7f4 100%);
+  padding-top: 4.5rem;
+  padding-bottom: 5rem;
+}
+
+@media (min-width: 768px) {
+  .section {
+    padding-top: 6rem;
+    padding-bottom: 6.5rem;
+  }
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2.25rem;
+}
+
+@media (min-width: 768px) {
+  .header {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 3rem;
+  }
+}
+
+.headerAside {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  max-width: 18rem;
+}
+
+@media (min-width: 768px) {
+  .headerAside {
+    align-items: flex-end;
+    text-align: right;
+  }
+}
+
+.subtitle {
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: #5a6b60;
+}
+
+.shopLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: var(--font-nav);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #1f3d2b;
+  text-decoration: none;
+  transition: color 0.25s ease;
+}
+
+.shopLink i {
+  font-size: 0.65rem;
+  transition: transform 0.25s ease;
+}
+
+.shopLink:hover {
+  color: #5b8a6a;
+}
+
+.shopLink:hover i {
+  transform: translateX(3px);
+}
+
+.slider {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.viewport {
+  overflow: hidden;
+  margin: 0 -0.25rem;
+  padding: 0.25rem;
+}
+
+.track {
+  display: flex;
+  transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.slide {
+  flex-shrink: 0;
+  padding: 0 0.5rem;
+  box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+  .slide {
+    padding: 0 0.65rem;
+  }
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+  align-items: center;
+}
+
+@media (min-width: 720px) {
+  .controls {
+    grid-template-columns: auto 1fr auto;
+    gap: 1.5rem;
+  }
+}
+
+.arrows {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  padding: 0;
+  border: 1px solid #c9d5cc;
+  background: #fff;
+  color: #1f3d2b;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.arrow:hover:not(:disabled) {
+  background: #1f3d2b;
+  border-color: #1f3d2b;
+  color: #fff;
+}
+
+.arrow:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.arrow:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+@media (min-width: 768px) {
+  .arrow {
+    width: 3.25rem;
+    height: 3.25rem;
+    font-size: 1rem;
+  }
+}
+
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+}
+
+@media (min-width: 720px) {
+  .pagination {
+    justify-content: flex-start;
+  }
+}
+
+.dot {
+  position: relative;
+  width: 1.65rem;
+  height: 2px;
+  padding: 0.55rem 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.dot::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 2px;
+  transform: translateY(-50%);
+  background: #c9d5cc;
+  transition: background 0.25s ease;
+}
+
+.dotFill {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 0;
+  height: 2px;
+  transform: translateY(-50%);
+  background: #1f3d2b;
+  transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dotActive::before {
+  background: #d7e0d9;
+}
+
+.dotActive .dotFill {
+  width: 100%;
+}
+
+.dot:hover::before {
+  background: #5b8a6a;
+}
+
+.counter {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.25rem;
+  justify-self: start;
+  font-family: var(--font-nav);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  color: #1f3d2b;
+}
+
+@media (min-width: 720px) {
+  .counter {
+    justify-self: end;
+  }
+}
+
+.counterSep {
+  color: #5b8a6a;
+  font-weight: 500;
+}
+
+
+========================================================================
+11 — SocialMediaSection.jsx
+FILE: c:\Users\TRUE TECH\Desktop\nabat\nabategypt\src\Components\SocialMediaSection\SocialMediaSection.jsx
+========================================================================
+
+import React from 'react';
+import socialMediaImage from '../../assets/images/socialmedia.png';
+import BrandLogo from '../BrandLogo/BrandLogo';
+import { STORE } from '../../config/store';
+import { useLanguage } from '../LanguageContext/LanguageContext';
+import { useSiteContent } from '../SiteContentContext/SiteContentContext';
+
+/** Only link icons that have live destinations â€” empty # links hurt trust */
+const SOCIAL = [
+  {
+    id: 'whatsapp',
+    icon: 'whatsapp',
+    href: (phone) => `https://wa.me/2${String(phone).replace(/^0/, '')}`,
+    active: true,
+  },
+  // Add real profile URLs here when accounts are live:
+  // { id: 'instagram', icon: 'instagram', href: () => 'https://instagram.com/â€¦', active: true },
+];
+
+export default function SocialMediaSection() {
+  const { t, isAr } = useLanguage();
+  const { content } = useSiteContent();
+  const home = content?.home || {};
+  const phone = content?.store?.phone || STORE.phone;
+  const socialTitle = isAr
+    ? t('socialTitle')
+    : home.socialTitle || t('socialTitle');
+  const socialSubtitle = isAr
+    ? t('socialSubtitle')
+    : home.socialSubtitle || t('socialSubtitle');
+
+  const links = SOCIAL.filter((s) => s.active);
+
+  return (
+    <section className="grid md:grid-cols-2">
+      <div className="leaf-wash section-pad flex flex-col justify-center py-16 md:py-24">
+        <BrandLogo className="mb-6" imgClassName="h-10 w-auto object-contain" />
+        <p className="section-label">{t('community')}</p>
+        <h2 className="section-title">{socialTitle}</h2>
+        <p className="section-subtitle">{socialSubtitle}</p>
+        <ul className="mt-8 space-y-3 font-body text-sm text-nabat-muted">
+          <li className="flex gap-2">
+            <i className="fa-solid fa-seedling mt-0.5 text-nabat-accent" aria-hidden />
+            {t('communityPoint1')}
+          </li>
+          <li className="flex gap-2">
+            <i className="fa-solid fa-hand-holding-heart mt-0.5 text-nabat-accent" aria-hidden />
+            {t('communityPoint2')}
+          </li>
+          <li className="flex gap-2">
+            <i className="fa-solid fa-box-open mt-0.5 text-nabat-accent" aria-hidden />
+            {t('communityPoint3')}
+          </li>
+        </ul>
+        {links.length > 0 && (
+          <div className="mt-10 flex gap-2">
+            {links.map((n) => (
+              <a
+                key={n.id}
+                href={n.href(phone)}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={n.id}
+                className="flex h-12 w-12 items-center justify-center border border-nabat-border text-nabat-primary transition-colors hover:border-nabat-primary hover:bg-nabat-primary hover:text-white"
+              >
+                <i className={`fa-brands fa-${n.icon}`} />
+              </a>
+            ))}
+          </div>
+        )}
+      </div>
+      <div className="relative min-h-[18rem] md:min-h-full">
+        <img
+          src={socialMediaImage}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-nabat-primary/35 to-transparent" />
+      </div>
+    </section>
+  );
+}
+
+
+========================================================================
+SHARED — PlantCard.jsx (used by product grids)
+FILE: c:\Users\TRUE TECH\Desktop\nabat\nabategypt\src\Components\PlantCard\PlantCard.jsx
+========================================================================
+
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useCart } from '../CartContext/CartContext';
+import { useLanguage } from '../LanguageContext/LanguageContext';
+import { formatEGP } from '../../utils/money';
+import {
+  getCategoryLabel,
+  getProductName,
+} from '../../utils/productLocale';
+import styles from './PlantCard.module.css';
+
+export default function PlantCard({ product }) {
+  const navigate = useNavigate();
+  const { cartItems, addToCart } = useCart();
+  const { t, isAr } = useLanguage();
+  const [justAdded, setJustAdded] = useState(false);
+
+  if (!product) return null;
+
+  const displayName = getProductName(product, { isAr, t });
+  const categoryLabel = getCategoryLabel(product.category, { t });
+  const quantity = cartItems.find((item) => item.id === product.id)?.quantity || 0;
+  const hoverImage = product.hoverImage || product.secondaryImage || product.images?.[1];
+  const hasHoverImage = Boolean(hoverImage);
+  const outOfStock = product.stock != null && product.stock <= 0;
+  const isSeasonal = Boolean(product.isRecent || product.isSeasonal);
+
+  useEffect(() => {
+    if (!justAdded) return undefined;
+    const timer = setTimeout(() => setJustAdded(false), 1400);
+    return () => clearTimeout(timer);
+  }, [justAdded]);
+
+  const openProduct = () => navigate(`/singleproduct/${product.id}`);
+
+  const handleAdd = (e) => {
+    e.stopPropagation();
+    if (outOfStock) return;
+    addToCart(product);
+    setJustAdded(true);
+  };
+
+  let statusBadge = null;
+  if (outOfStock) {
+    statusBadge = { label: t('outOfStock'), className: styles.badgeSold };
+  } else if (isSeasonal) {
+    statusBadge = { label: t('seasonal'), className: styles.badgeSeasonal };
+  } else {
+    statusBadge = { label: t('inStock'), className: styles.badgeStock };
+  }
+
+  return (
+    <article className={styles.card}>
+      <div className={styles.frame}>
+        <button
+          type="button"
+          className={`${styles.media} ${hasHoverImage ? styles.mediaSwap : ''}`}
+          onClick={openProduct}
+          aria-label={`${t('shop')} ${displayName}`}
+        >
+          <img
+            src={product.image}
+            alt=""
+            className={`${styles.image} ${styles.imagePrimary}`}
+          />
+          {hasHoverImage && (
+            <img
+              src={hoverImage}
+              alt=""
+              className={`${styles.image} ${styles.imageSecondary}`}
+            />
+          )}
+        </button>
+
+        <span className={`${styles.badge} ${statusBadge.className}`}>
+          {statusBadge.label}
+        </span>
+
+        {product.onSale && !outOfStock && (
+          <span className={`${styles.badge} ${styles.badgeSale}`}>{t('sale')}</span>
+        )}
+
+        <button
+          type="button"
+          className={`${styles.addBtn} ${justAdded ? styles.addBtnDone : ''} ${
+            quantity > 0 && !justAdded ? styles.addBtnInCart : ''
+          }`}
+          onClick={handleAdd}
+          disabled={outOfStock}
+          aria-label={
+            justAdded
+              ? t('addedToBag')
+              : quantity > 0
+                ? t('addAnother')
+                : t('addToBag')
+          }
+          title={outOfStock ? t('outOfStock') : t('addToBag')}
+        >
+          <i
+            className={`fa-solid ${justAdded ? 'fa-check' : 'fa-plus'}`}
+            aria-hidden
+          />
+        </button>
+      </div>
+
+      <div className={styles.footer}>
+        <p className={styles.category}>{categoryLabel}</p>
+        <h2 className={styles.name}>
+          <button type="button" onClick={openProduct}>
+            {displayName}
+          </button>
+        </h2>
+        <div className={styles.priceRow}>
+          <p className={styles.price}>{formatEGP(product.price)}</p>
+          {product.compareAtPrice != null &&
+            Number(product.compareAtPrice) > Number(product.price) && (
+              <p className={styles.compare}>{formatEGP(product.compareAtPrice)}</p>
+            )}
+        </div>
+      </div>
+    </article>
+  );
+}
+
+
+========================================================================
+SHARED — PlantCard.module.css
+FILE: c:\Users\TRUE TECH\Desktop\nabat\nabategypt\src\Components\PlantCard\PlantCard.module.css
+========================================================================
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  background: transparent;
+}
+
+.frame {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+}
+
+.media {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  background: #ebe8e2;
+  overflow: hidden;
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transition: opacity 0.45s ease, transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.imagePrimary {
+  position: relative;
+  z-index: 1;
+}
+
+.imageSecondary {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  opacity: 0;
+}
+
+.mediaSwap:hover .imagePrimary,
+.card:hover .mediaSwap .imagePrimary {
+  opacity: 0;
+}
+
+.mediaSwap:hover .imageSecondary,
+.card:hover .mediaSwap .imageSecondary {
+  opacity: 1;
+}
+
+.card:hover .media:not(.mediaSwap) .imagePrimary {
+  transform: scale(1.035);
+}
+
+.badge {
+  position: absolute;
+  top: 0.65rem;
+  inset-inline-start: 0.65rem;
+  z-index: 4;
+  padding: 0.28rem 0.5rem;
+  font-family: var(--font-nav);
+  font-size: 0.5625rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  line-height: 1.2;
+}
+
+.badgeStock {
+  background: rgba(255, 255, 255, 0.88);
+  color: var(--text-muted);
+  border: 1px solid rgba(213, 224, 216, 0.9);
+}
+
+.badgeSeasonal {
+  background: var(--seasonal);
+  color: #fff;
+}
+
+.badgeSold {
+  background: rgba(20, 32, 26, 0.72);
+  color: #fff;
+}
+
+.badgeSale {
+  inset-inline-start: auto;
+  inset-inline-end: 0.65rem;
+  background: var(--main-color);
+  color: #eaf3ec;
+}
+
+.addBtn {
+  position: absolute;
+  z-index: 5;
+  bottom: 0.65rem;
+  inset-inline-end: 0.65rem;
+  width: 2.35rem;
+  height: 2.35rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: var(--main-color);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.25s ease, transform 0.25s ease;
+}
+
+.addBtn:hover:not(:disabled) {
+  background: var(--accent);
+  transform: scale(1.04);
+}
+
+.addBtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.addBtnDone {
+  background: var(--accent);
+}
+
+.addBtnInCart {
+  background: #2a5238;
+}
+
+.addBtn i {
+  font-size: 0.75rem;
+}
+
+.footer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.1rem 0.05rem 0;
+}
+
+.category {
+  font-family: var(--font-nav);
+  font-size: 0.5625rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0 0 0.15rem;
+}
+
+.name {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  color: var(--text);
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.name button {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  cursor: pointer;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color 0.25s ease;
+}
+
+.name button:hover {
+  color: var(--accent);
+}
+
+.priceRow {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+}
+
+.price {
+  margin: 0;
+  font-family: var(--font-nav);
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--main-color);
+  line-height: 1;
+}
+
+.compare {
+  margin: 0;
+  font-family: var(--font-nav);
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
+
+

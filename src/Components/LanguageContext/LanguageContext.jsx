@@ -10,11 +10,23 @@ export function useLanguage() {
 }
 
 export function LanguageProvider({ children }) {
-  const [lang, setLang] = useState('en');
+  const [lang, setLang] = useState(() => {
+    try {
+      const saved = localStorage.getItem('nabat-lang');
+      return saved === 'ar' || saved === 'en' ? saved : 'en';
+    } catch {
+      return 'en';
+    }
+  });
 
   useEffect(() => {
     document.documentElement.lang = lang === 'ar' ? 'ar' : 'en';
     document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+    try {
+      localStorage.setItem('nabat-lang', lang);
+    } catch {
+      /* ignore */
+    }
   }, [lang]);
 
   const t = (key, vars) => translate(lang, key, vars);

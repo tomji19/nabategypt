@@ -1,8 +1,13 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useProducts } from '../ProductsContext/ProductsContext';
+import { useLanguage } from '../LanguageContext/LanguageContext';
 import AddToCartButton from '../AddToCartButton/AddToCartButton';
 import pageBanner from '../../assets/images/pagebanner.png';
+import {
+  getCategoryLabel,
+  getProductName,
+} from '../../utils/productLocale';
 
 export default function SearchResultsPage() {
   const location = useLocation();
@@ -10,13 +15,22 @@ export default function SearchResultsPage() {
   const queryParams = new URLSearchParams(location.search);
   const searchQuery = queryParams.get('query') || '';
   const { products } = useProducts();
+  const { t, isAr } = useLanguage();
   const [hoveredProductId, setHoveredProductId] = useState(null);
 
-  const searchResults = products.filter(
-    (product) =>
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.category.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const searchResults = useMemo(() => {
+    const q = searchQuery.toLowerCase();
+    if (!q) return [];
+    return (products || []).filter((product) => {
+      const name = getProductName(product, { isAr, t }).toLowerCase();
+      return (
+        name.includes(q) ||
+        product.name?.toLowerCase().includes(q) ||
+        product.nameAr?.toLowerCase().includes(q) ||
+        product.category?.toLowerCase().includes(q)
+      );
+    });
+  }, [products, searchQuery, isAr, t]);
 
   return (
     <>
@@ -29,54 +43,55 @@ export default function SearchResultsPage() {
         <div className="absolute inset-0 bg-nabat-primary/60" />
         <div className="relative z-10">
           <p className="mb-2 font-nav text-[11px] uppercase tracking-[0.2em] text-white/70">
-            Search
+            {t('searchLabel')}
           </p>
-          <h1 className="page-banner-title">
-            &ldquo;{searchQuery}&rdquo;
-          </h1>
+          <h1 className="page-banner-title">&ldquo;{searchQuery}&rdquo;</h1>
         </div>
       </section>
 
       <div className="section-pad py-12 md:py-16">
         {searchResults.length === 0 ? (
-          <p className="font-body text-nabat-muted">
-            No products found matching &ldquo;{searchQuery}&rdquo;
+          <p className="text-center font-body text-nabat-muted">
+            {t('noPlantsFound')}
           </p>
         ) : (
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            {searchResults.map((product) => (
-              <article
-                key={product.id}
-                className="product-card"
-                onMouseEnter={() => setHoveredProductId(product.id)}
-                onMouseLeave={() => setHoveredProductId(null)}
-              >
-                <div className="product-card-image-wrap">
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="product-card-image cursor-pointer"
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {searchResults.map((product) => {
+              const name = getProductName(product, { isAr, t });
+              return (
+                <article
+                  key={product.id}
+                  className="border border-nabat-border bg-white"
+                  onMouseEnter={() => setHoveredProductId(product.id)}
+                  onMouseLeave={() => setHoveredProductId(null)}
+                >
+                  <button
+                    type="button"
+                    className="block w-full"
                     onClick={() => navigate(`/singleproduct/${product.id}`)}
-                  />
-                  <div
-                    className={`absolute inset-x-0 bottom-0 transition-all duration-300 ${
-                      hoveredProductId === product.id
-                        ? 'translate-y-0 opacity-100'
-                        : 'translate-y-full opacity-0'
-                    }`}
                   >
-                    <AddToCartButton product={product} />
+                    <img
+                      src={
+                        hoveredProductId === product.id && product.hoverImage
+                          ? product.hoverImage
+                          : product.image
+                      }
+                      alt={name}
+                      className="aspect-square w-full object-cover bg-nabat-mist"
+                    />
+                  </button>
+                  <div className="p-4">
+                    <p className="font-nav text-xs uppercase tracking-wider text-nabat-muted">
+                      {getCategoryLabel(product.category, { t })}
+                    </p>
+                    <h2 className="font-heading text-lg font-medium">{name}</h2>
+                    <div className="mt-3">
+                      <AddToCartButton product={product} />
+                    </div>
                   </div>
-                </div>
-                <div className="mt-4 space-y-1">
-                  <p className="font-nav text-[10px] uppercase tracking-[0.18em] text-nabat-accent">
-                    {product.category}
-                  </p>
-                  <h2 className="font-heading text-lg font-medium">{product.name}</h2>
-                  <p className="font-nav text-sm">{product.price} EGP</p>
-                </div>
-              </article>
-            ))}
+                </article>
+              );
+            })}
           </div>
         )}
       </div>

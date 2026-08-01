@@ -21,6 +21,9 @@ function mapDbProduct(row) {
     isActive: row.is_active !== false,
     isFeatured: !!row.is_featured,
     isRecent: !!row.is_recent,
+    isGift: !!row.is_gift,
+    isEasyCare:
+      !!row.is_easy_care || String(row.care || '').toLowerCase() === 'easy',
     care: row.care || '',
     light: row.light || '',
     sortOrder: row.sort_order ?? 0,
@@ -31,11 +34,23 @@ function mapDbProduct(row) {
  * Load active products from Supabase only. No local/CMS fallback.
  */
 export async function fetchProducts() {
-  const { data, error } = await supabase
-    .from('products')
-    .select('*')
-    .eq('is_active', true)
-    .order('sort_order', { ascending: true });
+  let data;
+  let error;
+  try {
+    ({ data, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true }));
+  } catch (err) {
+    const msg = err?.message || String(err);
+    if (/failed to fetch|networkerror|fetch/i.test(msg)) {
+      throw new Error(
+        'Could not reach Supabase (network). Check your connection, that the project is not paused, and restart npm run dev after editing .env.'
+      );
+    }
+    throw err;
+  }
 
   if (error) throw error;
 
@@ -44,6 +59,8 @@ export async function fetchProducts() {
     products,
     featuredProducts: products.filter((p) => p.isFeatured),
     recentProducts: products.filter((p) => p.isRecent),
+    giftProducts: products.filter((p) => p.isGift),
+    easyCareProducts: products.filter((p) => p.isEasyCare),
     source: 'supabase',
     getProductById: (id) =>
       products.find((p) => p.id === id || p.dbId === id) || null,
@@ -78,6 +95,8 @@ export async function upsertProduct(product) {
     is_active: product.isActive !== false,
     is_featured: !!product.isFeatured,
     is_recent: !!product.isRecent,
+    is_gift: !!product.isGift,
+    is_easy_care: !!product.isEasyCare,
     care: product.care || null,
     light: product.light || null,
     sort_order: Number(product.sortOrder) || 0,
@@ -88,11 +107,28 @@ export async function upsertProduct(product) {
     row.id = product.dbId;
   }
 
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from('products')
     .upsert(row, { onConflict: 'slug' })
     .select()
     .single();
+
+  if (error && /is_gift/i.test(error.message || '')) {
+    delete row.is_gift;
+    ({ data, error } = await supabase
+      .from('products')
+      .upsert(row, { onConflict: 'slug' })
+      .select()
+      .single());
+  }
+  if (error && /is_easy_care/i.test(error.message || '')) {
+    delete row.is_easy_care;
+    ({ data, error } = await supabase
+      .from('products')
+      .upsert(row, { onConflict: 'slug' })
+      .select()
+      .single());
+  }
 
   if (error) throw error;
   return mapDbProduct(data);

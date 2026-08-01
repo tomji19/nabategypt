@@ -1,8 +1,8 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../CartContext/CartContext';
-import { useAuth } from '../AuthContext/AuthContext';
-import { loginPathWithRedirect } from '../../utils/authRedirect';
+import { useLanguage } from '../LanguageContext/LanguageContext';
+import { getCategoryLabel, getProductName } from '../../utils/productLocale';
 import styles from './CartDrawer.module.css';
 
 export default function CartDrawer() {
@@ -15,16 +15,12 @@ export default function CartDrawer() {
     updateQuantity,
     removeFromCart,
   } = useCart();
-  const { userLoggedIn } = useAuth();
+  const { t, isAr } = useLanguage();
   const navigate = useNavigate();
 
   const handleCheckout = (e) => {
     e.preventDefault();
     closeCart();
-    if (!userLoggedIn) {
-      navigate(loginPathWithRedirect('/checkout'));
-      return;
-    }
     navigate('/checkout');
   };
 
@@ -43,9 +39,9 @@ export default function CartDrawer() {
       >
         <header className={styles.header}>
           <div>
-            <p className={styles.label}>Your bag</p>
+            <p className={styles.label}>{t('yourBag')}</p>
             <h2 className={styles.title}>
-              {cartCount} {cartCount === 1 ? 'item' : 'items'}
+              {cartCount} {cartCount === 1 ? t('itemSingular') : t('items')}
             </h2>
           </div>
           <button
@@ -61,9 +57,9 @@ export default function CartDrawer() {
         <div className={styles.body}>
           {cartItems.length === 0 ? (
             <div className={styles.empty}>
-              <p>Your bag is empty.</p>
+              <p>{t('bagEmpty')}</p>
               <button type="button" className={styles.continue} onClick={closeCart}>
-                Continue shopping
+                {t('continueShopping')}
               </button>
             </div>
           ) : (
@@ -72,9 +68,15 @@ export default function CartDrawer() {
                 <li key={item.id} className={styles.item}>
                   <img src={item.image} alt="" className={styles.thumb} />
                   <div className={styles.details}>
-                    <p className={styles.itemCat}>{item.category}</p>
-                    <p className={styles.itemName}>{item.name}</p>
-                    <p className={styles.itemPrice}>{item.price} EGP</p>
+                    <p className={styles.itemCat}>
+                      {getCategoryLabel(item.category, { t })}
+                    </p>
+                    <p className={styles.itemName}>
+                      {getProductName(item, { isAr, t })}
+                    </p>
+                    <p className={styles.itemPrice}>
+                      {item.price} {t('egp')}
+                    </p>
 
                     <div className={styles.itemActions}>
                       <div className={styles.stepper}>
@@ -124,7 +126,7 @@ export default function CartDrawer() {
               className={styles.checkout}
               onClick={handleCheckout}
             >
-              {userLoggedIn ? 'Checkout' : 'Sign in to checkout'}
+              {t('checkout')}
             </button>
             <Link to="/cart" className={styles.viewCart} onClick={closeCart}>
               View full cart

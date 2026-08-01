@@ -9,8 +9,14 @@ import styles from './RecentProducts.module.css';
 export default function RecentProducts() {
   const { recentProducts, products } = useProducts();
   const { content } = useSiteContent();
-  const { t } = useLanguage();
+  const { t, isAr } = useLanguage();
   const home = content?.home || {};
+  const recentTitle = isAr
+    ? t('recentTitle')
+    : home.recentTitle || t('recentTitle');
+  const recentSubtitle = isAr
+    ? t('recentSubtitle')
+    : home.recentSubtitle || t('recentSubtitle');
 
   const cards = useMemo(() => {
     const recent = Array.isArray(recentProducts) ? recentProducts : [];
@@ -32,15 +38,15 @@ export default function RecentProducts() {
           <div>
             <p className="section-label">{t('justIn')}</p>
             <h2 className="section-title">
-              {home.recentTitle || t('recentTitle')}
+              {recentTitle}
             </h2>
           </div>
           <div className={styles.headerAside}>
             <p className={styles.subtitle}>
-              {home.recentSubtitle || t('recentSubtitle')}
+              {recentSubtitle}
             </p>
             <Link to="/shop" className={styles.shopLink}>
-              View all
+              {t('browsePlants')}
               <i className="fa-solid fa-arrow-right" aria-hidden />
             </Link>
           </div>

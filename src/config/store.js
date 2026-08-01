@@ -14,6 +14,16 @@ export const STORE = {
   shippingFee: 50,
   taxRate: 0,
   paymentNumber: '01270545289',
+  social: {
+    facebook: '#',
+    instagram: '#',
+  },
+};
+
+/** First-order welcome promo — signed-in accounts only, once per account */
+export const PROMO = {
+  code: 'MEH10',
+  percent: 10,
 };
 
 export const PAYMENT_METHODS = [

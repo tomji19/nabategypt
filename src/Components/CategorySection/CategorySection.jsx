@@ -1,59 +1,114 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useLanguage } from '../LanguageContext/LanguageContext';
+import { useSiteContent } from '../SiteContentContext/SiteContentContext';
+import { useCategories } from '../CategoriesContext/CategoriesContext';
+import { CARD_IMAGE_FALLBACKS, cmsImage } from '../../config/cmsFallbacks';
 import styles from './CategorySection.module.css';
 
-import outdoorImg from '../../assets/images/outdoorplants.png';
-import succulentsImg from '../../assets/images/succulents.png';
-import indoorImg from '../../assets/images/indoor.png';
+const listVariants = {
+  hidden: {},
+  show: {
+    transition: { staggerChildren: 0.09, delayChildren: 0.06 },
+  },
+};
 
-const categories = [
-  { name: 'Indoor', image: indoorImg },
-  { name: 'Outdoor', image: outdoorImg },
-  { name: 'Succulents', image: succulentsImg },
-];
+const itemVariants = {
+  hidden: { opacity: 0, y: 24 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] },
+  },
+};
+
+function shopPathForCategory(category) {
+  const name = category?.name || '';
+  return `/shop?category=${encodeURIComponent(name)}`;
+}
 
 export default function CategorySection() {
+  const { t, isAr } = useLanguage();
+  const { content } = useSiteContent();
+  const { activeCategories } = useCategories();
+  const home = content?.home || {};
+  const categories = activeCategories || [];
+
+  if (!categories.length) return null;
+
+  const browseLabel = isAr
+    ? t('browseLabel')
+    : home.browseLabel || t('browseLabel');
+  const browseTitle = isAr
+    ? t('browseTitle')
+    : home.browseTitle || t('browseTitle');
+  const browseQuote = isAr
+    ? t('browseQuote')
+    : home.browseQuote || t('browseQuote');
+
   return (
-    <section className="section-pad bg-white py-20 md:py-28">
-      <div className="mb-12 md:mb-16">
-        <p className="section-label">Browse</p>
-        <h2 className="section-title">Find your plant</h2>
-      </div>
-
-      <div className={styles.layout}>
-        <motion.blockquote
-          className={styles.quote}
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-40px' }}
-          transition={{ duration: 0.45 }}
-        >
-          <span className={styles.quoteMark} aria-hidden>
-            “
-          </span>
-          <p>From sunlit balconies to quiet corners indoors</p>
-        </motion.blockquote>
-
-        <div className={styles.grid}>
-          {categories.map((cat, i) => (
-            <motion.div
-              key={cat.name}
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-40px' }}
-              transition={{ duration: 0.45, delay: 0.06 + i * 0.05 }}
-            >
-              <Link to="/shop" className={styles.item}>
-                <div className={styles.stage}>
-                  <span className={styles.halo} aria-hidden />
-                  <img src={cat.image} alt="" className={styles.plant} />
-                </div>
-                <span className={styles.name}>{cat.name}</span>
-              </Link>
-            </motion.div>
-          ))}
+    <section className={styles.section} aria-labelledby="collections-heading">
+      <div className={`section-pad ${styles.inner}`}>
+        <div className={styles.intro}>
+          <header className={styles.header}>
+            <p className={styles.label}>{browseLabel}</p>
+            <h2 id="collections-heading" className={styles.title}>
+              {browseTitle}
+            </h2>
+          </header>
+          <p className={styles.quote}>{browseQuote}</p>
         </div>
+
+        <motion.ul
+          className={styles.grid}
+          variants={listVariants}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, amount: 0.2 }}
+        >
+          {categories.map((category, index) => {
+            const label = isAr
+              ? category.nameAr || category.name
+              : category.name;
+            const src = cmsImage(
+              category.image,
+              CARD_IMAGE_FALLBACKS[category.id]
+            );
+
+            return (
+              <motion.li
+                key={category.id || index}
+                className={styles.cell}
+                variants={itemVariants}
+              >
+                <Link to={shopPathForCategory(category)} className={styles.card}>
+                  {src ? (
+                    <img
+                      src={src}
+                      alt=""
+                      className={styles.image}
+                      loading="lazy"
+                    />
+                  ) : (
+                    <span className={styles.image} aria-hidden />
+                  )}
+                  <span className={styles.shade} aria-hidden="true" />
+                  <span className={styles.index} aria-hidden="true">
+                    {String(index + 1).padStart(2, '0')}
+                  </span>
+                  <span className={styles.footer}>
+                    <span className={styles.name}>{label}</span>
+                    <span className={styles.cta}>
+                      {t('explore')}
+                      <i className="fa-solid fa-arrow-right" aria-hidden />
+                    </span>
+                  </span>
+                </Link>
+              </motion.li>
+            );
+          })}
+        </motion.ul>
       </div>
     </section>
   );

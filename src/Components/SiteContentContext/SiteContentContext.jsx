@@ -10,6 +10,7 @@ export function useSiteContent() {
     return {
       content: DEFAULT_SITE_CONTENT,
       refreshContent: () => {},
+      patchContent: () => {},
       loading: false,
     };
   }
@@ -33,13 +34,20 @@ export function SiteContentProvider({ children }) {
     }
   };
 
+  const patchContent = (key, value) => {
+    setContent((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
+
   useEffect(() => {
     load();
   }, []);
 
   return (
     <SiteContentContext.Provider
-      value={{ content, refreshContent: load, loading }}
+      value={{ content, refreshContent: load, patchContent, loading }}
     >
       {children}
     </SiteContentContext.Provider>

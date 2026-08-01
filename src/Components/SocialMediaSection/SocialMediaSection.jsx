@@ -1,49 +1,72 @@
 import React from 'react';
-import socialMediaImage from '../../assets/images/socialmedia.png';
 import BrandLogo from '../BrandLogo/BrandLogo';
-import { STORE } from '../../config/store';
 import { useLanguage } from '../LanguageContext/LanguageContext';
 import { useSiteContent } from '../SiteContentContext/SiteContentContext';
+import { SECTION_IMAGE_FALLBACKS } from '../../config/cmsFallbacks';
+import styles from './SocialMediaSection.module.css';
+
+const WHATSAPP_PHONE = '01270545289';
+
+function whatsappHref(phone) {
+  const digits = String(phone || WHATSAPP_PHONE).replace(/\D/g, '');
+  const local = digits.replace(/^20/, '').replace(/^0/, '');
+  return `https://wa.me/20${local}`;
+}
 
 export default function SocialMediaSection() {
-  const { t } = useLanguage();
+  const { t, isAr } = useLanguage();
   const { content } = useSiteContent();
   const home = content?.home || {};
-  const phone = content?.store?.phone || STORE.phone;
-  const wa = `https://wa.me/2${String(phone).replace(/^0/, '')}`;
+  const socialTitle = isAr
+    ? t('socialTitle')
+    : home.socialTitle || t('socialTitle');
+  const socialSubtitle = isAr
+    ? t('socialSubtitle')
+    : home.socialSubtitle || t('socialSubtitle');
+  const socialSrc = SECTION_IMAGE_FALLBACKS.socialImage;
 
   return (
-    <section className="grid md:grid-cols-2">
-      <div className="leaf-wash section-pad flex flex-col justify-center py-16 md:py-24">
-        <BrandLogo className="mb-6" imgClassName="h-10 w-auto object-contain" />
-        <p className="section-label">{t('community')}</p>
-        <h2 className="section-title">
-          {home.socialTitle || t('socialTitle')}
-        </h2>
-        <p className="section-subtitle">
-          {home.socialSubtitle || t('socialSubtitle')}
-        </p>
-        <div className="mt-10 flex gap-2">
-          {['facebook', 'instagram', 'youtube', 'whatsapp'].map((n) => (
+    <section className={styles.section} aria-labelledby="community-heading">
+      <div className={`section-pad ${styles.inner}`}>
+        <div className={styles.copy}>
+          <BrandLogo className={styles.logo} imgClassName="h-10 w-auto object-contain" />
+          <p className="section-label">{t('community')}</p>
+          <h2 id="community-heading" className="section-title">
+            {socialTitle}
+          </h2>
+          <p className="section-subtitle">{socialSubtitle}</p>
+          <ul className={styles.points}>
+            <li className={styles.point}>
+              <i className="fa-solid fa-seedling" aria-hidden />
+              {t('communityPoint1')}
+            </li>
+            <li className={styles.point}>
+              <i className="fa-solid fa-hand-holding-heart" aria-hidden />
+              {t('communityPoint2')}
+            </li>
+            <li className={styles.point}>
+              <i className="fa-solid fa-box-open" aria-hidden />
+              {t('communityPoint3')}
+            </li>
+          </ul>
+          <div className={styles.actions}>
             <a
-              key={n}
-              href={n === 'whatsapp' ? wa : '#'}
-              target={n === 'whatsapp' ? '_blank' : undefined}
-              rel={n === 'whatsapp' ? 'noopener noreferrer' : undefined}
-              aria-label={n}
-              className="flex h-12 w-12 items-center justify-center border border-nabat-border text-nabat-primary transition-colors hover:border-nabat-primary hover:bg-nabat-primary hover:text-white"
+              href={whatsappHref(WHATSAPP_PHONE)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-primary"
             >
-              <i className={`fa-brands fa-${n}`} />
+              {t('contactUs')}
             </a>
-          ))}
+          </div>
         </div>
-      </div>
-      <div className="relative min-h-[18rem] md:min-h-full">
-        <img
-          src={socialMediaImage}
-          alt=""
-          className="absolute inset-0 h-full w-full object-cover"
-        />
+
+        <div className={styles.mediaWrap}>
+          <figure className={styles.media}>
+            <img src={socialSrc} alt="" />
+            <span className={styles.mediaFrame} aria-hidden />
+          </figure>
+        </div>
       </div>
     </section>
   );

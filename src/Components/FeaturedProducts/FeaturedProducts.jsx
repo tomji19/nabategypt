@@ -27,8 +27,11 @@ function useVisibleCount() {
 export default function FeaturedProducts() {
   const { featuredProducts, products } = useProducts();
   const { content } = useSiteContent();
-  const { t } = useLanguage();
+  const { t, isAr } = useLanguage();
   const home = content?.home || {};
+  const featuredTitle = isAr
+    ? t('featuredTitle')
+    : home.featuredTitle || t('featuredTitle');
   const visible = useVisibleCount();
 
   const cards = useMemo(() => {
@@ -66,17 +69,14 @@ export default function FeaturedProducts() {
       <div className={`section-pad ${styles.inner}`}>
         <div className={styles.header}>
           <div>
-            <p className="section-label">{t('favorites')}</p>
+            <p className="section-label">{t('bestsellersEyebrow')}</p>
             <h2 className="section-title">
-              {home.featuredTitle || t('featuredTitle')}
+              {featuredTitle}
             </h2>
           </div>
           <div className={styles.headerAside}>
-            <p className={styles.subtitle}>
-              {home.featuredSubtitle || t('featuredSubtitle')}
-            </p>
             <Link to="/shop" className={styles.shopLink}>
-              Shop featured
+              {t('browsePlants')}
               <i className="fa-solid fa-arrow-right" aria-hidden />
             </Link>
           </div>

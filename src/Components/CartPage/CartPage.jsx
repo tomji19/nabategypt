@@ -6,32 +6,24 @@ import { Link, useNavigate } from 'react-router-dom';
 import pageBanner from '../../assets/images/pagebanner.png';
 import { calcOrderTotals, formatEGP } from '../../utils/money';
 import { useLanguage } from '../LanguageContext/LanguageContext';
-import { useAuth } from '../AuthContext/AuthContext';
-import { loginPathWithRedirect } from '../../utils/authRedirect';
+import { getProductName } from '../../utils/productLocale';
 
 export default function CartPage() {
   const { cartItems, updateQuantity, removeFromCart } = useCart();
-  const { t } = useLanguage();
-  const { userLoggedIn, loading: authLoading } = useAuth();
+  const { t, isAr } = useLanguage();
   const navigate = useNavigate();
 
   const handleRemoveItem = (id) => {
     const itemToRemove = cartItems.find((item) => item.id === id);
     if (itemToRemove) {
       removeFromCart(id);
-      toast.success(`${itemToRemove.name}`);
+      toast.success(getProductName(itemToRemove, { isAr, t }));
     }
   };
 
   const handleCheckout = (e) => {
     e.preventDefault();
     if (cartItems.length === 0) return;
-    if (authLoading) return;
-    if (!userLoggedIn) {
-      toast.info(t('signInToCheckout'));
-      navigate(loginPathWithRedirect('/checkout'));
-      return;
-    }
     navigate('/checkout');
   };
 
@@ -68,14 +60,14 @@ export default function CartPage() {
                 >
                   <img
                     src={item.image}
-                    alt={item.name}
+                    alt={getProductName(item, { isAr, t })}
                     className="h-24 w-24 shrink-0 object-cover bg-nabat-mist md:h-32 md:w-32"
                   />
                   <div className="min-w-0 flex-1">
                     <div className="flex justify-between gap-3">
                       <div>
                         <h3 className="font-heading text-lg font-medium text-nabat-text md:text-xl">
-                          {item.name}
+                          {getProductName(item, { isAr, t })}
                         </h3>
                         <p className="mt-1 font-nav text-xs text-nabat-muted">
                           {item.category}
@@ -136,7 +128,7 @@ export default function CartPage() {
                   onClick={handleCheckout}
                   className="btn-primary mt-8 w-full"
                 >
-                  {userLoggedIn ? t('checkout') : t('signInToCheckout')}
+                  {t('checkout')}
                 </button>
               ) : (
                 <Link to="/shop" className="btn-outline mt-8 w-full">

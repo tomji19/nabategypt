@@ -5,12 +5,7 @@ import styles from './HeroSection.module.css';
 import BrandLogo from '../BrandLogo/BrandLogo';
 import { useSiteContent } from '../SiteContentContext/SiteContentContext';
 import { useLanguage } from '../LanguageContext/LanguageContext';
-import bamboo from '../../assets/images/hero-bamboo.jpeg';
-import leather from '../../assets/images/leather-1-hero.jpeg';
-import succulent1 from '../../assets/images/succulent-1-hero.png';
-import succulent2 from '../../assets/images/succulent-2-hero.png';
-import succulent3 from '../../assets/images/succulent-3-hero.png';
-import pothos from '../../assets/images/pothos-hero.jpeg';
+import { cmsImage, HERO_IMAGE_FALLBACKS } from '../../config/cmsFallbacks';
 
 const enter = {
   hidden: { opacity: 0, y: 16 },
@@ -21,17 +16,78 @@ const enter = {
   }),
 };
 
-const trioItems = [
-  { src: succulent1, altKey: 'heroDesertTrio', to: '/shop' },
-  { src: succulent2, altKey: 'heroDesertTrio', to: '/shop' },
-  { src: succulent3, altKey: 'heroDesertTrio', to: '/shop' },
-];
+function pick(isAr, en, ar, fallback) {
+  if (isAr) return (ar && String(ar).trim()) || fallback;
+  return (en && String(en).trim()) || fallback;
+}
 
 export default function HeroSection() {
   const { content } = useSiteContent();
-  const { t } = useLanguage();
+  const { t, isAr } = useLanguage();
   const hero = content?.hero || {};
   const marqueeText = t('marquee');
+
+  const eyebrow = pick(isAr, hero.eyebrow, hero.eyebrowAr, t('heroEyebrow'));
+  const tagline = pick(isAr, hero.tagline, hero.taglineAr, t('heroTagline'));
+  const cta = pick(isAr, hero.cta, hero.ctaAr, t('heroCta'));
+
+  const bambooSrc = cmsImage(hero.bambooImage, HERO_IMAGE_FALLBACKS.bambooImage);
+  const snakeSrc = cmsImage(hero.snakeImage, HERO_IMAGE_FALLBACKS.snakeImage);
+  const pothosSrc = cmsImage(hero.pothosImage, HERO_IMAGE_FALLBACKS.pothosImage);
+  const trioItems = [
+    cmsImage(hero.trioImage1, HERO_IMAGE_FALLBACKS.trioImage1),
+    cmsImage(hero.trioImage2, HERO_IMAGE_FALLBACKS.trioImage2),
+    cmsImage(hero.trioImage3, HERO_IMAGE_FALLBACKS.trioImage3),
+  ];
+
+  const bambooEyebrow = pick(
+    isAr,
+    hero.bambooEyebrow,
+    hero.bambooEyebrowAr,
+    t('heroSignature')
+  );
+  const bambooTitle = pick(
+    isAr,
+    hero.bambooTitle,
+    hero.bambooTitleAr,
+    t('heroLuckyBamboo')
+  );
+  const snakeEyebrow = pick(
+    isAr,
+    hero.snakeEyebrow,
+    hero.snakeEyebrowAr,
+    t('heroIndoor')
+  );
+  const snakeTitle = pick(
+    isAr,
+    hero.snakeTitle,
+    hero.snakeTitleAr,
+    t('heroSnakePlant')
+  );
+  const trioEyebrow = pick(
+    isAr,
+    hero.trioEyebrow,
+    hero.trioEyebrowAr,
+    t('heroTrending')
+  );
+  const trioTitle = pick(
+    isAr,
+    hero.trioTitle,
+    hero.trioTitleAr,
+    t('heroDesertTrio')
+  );
+  const pothosEyebrow = pick(
+    isAr,
+    hero.pothosEyebrow,
+    hero.pothosEyebrowAr,
+    t('heroCollection')
+  );
+  const pothosTitle = pick(
+    isAr,
+    hero.pothosTitle,
+    hero.pothosTitleAr,
+    t('heroHangingPothos')
+  );
 
   return (
     <section className={`section-pad ${styles.hero}`}>
@@ -43,19 +99,15 @@ export default function HeroSection() {
           initial="hidden"
           animate="show"
         >
-          <p className={styles.brandMeta}>
-            {hero.eyebrow || t('heroEyebrow')}
-          </p>
+          <p className={styles.brandMeta}>{eyebrow}</p>
           <BrandLogo
             className={styles.brandLogoWrap}
             imgClassName={styles.brandLogo}
           />
           <div>
-            <p className={styles.brandCopy}>
-              {hero.tagline || t('heroTagline')}
-            </p>
+            <p className={styles.brandCopy}>{tagline}</p>
             <Link to="/shop" className={styles.cta}>
-              {hero.cta || t('heroCta')}
+              {cta}
               <span aria-hidden>↗</span>
             </Link>
           </div>
@@ -69,7 +121,7 @@ export default function HeroSection() {
           animate="show"
         >
           <Link to="/shop" className={`${styles.tile} ${styles.tileBamboo}`}>
-            <img src={bamboo} alt={t('heroLuckyBamboo')} className={styles.tileImg} />
+            <img src={bambooSrc} alt={bambooTitle} className={styles.tileImg} />
             <div className={styles.marquee} aria-hidden>
               <div className={styles.marqueeBar}>
                 <div className={styles.marqueeTrack}>
@@ -79,8 +131,8 @@ export default function HeroSection() {
               </div>
             </div>
             <div className={styles.label}>
-              <p className={styles.labelEyebrow}>{t('heroSignature')}</p>
-              <p className={styles.labelTitle}>{t('heroLuckyBamboo')}</p>
+              <p className={styles.labelEyebrow}>{bambooEyebrow}</p>
+              <p className={styles.labelTitle}>{bambooTitle}</p>
             </div>
           </Link>
         </motion.div>
@@ -93,10 +145,10 @@ export default function HeroSection() {
           animate="show"
         >
           <Link to="/shop" className={`${styles.tile} ${styles.tileFern}`}>
-            <img src={leather} alt={t('heroLeatherleaf')} className={styles.tileImg} />
+            <img src={snakeSrc} alt={snakeTitle} className={styles.tileImg} />
             <div className={styles.label}>
-              <p className={styles.labelEyebrow}>{t('heroIndoor')}</p>
-              <p className={styles.labelTitle}>{t('heroLeatherleaf')}</p>
+              <p className={styles.labelEyebrow}>{snakeEyebrow}</p>
+              <p className={styles.labelTitle}>{snakeTitle}</p>
             </div>
           </Link>
         </motion.div>
@@ -110,19 +162,15 @@ export default function HeroSection() {
         >
           <div className={`${styles.tile} ${styles.tileTrio}`}>
             <div className={styles.trioRow}>
-              {trioItems.map((item, i) => (
-                <Link
-                  key={i}
-                  to={item.to}
-                  className={styles.trioItem}
-                >
-                  <img src={item.src} alt={t(item.altKey)} />
+              {trioItems.map((src, i) => (
+                <Link key={i} to="/shop" className={styles.trioItem}>
+                  <img src={src} alt={trioTitle} />
                 </Link>
               ))}
             </div>
             <div className={styles.label}>
-              <p className={styles.labelEyebrow}>{t('heroTrending')}</p>
-              <p className={styles.labelTitle}>{t('heroDesertTrio')}</p>
+              <p className={styles.labelEyebrow}>{trioEyebrow}</p>
+              <p className={styles.labelTitle}>{trioTitle}</p>
             </div>
           </div>
         </motion.div>
@@ -135,10 +183,10 @@ export default function HeroSection() {
           animate="show"
         >
           <Link to="/shop" className={`${styles.tile} ${styles.tileFern}`}>
-            <img src={pothos} alt={t('heroHangingPothos')} className={styles.tileImg} />
+            <img src={pothosSrc} alt={pothosTitle} className={styles.tileImg} />
             <div className={styles.label}>
-              <p className={styles.labelEyebrow}>{t('heroCollection')}</p>
-              <p className={styles.labelTitle}>{t('heroHangingPothos')}</p>
+              <p className={styles.labelEyebrow}>{pothosEyebrow}</p>
+              <p className={styles.labelTitle}>{pothosTitle}</p>
             </div>
           </Link>
         </motion.div>

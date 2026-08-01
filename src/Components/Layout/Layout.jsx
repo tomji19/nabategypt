@@ -5,6 +5,7 @@ import Footer from '../Footer/Footer';
 import PlantLoader from '../PlantLoader/PlantLoader';
 import CartDrawer from '../CartDrawer/CartDrawer';
 import AuthRedirectHandler from '../AuthRedirectHandler/AuthRedirectHandler';
+import PlantChatbot from '../PlantChatbot/PlantChatbot';
 import {
   resetBodyScroll,
   scrollWindowToTop,
@@ -57,6 +58,7 @@ export default function Layout() {
       </main>
       <Footer />
       <CartDrawer />
+      <PlantChatbot />
     </div>
   );
 }

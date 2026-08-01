@@ -7,15 +7,12 @@ import { useAuth } from '../AuthContext/AuthContext';
 import { useProducts } from '../ProductsContext/ProductsContext';
 import { useWishlist } from '../WishlistContext/WishlistContext';
 import BrandLogo from '../BrandLogo/BrandLogo';
+import { PROMO } from '../../config/store';
 import { useLanguage } from '../LanguageContext/LanguageContext';
 import { toast } from 'react-toastify';
+import { getProductName } from '../../utils/productLocale';
+import { useCategories } from '../CategoriesContext/CategoriesContext';
 import styles from './Navbar.module.css';
-
-const categoryLinks = [
-  { to: '/shop', labelKey: 'catSucculent' },
-  { to: '/shop', labelKey: 'catIndoor' },
-  { to: '/shop', labelKey: 'catOutdoor' },
-];
 
 export default function Navbar() {
   const navigate = useNavigate();
@@ -23,7 +20,14 @@ export default function Navbar() {
   const { currentUser, userDetails, userLoggedIn, logout } = useAuth();
   const { products } = useProducts();
   const { wishlistCount, clearWishlist } = useWishlist();
-  const { t, toggle } = useLanguage();
+  const { t, toggle, isAr } = useLanguage();
+  const { activeCategories } = useCategories();
+
+  const categoryLinks = (activeCategories || []).map((cat) => ({
+    id: cat.id,
+    to: `/shop?category=${encodeURIComponent(cat.name)}`,
+    label: isAr ? cat.nameAr || cat.name : cat.name,
+  }));
 
   const [searchTerm, setSearchTerm] = useState('');
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -38,13 +42,17 @@ export default function Navbar() {
     const q = searchTerm.trim().toLowerCase();
     if (!q) return [];
     return (products || [])
-      .filter(
-        (product) =>
-          product.name.toLowerCase().includes(q) ||
-          product.category.toLowerCase().includes(q)
-      )
+      .filter((product) => {
+        const name = getProductName(product, { isAr, t }).toLowerCase();
+        return (
+          name.includes(q) ||
+          product.name?.toLowerCase().includes(q) ||
+          product.nameAr?.toLowerCase().includes(q) ||
+          product.category?.toLowerCase().includes(q)
+        );
+      })
       .slice(0, 8);
-  }, [products, searchTerm]);
+  }, [products, searchTerm, isAr, t]);
 
   const showDesktopResults = searchOpen && searchTerm.trim().length > 0;
   const showMobileResults = mobileOpen && searchTerm.trim().length > 0;
@@ -130,8 +138,12 @@ export default function Navbar() {
                 <img src={product.image} alt="" className={styles.searchThumb} />
                 <span className={styles.searchMeta}>
                   <span className={styles.searchCat}>{product.category}</span>
-                  <span className={styles.searchName}>{product.name}</span>
-                  <span className={styles.searchPrice}>{product.price} EGP</span>
+                  <span className={styles.searchName}>
+                    {getProductName(product, { isAr, t })}
+                  </span>
+                  <span className={styles.searchPrice}>
+                    {product.price} {t('egp')}
+                  </span>
                 </span>
               </button>
             </li>
@@ -159,7 +171,16 @@ export default function Navbar() {
     <header className={styles.header}>
       <div className={styles.promo}>
         <div className={`section-pad ${styles.promoInner}`}>
-          <p className={styles.promoText}>{t('promoFirstOrder')}</p>
+          <p className={styles.promoText}>
+            <span className={styles.promoLabel}>{t('promoLabel')}</span>
+            <span className={styles.promoSepDot} aria-hidden>
+              ·
+            </span>
+            <span className={styles.promoOffer}>{t('promoOfferShort')}</span>
+            <span className={styles.promoCode} title={t('promoCodeHint')}>
+              {PROMO.code}
+            </span>
+          </p>
           <div className={styles.promoAuth}>
             {userLoggedIn ? (
               <>
@@ -215,13 +236,13 @@ export default function Navbar() {
             {categoriesOpen && (
               <ul className={styles.dropdown}>
                 {categoryLinks.map((cat) => (
-                  <li key={cat.labelKey}>
+                  <li key={cat.id}>
                     <NavLink
                       to={cat.to}
                       className={styles.dropdownLink}
                       onClick={() => setCategoriesOpen(false)}
                     >
-                      {t(cat.labelKey)}
+                      {cat.label}
                     </NavLink>
                   </li>
                 ))}
@@ -253,7 +274,6 @@ export default function Navbar() {
             aria-label={t('switchToLangHint')}
             title={t('switchToLangHint')}
           >
-            <i className={`fa-solid fa-globe ${styles.langBtnIcon}`} aria-hidden />
             <span className={styles.langBtnLabel}>
               {t('switchToLang')}
             </span>
@@ -352,13 +372,13 @@ export default function Navbar() {
               {categoriesOpen && (
                 <ul className={styles.mobileCats}>
                   {categoryLinks.map((cat) => (
-                    <li key={cat.labelKey}>
+                    <li key={cat.id}>
                       <NavLink
                         to={cat.to}
                         className={styles.mobileSubLink}
                         onClick={() => setMobileOpen(false)}
                       >
-                        {t(cat.labelKey)}
+                        {cat.label}
                       </NavLink>
                     </li>
                   ))}

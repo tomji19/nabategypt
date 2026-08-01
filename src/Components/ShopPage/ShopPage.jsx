@@ -1,36 +1,13 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import PlantCard from '../PlantCard/PlantCard';
-import pageBanner from '../../assets/images/pagebanner.png';
 import styles from './ShopPage.module.css';
 import { useProducts } from '../ProductsContext/ProductsContext';
-
-const CATEGORIES = [
-  { value: '', label: 'All plants' },
-  { value: 'Indoor Plants', label: 'Indoor' },
-  { value: 'Outdoor Plants', label: 'Outdoor' },
-  { value: 'Succulent', label: 'Succulents' },
-];
-
-const LIGHT_OPTIONS = [
-  { value: '', label: 'Any light' },
-  { value: 'low', label: 'Low light' },
-  { value: 'medium', label: 'Medium light' },
-  { value: 'bright', label: 'Bright light' },
-];
-
-const CARE_OPTIONS = [
-  { value: '', label: 'Any care' },
-  { value: 'easy', label: 'Easy care' },
-  { value: 'moderate', label: 'Moderate' },
-  { value: 'expert', label: 'Expert' },
-];
-
-const SORT_OPTIONS = [
-  { value: 'featured', label: 'Featured' },
-  { value: 'price-asc', label: 'Price: Low to high' },
-  { value: 'price-desc', label: 'Price: High to low' },
-  { value: 'name-asc', label: 'Name: A–Z' },
-];
+import { useLanguage } from '../LanguageContext/LanguageContext';
+// import { useSiteContent } from '../SiteContentContext/SiteContentContext';
+import { useCategories } from '../CategoriesContext/CategoriesContext';
+import { getProductName } from '../../utils/productLocale';
+// import { cmsImage, SECTION_IMAGE_FALLBACKS } from '../../config/cmsFallbacks';
 
 function FilterDropdown({ id, label, value, options, openId, setOpenId, onChange }) {
   const ref = useRef(null);
@@ -50,18 +27,15 @@ function FilterDropdown({ id, label, value, options, openId, setOpenId, onChange
     <div className={styles.dropdown} ref={ref}>
       <button
         type="button"
-        className={`${styles.dropdownBtn} ${open ? styles.dropdownBtnOpen : ''} ${
-          value ? styles.dropdownBtnActive : ''
-        }`}
+        className={`${styles.dropdownBtn} ${open ? styles.dropdownBtnOpen : ''}`}
         onClick={() => setOpenId(open ? null : id)}
-        aria-expanded={open}
       >
         <span className={styles.dropdownLabel}>{label}</span>
         <span className={styles.dropdownValue}>{current}</span>
-        <i className={`fa-solid fa-chevron-down ${styles.chevron}`} />
+        <i className={`fa-solid fa-chevron-down ${styles.chevron}`} aria-hidden />
       </button>
       {open && (
-        <ul className={styles.menu} role="listbox">
+        <ul className={styles.menu}>
           {options.map((opt) => (
             <li key={opt.value || 'all'}>
               <button
@@ -84,30 +58,105 @@ function FilterDropdown({ id, label, value, options, openId, setOpenId, onChange
   );
 }
 
+function OptionGroup({ label, options, value, onChange }) {
+  return (
+    <div className={styles.group}>
+      <p className={styles.rowLabel}>{label}</p>
+      <div className={styles.optionList} role="listbox" aria-label={label}>
+        {options.map((opt) => (
+          <button
+            key={opt.value || 'all'}
+            type="button"
+            role="option"
+            aria-selected={value === opt.value}
+            className={`${styles.option} ${
+              value === opt.value ? styles.optionActive : ''
+            }`}
+            onClick={() => onChange(opt.value)}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function ShopPage() {
   const { products, loading, error, refreshProducts } = useProducts();
+  const { t, isAr } = useLanguage();
+  // const { content } = useSiteContent();
+  const { activeCategories } = useCategories();
+  // const shop = content?.shop || {};
+  // const bannerSrc = cmsImage(
+  //   shop.bannerImage,
+  //   SECTION_IMAGE_FALLBACKS.pageBannerImage
+  // );
+  const [searchParams] = useSearchParams();
   const [openId, setOpenId] = useState(null);
-  const [category, setCategory] = useState('');
+  const [category, setCategory] = useState(searchParams.get('category') || '');
   const [light, setLight] = useState('');
-  const [care, setCare] = useState('');
+  const [care, setCare] = useState(searchParams.get('care') || '');
   const [sort, setSort] = useState('featured');
   const [onSale, setOnSale] = useState(false);
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [filtersOpen, setFiltersOpen] = useState(true);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+
+  useEffect(() => {
+    setCategory(searchParams.get('category') || '');
+    setCare(searchParams.get('care') || '');
+  }, [searchParams]);
+
+  const CATEGORIES = useMemo(
+    () => [
+      { value: '', label: t('catAll') },
+      ...(activeCategories || []).map((cat) => ({
+        value: cat.name,
+        label: isAr ? cat.nameAr || cat.name : cat.name,
+      })),
+    ],
+    [activeCategories, isAr, t]
+  );
+
+  const LIGHT_OPTIONS = [
+    { value: '', label: t('anyLight') },
+    { value: 'low', label: t('lowLight') },
+    { value: 'medium', label: t('mediumLight') },
+    { value: 'bright', label: t('brightLight') },
+  ];
+
+  const CARE_OPTIONS = [
+    { value: '', label: t('anyCare') },
+    { value: 'easy', label: t('easyCare') },
+    { value: 'moderate', label: t('moderateCare') },
+    { value: 'expert', label: t('expertCare') },
+  ];
+
+  const SORT_OPTIONS = [
+    { value: 'featured', label: t('sortFeatured') },
+    { value: 'price-asc', label: t('sortPriceAsc') },
+    { value: 'price-desc', label: t('sortPriceDesc') },
+    { value: 'name-asc', label: t('sortNameAsc') },
+  ];
 
   const list = Array.isArray(products) ? products : [];
 
   const filteredProducts = useMemo(() => {
+    const q = searchTerm.trim().toLowerCase();
     let next = list.filter((product) => {
       const min = minPrice === '' ? 0 : Number(minPrice);
       const max = maxPrice === '' ? Infinity : Number(maxPrice);
       const withinPrice = product.price >= min && product.price <= max;
       const matchesCategory = category ? product.category === category : true;
       const matchesSale = onSale ? Boolean(product.onSale) : true;
-      const matchesSearch = searchTerm
-        ? product.name.toLowerCase().includes(searchTerm.toLowerCase())
+      const displayName = getProductName(product, { isAr, t }).toLowerCase();
+      const matchesSearch = q
+        ? displayName.includes(q) ||
+          product.name?.toLowerCase().includes(q) ||
+          product.nameAr?.toLowerCase().includes(q) ||
+          product.category?.toLowerCase().includes(q)
         : true;
       const matchesLight = light ? product.light === light : true;
       const matchesCare = care ? product.care === care : true;
@@ -133,9 +182,28 @@ export default function ShopPage() {
     }
     if (sort === 'price-asc') next.sort((a, b) => a.price - b.price);
     if (sort === 'price-desc') next.sort((a, b) => b.price - a.price);
-    if (sort === 'name-asc') next.sort((a, b) => a.name.localeCompare(b.name));
+    if (sort === 'name-asc') {
+      next.sort((a, b) =>
+        getProductName(a, { isAr, t }).localeCompare(
+          getProductName(b, { isAr, t }),
+          isAr ? 'ar' : 'en'
+        )
+      );
+    }
     return next;
-  }, [list, category, light, care, sort, onSale, minPrice, maxPrice, searchTerm]);
+  }, [
+    list,
+    category,
+    light,
+    care,
+    sort,
+    onSale,
+    minPrice,
+    maxPrice,
+    searchTerm,
+    isAr,
+    t,
+  ]);
 
   const activeCount = [
     category,
@@ -144,7 +212,6 @@ export default function ShopPage() {
     onSale,
     minPrice !== '',
     maxPrice !== '',
-    searchTerm,
   ].filter(Boolean).length;
 
   const resetFilters = () => {
@@ -159,178 +226,186 @@ export default function ShopPage() {
     setOpenId(null);
   };
 
+  const sidebar = (
+    <aside
+      className={`${styles.sidebar} ${filtersOpen ? styles.sidebarOpen : ''}`}
+      aria-label={t('filters')}
+    >
+      <div className={styles.sidebarHead}>
+        <h2 className={styles.sidebarTitle}>{t('filters')}</h2>
+        {activeCount > 0 && (
+          <button type="button" className={styles.reset} onClick={resetFilters}>
+            {t('resetFilters')}
+          </button>
+        )}
+      </div>
+
+      <OptionGroup
+        label={t('category')}
+        options={CATEGORIES}
+        value={category}
+        onChange={setCategory}
+      />
+      <OptionGroup
+        label={t('light')}
+        options={LIGHT_OPTIONS}
+        value={light}
+        onChange={setLight}
+      />
+      <OptionGroup
+        label={t('care')}
+        options={CARE_OPTIONS}
+        value={care}
+        onChange={setCare}
+      />
+
+      <div className={styles.group}>
+        <p className={styles.rowLabel}>{t('priceEgp')}</p>
+        <div className={styles.priceInputs}>
+          <input
+            type="number"
+            min="0"
+            placeholder={t('min')}
+            value={minPrice}
+            onChange={(e) => setMinPrice(e.target.value)}
+            className={styles.priceInput}
+            aria-label={t('min')}
+          />
+          <span className={styles.priceSep}>—</span>
+          <input
+            type="number"
+            min="0"
+            placeholder={t('max')}
+            value={maxPrice}
+            onChange={(e) => setMaxPrice(e.target.value)}
+            className={styles.priceInput}
+            aria-label={t('max')}
+          />
+        </div>
+      </div>
+
+      <label className={styles.saleToggle}>
+        <input
+          type="checkbox"
+          checked={onSale}
+          onChange={(e) => setOnSale(e.target.checked)}
+        />
+        <span>{t('onSale')}</span>
+      </label>
+    </aside>
+  );
+
   return (
     <div className={styles.page}>
+      {/* Shop banner — temporarily hidden
       <section className="page-banner">
         <img
-          src={pageBanner}
+          src={bannerSrc}
           alt=""
           className="absolute inset-0 h-full w-full object-cover"
         />
         <div className="absolute inset-0 bg-nabat-primary/60" />
         <div className="relative z-10">
           <p className="mb-2 font-nav text-[11px] uppercase tracking-[0.2em] text-white/70">
-            Collection
+            {shop.bannerEyebrow || t('collection')}
           </p>
-          <h1 className="page-banner-title">Shop</h1>
+          <h1 className="page-banner-title">
+            {shop.bannerTitle || t('shopBanner')}
+          </h1>
         </div>
       </section>
+      */}
 
-      <div className={`section-pad ${styles.toolbar}`}>
-        <div className={styles.toolbarTop}>
-          <div className={styles.searchWrap}>
-            <i className="fa-solid fa-magnifying-glass" aria-hidden />
-            <input
-              type="search"
-              placeholder="Search plants…"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className={styles.search}
-            />
-          </div>
+      <div className={`section-pad ${styles.layout}`}>
+        {sidebar}
 
-          <button
-            type="button"
-            className={`${styles.filtersToggle} ${
-              filtersOpen ? styles.filtersToggleOpen : ''
-            }`}
-            onClick={() => setFiltersOpen((o) => !o)}
-            aria-expanded={filtersOpen}
-          >
-            {filtersOpen ? 'Hide filters' : 'Filters'}
-            {activeCount > 0 && <span className={styles.filterCount}>{activeCount}</span>}
-            <i
-              className={`fa-solid ${filtersOpen ? 'fa-xmark' : 'fa-sliders'} ${styles.sliders}`}
-            />
-          </button>
-
-          <FilterDropdown
-            id="sort"
-            label="Sort"
-            value={sort}
-            options={SORT_OPTIONS}
-            openId={openId}
-            setOpenId={setOpenId}
-            onChange={setSort}
-          />
-        </div>
-
-        <div className={`${styles.filters} ${filtersOpen ? styles.filtersOpen : ''}`}>
-          <div className={styles.categoryRow}>
-            <p className={styles.rowLabel}>Category</p>
-            <div className={styles.chips}>
-              {CATEGORIES.map((cat) => (
-                <button
-                  key={cat.label}
-                  type="button"
-                  className={`${styles.chip} ${
-                    category === cat.value ? styles.chipActive : ''
-                  }`}
-                  onClick={() => setCategory(cat.value)}
-                >
-                  {cat.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className={styles.dropdownRow}>
-            <FilterDropdown
-              id="light"
-              label="Light"
-              value={light}
-              options={LIGHT_OPTIONS}
-              openId={openId}
-              setOpenId={setOpenId}
-              onChange={setLight}
-            />
-            <FilterDropdown
-              id="care"
-              label="Care"
-              value={care}
-              options={CARE_OPTIONS}
-              openId={openId}
-              setOpenId={setOpenId}
-              onChange={setCare}
-            />
-          </div>
-
-          <div className={styles.priceRow}>
-            <p className={styles.rowLabel}>Price (EGP)</p>
-            <div className={styles.priceInputs}>
+        <div className={styles.main}>
+          <div className={styles.toolbar}>
+            <div className={styles.searchWrap}>
+              <i className="fa-solid fa-magnifying-glass" aria-hidden />
               <input
-                type="number"
-                min="0"
-                placeholder="Min"
-                value={minPrice}
-                onChange={(e) => setMinPrice(e.target.value)}
-                className={styles.priceInput}
-              />
-              <span className={styles.priceSep}>—</span>
-              <input
-                type="number"
-                min="0"
-                placeholder="Max"
-                value={maxPrice}
-                onChange={(e) => setMaxPrice(e.target.value)}
-                className={styles.priceInput}
+                type="search"
+                placeholder={t('searchPlants')}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className={styles.search}
               />
             </div>
-            <label className={styles.saleToggle}>
-              <input
-                type="checkbox"
-                checked={onSale}
-                onChange={(e) => setOnSale(e.target.checked)}
-              />
-              <span>On sale</span>
-            </label>
-            {activeCount > 0 && (
-              <button type="button" className={styles.reset} onClick={resetFilters}>
-                Clear all
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
 
-      <div className={`section-pad ${styles.gridWrap}`}>
-        {loading ? (
-          <div className={styles.empty}>
-            <p>Loading plants…</p>
-          </div>
-        ) : error ? (
-          <div className={styles.empty}>
-            <p>Couldn’t load the shop from Supabase.</p>
-            <p className={styles.count}>{error}</p>
-            <button type="button" className={styles.reset} onClick={refreshProducts}>
-              Try again
+            <button
+              type="button"
+              className={`${styles.filtersToggle} ${
+                filtersOpen ? styles.filtersToggleOpen : ''
+              }`}
+              onClick={() => setFiltersOpen((o) => !o)}
+              aria-expanded={filtersOpen}
+            >
+              {t('filters')}
+              {activeCount > 0 && (
+                <span className={styles.filterCount}>{activeCount}</span>
+              )}
+              <i
+                className={`fa-solid ${
+                  filtersOpen ? 'fa-xmark' : 'fa-sliders'
+                } ${styles.sliders}`}
+              />
             </button>
+
+            <FilterDropdown
+              id="sort"
+              label={t('sortFeatured')}
+              value={sort}
+              options={SORT_OPTIONS}
+              openId={openId}
+              setOpenId={setOpenId}
+              onChange={setSort}
+            />
           </div>
-        ) : (
-          <>
-            <p className={styles.count}>{filteredProducts.length} plants</p>
-            {filteredProducts.length > 0 ? (
-              <div className={styles.grid}>
-                {filteredProducts.map((product) => (
-                  <PlantCard key={product.id} product={product} />
-                ))}
-              </div>
-            ) : (
-              <div className={styles.empty}>
-                <p>
-                  {list.length === 0
-                    ? 'No products in the catalog yet. Seed products in Supabase to populate the shop.'
-                    : 'No plants match these filters.'}
-                </p>
-                {list.length > 0 && (
-                  <button type="button" className={styles.reset} onClick={resetFilters}>
-                    Clear filters
-                  </button>
-                )}
-              </div>
-            )}
-          </>
-        )}
+
+          {loading ? (
+            <div className={styles.empty}>
+              <p>{t('loadingPlants')}</p>
+            </div>
+          ) : error ? (
+            <div className={styles.empty}>
+              <p>{t('shopLoadError')}</p>
+              <p className={styles.count}>{error}</p>
+              <button
+                type="button"
+                className={styles.reset}
+                onClick={refreshProducts}
+              >
+                {t('tryAgain')}
+              </button>
+            </div>
+          ) : (
+            <>
+              <p className={styles.count}>
+                {t('plantsCount', { count: filteredProducts.length })}
+              </p>
+              {filteredProducts.length > 0 ? (
+                <div className={styles.grid}>
+                  {filteredProducts.map((product) => (
+                    <PlantCard key={product.id} product={product} />
+                  ))}
+                </div>
+              ) : (
+                <div className={styles.empty}>
+                  <p>{list.length === 0 ? t('emptyCatalog') : t('noResults')}</p>
+                  {list.length > 0 && (
+                    <button
+                      type="button"
+                      className={styles.reset}
+                      onClick={resetFilters}
+                    >
+                      {t('resetFilters')}
+                    </button>
+                  )}
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
