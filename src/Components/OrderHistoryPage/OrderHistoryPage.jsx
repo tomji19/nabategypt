@@ -6,6 +6,7 @@ import PlantLoader from '../PlantLoader/PlantLoader';
 import { fetchOrdersForUser } from '../../supabase/orders';
 import { PAYMENT_METHODS } from '../../config/store';
 import { formatEGP } from '../../utils/money';
+import { toast } from 'react-toastify';
 
 export default function OrderHistoryPage() {
   const [orders, setOrders] = useState([]);
@@ -14,33 +15,33 @@ export default function OrderHistoryPage() {
   const { userLoggedIn, loading: authLoading, currentUser } = useAuth();
   const navigate = useNavigate();
 
+  const userId = currentUser?.uid;
+  const userEmail = currentUser?.email;
+
   useEffect(() => {
     if (authLoading) return;
-    if (!userLoggedIn) {
-      navigate('/login');
+
+    if (!userLoggedIn || !userId) {
       return;
     }
 
     let cancelled = false;
+    setLoading(true);
 
     (async () => {
       try {
-        const data = await fetchOrdersForUser(
-          currentUser?.uid,
-          currentUser?.email
-        );
-        if (!cancelled) {
-          setOrders(data);
-          setError(null);
-        }
+        const data = await fetchOrdersForUser(userId, userEmail);
+        if (cancelled) return;
+        setOrders(data || []);
+        setError(null);
       } catch (err) {
-        if (!cancelled) {
-          setError(
-            err?.message?.includes('relation') || err?.code === '42P01'
-              ? 'Orders table not ready. Run supabase_schema.sql in Supabase.'
-              : err.message || 'Failed to load orders'
-          );
-        }
+        if (cancelled) return;
+        const message =
+          err?.message?.includes('relation') || err?.code === '42P01'
+            ? 'Orders table not ready. Run supabase_schema.sql in Supabase.'
+            : err.message || 'Failed to load orders';
+        setError(message);
+        toast.error(message);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -49,7 +50,15 @@ export default function OrderHistoryPage() {
     return () => {
       cancelled = true;
     };
-  }, [userLoggedIn, navigate, authLoading, currentUser]);
+  }, [userLoggedIn, authLoading, userId, userEmail]);
+
+  if (authLoading) {
+    return <PlantLoader variant="overlay" />;
+  }
+
+  if (!userLoggedIn) {
+    return null;
+  }
 
   if (loading) {
     return <PlantLoader variant="overlay" />;
@@ -59,6 +68,23 @@ export default function OrderHistoryPage() {
     return (
       <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3 px-4 text-center font-nav text-nabat-muted">
         <p className="text-red-600">{error}</p>
+        <button
+          type="button"
+          className="btn-outline"
+          onClick={() => {
+            setError(null);
+            setLoading(true);
+            fetchOrdersForUser(userId, userEmail)
+              .then((data) => {
+                setOrders(data || []);
+                setError(null);
+              })
+              .catch((err) => setError(err.message || 'Failed to load orders'))
+              .finally(() => setLoading(false));
+          }}
+        >
+          Try again
+        </button>
         <Link to="/shop" className="btn-primary">
           Back to shop
         </Link>
@@ -184,6 +210,15 @@ export default function OrderHistoryPage() {
                             : ''}
                           , {order.shipping_city}, {order.shipping_country}
                         </p>
+                      </div>
+
+                      <div className="mt-6">
+                        <Link
+                          to={`/thankyoupage?orderId=${order.id}`}
+                          className="btn-outline inline-flex"
+                        >
+                          View receipt
+                        </Link>
                       </div>
                     </div>
                   </div>

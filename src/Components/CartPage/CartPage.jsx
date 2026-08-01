@@ -2,14 +2,18 @@ import React from 'react';
 import { X } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { useCart } from '../CartContext/CartContext';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import pageBanner from '../../assets/images/pagebanner.png';
 import { calcOrderTotals, formatEGP } from '../../utils/money';
 import { useLanguage } from '../LanguageContext/LanguageContext';
+import { useAuth } from '../AuthContext/AuthContext';
+import { loginPathWithRedirect } from '../../utils/authRedirect';
 
 export default function CartPage() {
   const { cartItems, updateQuantity, removeFromCart } = useCart();
   const { t } = useLanguage();
+  const { userLoggedIn, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
 
   const handleRemoveItem = (id) => {
     const itemToRemove = cartItems.find((item) => item.id === id);
@@ -19,7 +23,20 @@ export default function CartPage() {
     }
   };
 
+  const handleCheckout = (e) => {
+    e.preventDefault();
+    if (cartItems.length === 0) return;
+    if (authLoading) return;
+    if (!userLoggedIn) {
+      toast.info(t('signInToCheckout'));
+      navigate(loginPathWithRedirect('/checkout'));
+      return;
+    }
+    navigate('/checkout');
+  };
+
   const { subtotal, shipping, total } = calcOrderTotals(cartItems);
+  const canCheckout = cartItems.length > 0;
 
   return (
     <>
@@ -113,9 +130,19 @@ export default function CartPage() {
                   <span>{formatEGP(total)}</span>
                 </div>
               </div>
-              <Link to="/checkout" className="btn-primary mt-8 w-full">
-                {t('checkout')}
-              </Link>
+              {canCheckout ? (
+                <button
+                  type="button"
+                  onClick={handleCheckout}
+                  className="btn-primary mt-8 w-full"
+                >
+                  {userLoggedIn ? t('checkout') : t('signInToCheckout')}
+                </button>
+              ) : (
+                <Link to="/shop" className="btn-outline mt-8 w-full">
+                  {t('continueShopping')}
+                </Link>
+              )}
             </div>
           </div>
         </div>

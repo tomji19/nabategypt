@@ -6,9 +6,9 @@ import { useCart } from '../CartContext/CartContext';
 import { useAuth } from '../AuthContext/AuthContext';
 import { useProducts } from '../ProductsContext/ProductsContext';
 import { useWishlist } from '../WishlistContext/WishlistContext';
-import { doSignOut } from '../../supabase/auth';
 import BrandLogo from '../BrandLogo/BrandLogo';
 import { useLanguage } from '../LanguageContext/LanguageContext';
+import { toast } from 'react-toastify';
 import styles from './Navbar.module.css';
 
 const categoryLinks = [
@@ -20,9 +20,9 @@ const categoryLinks = [
 export default function Navbar() {
   const navigate = useNavigate();
   const { cartCount, clearCart, openCart } = useCart();
-  const { currentUser, userDetails, userLoggedIn, anonymousUserName } = useAuth();
+  const { currentUser, userDetails, userLoggedIn, logout } = useAuth();
   const { products } = useProducts();
-  const { wishlistCount } = useWishlist();
+  const { wishlistCount, clearWishlist } = useWishlist();
   const { t, toggle } = useLanguage();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -70,31 +70,26 @@ export default function Navbar() {
 
   const handleLogout = async () => {
     try {
-      await doSignOut();
-      localStorage.removeItem('token');
-      localStorage.removeItem('guestCart');
-      localStorage.removeItem('userAddresses');
-      localStorage.removeItem('userDetails');
-      clearCart();
+      clearCart({ clearRemote: false });
+      clearWishlist();
+      await logout();
+      toast.success('Signed out successfully.');
       navigate('/login');
     } catch (error) {
       console.error('Logout error:', error);
-      localStorage.removeItem('token');
-      localStorage.removeItem('guestCart');
-      localStorage.removeItem('userAddresses');
-      localStorage.removeItem('userDetails');
-      clearCart();
+      clearCart({ clearRemote: false });
+      clearWishlist();
+      toast.error('Signed out locally, but something went wrong clearing the server session.');
       navigate('/login');
     }
   };
 
   const getUserDisplayName = () => {
     if (!userLoggedIn) return null;
-    if (anonymousUserName) return anonymousUserName;
     if (userDetails?.name) return userDetails.name;
     if (currentUser?.displayName) return currentUser.displayName;
     if (currentUser?.email) return currentUser.email.split('@')[0];
-    return 'Guest';
+    return 'Account';
   };
 
   const closeSearch = () => {

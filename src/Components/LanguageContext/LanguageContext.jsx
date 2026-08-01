@@ -2,7 +2,6 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { translate } from '../../i18n';
 
 const LanguageContext = createContext(null);
-const STORAGE_KEY = 'nabat_lang';
 
 export function useLanguage() {
   const ctx = useContext(LanguageContext);
@@ -11,20 +10,9 @@ export function useLanguage() {
 }
 
 export function LanguageProvider({ children }) {
-  const [lang, setLang] = useState(() => {
-    try {
-      return localStorage.getItem(STORAGE_KEY) === 'ar' ? 'ar' : 'en';
-    } catch {
-      return 'en';
-    }
-  });
+  const [lang, setLang] = useState('en');
 
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, lang);
-    } catch {
-      /* ignore */
-    }
     document.documentElement.lang = lang === 'ar' ? 'ar' : 'en';
     document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
   }, [lang]);

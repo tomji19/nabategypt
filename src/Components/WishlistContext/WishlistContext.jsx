@@ -1,7 +1,15 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { toast } from 'react-toastify';
+import { useAuth } from '../AuthContext/AuthContext';
+import { useProducts } from '../ProductsContext/ProductsContext';
+import {
+  addWishlistItem,
+  fetchWishlistSlugs,
+  removeWishlistItem,
+} from '../../supabase/wishlist';
+import { getAuthErrorMessage } from '../../supabase/authErrors';
 
 const WishlistContext = createContext(null);
-const STORAGE_KEY = 'nabat_wishlist';
 
 export function useWishlist() {
   const ctx = useContext(WishlistContext);
@@ -12,25 +20,60 @@ export function useWishlist() {
 }
 
 export function WishlistProvider({ children }) {
-  const [items, setItems] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-    } catch {
-      return [];
-    }
-  });
+  const { currentUser, userLoggedIn } = useAuth();
+  const { getProductById, products } = useProducts();
+  const [items, setItems] = useState([]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-  }, [items]);
+    let cancelled = false;
+
+    const load = async () => {
+      if (!userLoggedIn || !currentUser?.uid) {
+        setItems([]);
+        return;
+      }
+      try {
+        const slugs = await fetchWishlistSlugs(currentUser.uid);
+        if (cancelled) return;
+        setItems(
+          slugs
+            .map((slug) => {
+              const product = getProductById(slug);
+              if (!product) return null;
+              return {
+                id: product.id,
+                name: product.name,
+                price: product.price,
+                image: product.image,
+                category: product.category,
+              };
+            })
+            .filter(Boolean)
+        );
+      } catch (err) {
+        console.error('Failed to load wishlist:', err);
+        if (!cancelled) setItems([]);
+      }
+    };
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [userLoggedIn, currentUser?.uid, getProductById, products]);
 
   const isInWishlist = (productId) => items.some((i) => i.id === productId);
 
-  const toggleWishlist = (product) => {
+  const toggleWishlist = async (product) => {
+    if (!userLoggedIn || !currentUser?.uid) {
+      toast.error('Please sign in to use your wishlist.');
+      return;
+    }
+
+    const exists = items.some((i) => i.id === product.id);
+
     setItems((prev) => {
-      if (prev.some((i) => i.id === product.id)) {
-        return prev.filter((i) => i.id !== product.id);
-      }
+      if (exists) return prev.filter((i) => i.id !== product.id);
       return [
         ...prev,
         {
@@ -42,10 +85,28 @@ export function WishlistProvider({ children }) {
         },
       ];
     });
+
+    try {
+      if (exists) await removeWishlistItem(currentUser.uid, product.id);
+      else await addWishlistItem(currentUser.uid, product.id);
+    } catch (err) {
+      console.error('Wishlist sync failed:', err);
+      toast.error(getAuthErrorMessage(err, 'Could not update wishlist.'));
+    }
   };
 
-  const removeFromWishlist = (productId) => {
+  const removeFromWishlist = async (productId) => {
     setItems((prev) => prev.filter((i) => i.id !== productId));
+    if (!userLoggedIn || !currentUser?.uid) return;
+    try {
+      await removeWishlistItem(currentUser.uid, productId);
+    } catch (err) {
+      console.error('Wishlist remove failed:', err);
+    }
+  };
+
+  const clearWishlist = () => {
+    setItems([]);
   };
 
   return (
@@ -56,6 +117,7 @@ export function WishlistProvider({ children }) {
         isInWishlist,
         toggleWishlist,
         removeFromWishlist,
+        clearWishlist,
       }}
     >
       {children}

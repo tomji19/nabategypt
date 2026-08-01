@@ -1,6 +1,8 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../CartContext/CartContext';
+import { useAuth } from '../AuthContext/AuthContext';
+import { loginPathWithRedirect } from '../../utils/authRedirect';
 import styles from './CartDrawer.module.css';
 
 export default function CartDrawer() {
@@ -13,6 +15,18 @@ export default function CartDrawer() {
     updateQuantity,
     removeFromCart,
   } = useCart();
+  const { userLoggedIn } = useAuth();
+  const navigate = useNavigate();
+
+  const handleCheckout = (e) => {
+    e.preventDefault();
+    closeCart();
+    if (!userLoggedIn) {
+      navigate(loginPathWithRedirect('/checkout'));
+      return;
+    }
+    navigate('/checkout');
+  };
 
   return (
     <>
@@ -105,9 +119,13 @@ export default function CartDrawer() {
               <span>Subtotal</span>
               <strong>{cartTotal} EGP</strong>
             </div>
-            <Link to="/checkout" className={styles.checkout} onClick={closeCart}>
-              Checkout
-            </Link>
+            <button
+              type="button"
+              className={styles.checkout}
+              onClick={handleCheckout}
+            >
+              {userLoggedIn ? 'Checkout' : 'Sign in to checkout'}
+            </button>
             <Link to="/cart" className={styles.viewCart} onClick={closeCart}>
               View full cart
             </Link>

@@ -182,7 +182,10 @@ const en = {
   checkoutLabel: 'Checkout',
   checkoutTitle: 'Complete your order',
   checkoutHint:
-    'Delivery in Alexandria only · Shipping 50 EGP · No account needed',
+    'Delivery in Alexandria only · Shipping 50 EGP · Sign in required',
+  loginRequiredCheckout: 'Please sign in to place your order.',
+  orderFailed: 'Could not place your order. Please try again.',
+  signInToCheckout: 'Sign in to checkout',
   contactSection: 'Contact',
   shippingSection: 'Shipping',
   paymentSection: 'Payment',
@@ -192,7 +195,7 @@ const en = {
   lastName: 'Last name',
   streetAddress: 'Street address',
   apartment: 'Apartment, floor, landmark',
-  phone: 'Phone (01xxxxxxxxx)',
+  phone: 'Phone number',
   paymentInstructions: 'Payment instructions',
   confirmOrder: 'Confirm order',
   placingOrder: 'Placing order…',
@@ -200,6 +203,11 @@ const en = {
   deliveryOnlyAlex: 'Currently delivering inside Alexandria, Egypt only',
   egypt: 'Egypt',
   alexandriaCity: 'Alexandria',
+  savedAddresses: 'Saved addresses',
+  chooseAddress: 'Choose a shipping address',
+  useNewAddress: 'Use a different address',
+  defaultAddress: 'Default',
+  usingSavedAddress: 'Using your saved address',
 
   // Payment methods
   payCod: 'Cash On Delivery',
@@ -221,7 +229,7 @@ const en = {
   lastNameRequired: 'Last name is required',
   addressRequired: 'Address is required',
   apartmentRequired: 'Apartment / floor is required',
-  phoneInvalid: 'Enter a valid Egyptian mobile (01xxxxxxxxx)',
+  phoneInvalid: 'Enter a valid phone number for the selected country',
   phoneRequired: 'Phone is required',
   paymentRequired: 'Payment method is required',
 

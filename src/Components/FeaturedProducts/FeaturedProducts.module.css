@@ -1,0 +1,251 @@
+.section {
+  background:
+    linear-gradient(180deg, #f7faf7 0%, #ffffff 42%, #f3f7f4 100%);
+  padding-top: 4.5rem;
+  padding-bottom: 5rem;
+}
+
+@media (min-width: 768px) {
+  .section {
+    padding-top: 6rem;
+    padding-bottom: 6.5rem;
+  }
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2.25rem;
+}
+
+@media (min-width: 768px) {
+  .header {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 3rem;
+  }
+}
+
+.headerAside {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  max-width: 18rem;
+}
+
+@media (min-width: 768px) {
+  .headerAside {
+    align-items: flex-end;
+    text-align: right;
+  }
+}
+
+.subtitle {
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: #5a6b60;
+}
+
+.shopLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: var(--font-nav);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #1f3d2b;
+  text-decoration: none;
+  transition: color 0.25s ease;
+}
+
+.shopLink i {
+  font-size: 0.65rem;
+  transition: transform 0.25s ease;
+}
+
+.shopLink:hover {
+  color: #5b8a6a;
+}
+
+.shopLink:hover i {
+  transform: translateX(3px);
+}
+
+.slider {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.viewport {
+  overflow: hidden;
+  margin: 0 -0.25rem;
+  padding: 0.25rem;
+}
+
+.track {
+  display: flex;
+  transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.slide {
+  flex-shrink: 0;
+  padding: 0 0.5rem;
+  box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+  .slide {
+    padding: 0 0.65rem;
+  }
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+  align-items: center;
+}
+
+@media (min-width: 720px) {
+  .controls {
+    grid-template-columns: auto 1fr auto;
+    gap: 1.5rem;
+  }
+}
+
+.arrows {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  padding: 0;
+  border: 1px solid #c9d5cc;
+  background: #fff;
+  color: #1f3d2b;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.arrow:hover:not(:disabled) {
+  background: #1f3d2b;
+  border-color: #1f3d2b;
+  color: #fff;
+}
+
+.arrow:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.arrow:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+@media (min-width: 768px) {
+  .arrow {
+    width: 3.25rem;
+    height: 3.25rem;
+    font-size: 1rem;
+  }
+}
+
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+}
+
+@media (min-width: 720px) {
+  .pagination {
+    justify-content: flex-start;
+  }
+}
+
+.dot {
+  position: relative;
+  width: 1.65rem;
+  height: 2px;
+  padding: 0.55rem 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.dot::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 2px;
+  transform: translateY(-50%);
+  background: #c9d5cc;
+  transition: background 0.25s ease;
+}
+
+.dotFill {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 0;
+  height: 2px;
+  transform: translateY(-50%);
+  background: #1f3d2b;
+  transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dotActive::before {
+  background: #d7e0d9;
+}
+
+.dotActive .dotFill {
+  width: 100%;
+}
+
+.dot:hover::before {
+  background: #5b8a6a;
+}
+
+.counter {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.25rem;
+  justify-self: start;
+  font-family: var(--font-nav);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  color: #1f3d2b;
+}
+
+@media (min-width: 720px) {
+  .counter {
+    justify-self: end;
+  }
+}
+
+.counterSep {
+  color: #5b8a6a;
+  font-weight: 500;
+}

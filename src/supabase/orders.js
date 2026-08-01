@@ -3,7 +3,7 @@ import { STORE } from '../config/store';
 
 /**
  * Create an order + line items in Supabase.
- * Works for guests (user_id null) and logged-in users.
+ * Requires a signed-in account (userId).
  */
 export async function createOrder({
   userId,
@@ -13,8 +13,15 @@ export async function createOrder({
   shipping,
   total,
 }) {
+  if (!userId) {
+    throw new Error('You must be signed in to place an order.');
+  }
+  if (!cartItems?.length) {
+    throw new Error('Your cart is empty.');
+  }
+
   const orderPayload = {
-    user_id: userId || null,
+    user_id: userId,
     customer_email: formData.email,
     customer_first_name: formData.firstName,
     customer_last_name: formData.lastName,
@@ -87,13 +94,27 @@ export async function createOrder({
     })
   );
 
-  // Fire-and-forget admin email (Edge Function — deploy when Supabase is ready)
+  // Notify admin email (Edge Function + Resend). Order still succeeds if email fails.
   try {
-    await supabase.functions.invoke('notify-new-order', {
-      body: { orderId: order.id },
-    });
+    const { data: notifyData, error: notifyError } =
+      await supabase.functions.invoke('notify-new-order', {
+        body: { orderId: order.id },
+      });
+    if (notifyError) {
+      console.warn(
+        'Order email notification failed:',
+        notifyError.message || notifyError
+      );
+    } else if (notifyData && notifyData.emailed === false) {
+      console.warn(
+        'Order email skipped — deploy notify-new-order and set RESEND_API_KEY / ADMIN_EMAIL'
+      );
+    }
   } catch (notifyErr) {
-    console.warn('Order email notification skipped:', notifyErr?.message || notifyErr);
+    console.warn(
+      'Order email notification skipped:',
+      notifyErr?.message || notifyErr
+    );
   }
 
   return order;
@@ -106,7 +127,7 @@ export async function fetchOrdersForUser(userId, email) {
     .order('created_at', { ascending: false });
 
   if (userId) {
-    query = query.or(`user_id.eq.${userId},customer_email.eq.${email}`);
+    query = query.eq('user_id', userId);
   } else if (email) {
     query = query.eq('customer_email', email);
   } else {
@@ -116,6 +137,50 @@ export async function fetchOrdersForUser(userId, email) {
   const { data, error } = await query;
   if (error) throw error;
   return data || [];
+}
+
+export async function fetchOrderById(orderId) {
+  if (!orderId) throw new Error('Order id required');
+
+  const { data, error } = await supabase
+    .from('orders')
+    .select('*, order_items(*)')
+    .eq('id', orderId)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) throw new Error('Order not found');
+  return data;
+}
+
+/** Map a DB order into ThankYouPage receipt shape */
+export function orderToReceiptState(order) {
+  if (!order) return null;
+  const items = order.order_items || [];
+  return {
+    formData: {
+      firstName: order.customer_first_name || '',
+      lastName: order.customer_last_name || '',
+      email: order.customer_email || '',
+      phone: order.customer_phone || '',
+      address: order.shipping_address || '',
+      apartment: order.shipping_apartment || '',
+      city: order.shipping_city || '',
+      country: order.shipping_country || '',
+      paymentMethod: order.payment_method || '',
+    },
+    cartItems: items.map((item) => ({
+      id: item.id,
+      name: item.product_name,
+      price: Number(item.unit_price),
+      quantity: Number(item.quantity),
+      image: item.product_image,
+    })),
+    order,
+    subtotal: Number(order.subtotal) || 0,
+    shipping: Number(order.shipping_fee) || 0,
+    total: Number(order.total) || 0,
+  };
 }
 
 export async function fetchAllOrders() {

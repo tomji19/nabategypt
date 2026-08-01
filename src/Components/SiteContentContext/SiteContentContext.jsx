@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { getCmsLocalContent, loadSiteContent } from '../../supabase/cms';
+import { loadSiteContent } from '../../supabase/cms';
 import { DEFAULT_SITE_CONTENT } from '../../config/defaultContent';
 
 const SiteContentContext = createContext(null);
@@ -17,7 +17,7 @@ export function useSiteContent() {
 }
 
 export function SiteContentProvider({ children }) {
-  const [content, setContent] = useState(() => getCmsLocalContent());
+  const [content, setContent] = useState(DEFAULT_SITE_CONTENT);
   const [loading, setLoading] = useState(true);
 
   const load = async () => {
@@ -25,8 +25,9 @@ export function SiteContentProvider({ children }) {
     try {
       const { content: next } = await loadSiteContent();
       setContent(next);
-    } catch {
-      setContent(getCmsLocalContent());
+    } catch (err) {
+      console.error('Failed to load site content:', err);
+      setContent(DEFAULT_SITE_CONTENT);
     } finally {
       setLoading(false);
     }

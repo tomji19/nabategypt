@@ -60,16 +60,19 @@ Until the function is deployed, orders still save in the database and appear in 
 | Feature | Status |
 |--------|--------|
 | EGP currency, 50 EGP Alex shipping, no tax | Done |
-| Guest checkout | Done |
+| Checkout requires signed-in account | Done |
 | COD / Vodafone Cash / Instapay / Visa (manual) | Done |
 | Orders → Supabase (needs schema) | Done |
 | Dashboard `/dashboard` (password `1999`) | Done |
 | Products DB + dashboard edit (needs schema) | Done |
-| Local product fallback with images | Done |
 | Wishlist `/wishlist` | Done |
 | Clothing size/color placeholders | Removed |
 | Paymob live card payments | Later |
 | Full AR/EN UI switch | Later |
+
+## 7. Re-apply order auth policies (if DB already exists)
+
+In Supabase SQL Editor, re-run the **orders / order_items RLS** section from `supabase_schema.sql` (policies named “Authenticated users create own orders”, “Users read own orders”, etc.) so guest inserts are blocked and customers only read their own orders.
 
 ## Payment note
 

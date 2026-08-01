@@ -10,11 +10,23 @@ const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
 const FROM_EMAIL = Deno.env.get('FROM_EMAIL') || 'نبات <onboarding@resend.dev>';
 
 Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers':
+          'authorization, x-client-info, apikey, content-type',
+      },
+    });
+  }
+
   try {
     const { orderId } = await req.json();
     if (!orderId) {
       return new Response(JSON.stringify({ error: 'orderId required' }), {
         status: 400,
+        headers: { 'Content-Type': 'application/json' },
       });
     }
 
@@ -32,6 +44,7 @@ Deno.serve(async (req) => {
     if (error || !order) {
       return new Response(JSON.stringify({ error: error?.message || 'not found' }), {
         status: 404,
+        headers: { 'Content-Type': 'application/json' },
       });
     }
 
@@ -39,6 +52,7 @@ Deno.serve(async (req) => {
       console.warn('RESEND_API_KEY not set — skipping email');
       return new Response(JSON.stringify({ ok: true, emailed: false }), {
         status: 200,
+        headers: { 'Content-Type': 'application/json' },
       });
     }
 
@@ -77,10 +91,17 @@ Deno.serve(async (req) => {
     });
 
     const body = await res.json();
-    return new Response(JSON.stringify({ ok: res.ok, body }), {
+    return new Response(JSON.stringify({ ok: res.ok, emailed: res.ok, body }), {
       status: res.ok ? 200 : 500,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
     });
   } catch (err) {
-    return new Response(JSON.stringify({ error: String(err) }), { status: 500 });
+    return new Response(JSON.stringify({ error: String(err) }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 });

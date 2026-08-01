@@ -180,7 +180,10 @@ const ar = {
   // الدفع
   checkoutLabel: 'إتمام الطلب',
   checkoutTitle: 'أكمل طلبك',
-  checkoutHint: 'التوصيل داخل الإسكندرية فقط · الشحن ٥٠ ج.م · بدون حساب',
+  checkoutHint: 'التوصيل داخل الإسكندرية فقط · الشحن ٥٠ ج.م · يلزم تسجيل الدخول',
+  loginRequiredCheckout: 'يرجى تسجيل الدخول لإتمام الطلب.',
+  orderFailed: 'تعذر إتمام الطلب. حاول مرة أخرى.',
+  signInToCheckout: 'سجّل الدخول لإتمام الطلب',
   contactSection: 'التواصل',
   shippingSection: 'الشحن',
   paymentSection: 'الدفع',
@@ -190,7 +193,7 @@ const ar = {
   lastName: 'اسم العائلة',
   streetAddress: 'عنوان الشارع',
   apartment: 'الشقة، الدور، علامة مميزة',
-  phone: 'الهاتف (٠١xxxxxxxxx)',
+  phone: 'رقم الهاتف',
   paymentInstructions: 'تعليمات الدفع',
   confirmOrder: 'تأكيد الطلب',
   placingOrder: 'جاري تأكيد الطلب…',
@@ -198,6 +201,11 @@ const ar = {
   deliveryOnlyAlex: 'التوصيل حالياً داخل الإسكندرية، مصر فقط',
   egypt: 'مصر',
   alexandriaCity: 'الإسكندرية',
+  savedAddresses: 'العناوين المحفوظة',
+  chooseAddress: 'اختر عنوان الشحن',
+  useNewAddress: 'استخدم عنواناً آخر',
+  defaultAddress: 'الافتراضي',
+  usingSavedAddress: 'يتم استخدام عنوانك المحفوظ',
 
   // طرق الدفع
   payCod: 'الدفع عند الاستلام',
@@ -216,7 +224,7 @@ const ar = {
   lastNameRequired: 'اسم العائلة مطلوب',
   addressRequired: 'العنوان مطلوب',
   apartmentRequired: 'الشقة / الدور مطلوب',
-  phoneInvalid: 'أدخل رقم موبايل مصري صحيح (٠١xxxxxxxxx)',
+  phoneInvalid: 'أدخل رقم هاتف صحيح للدولة المختارة',
   phoneRequired: 'الهاتف مطلوب',
   paymentRequired: 'طريقة الدفع مطلوبة',
 

@@ -219,6 +219,7 @@
   justify-content: center;
   width: 100%;
   padding: 0.95rem;
+  border: none;
   background: #1f3d2b;
   color: #fff;
   text-decoration: none;
@@ -227,6 +228,7 @@
   font-weight: 600;
   letter-spacing: 0.16em;
   text-transform: uppercase;
+  cursor: pointer;
   transition: background 0.3s ease;
 }
 

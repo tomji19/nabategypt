@@ -26,6 +26,7 @@ const OrderHistoryPage = lazy(() => import('./Components/OrderHistoryPage/OrderH
 const ContactPage = lazy(() => import('./Components/ContactPage/ContactPage'));
 const AboutPage = lazy(() => import('./Components/AboutPage/AboutPage'));
 const ForgetPassword = lazy(() => import('./Components/ForgetPassword/ForgetPassword'));
+const ResetPasswordPage = lazy(() => import('./Components/ResetPasswordPage/ResetPasswordPage'));
 const SearchResultsPage = lazy(() => import('./Components/SearchResultsPage/SearchResultsPage'));
 const AccountDetails = lazy(() => import('./Components/AccountDetails/AccountDetails'));
 const WishlistPage = lazy(() => import('./Components/WishlistPage/WishlistPage'));
@@ -43,7 +44,14 @@ export default function App() {
         { path: '/about', element: <AboutPage /> },
         { path: '/singleproduct/:id', element: <SingleProduct /> },
         { path: '/cart', element: <CartPage /> },
-        { path: '/checkout', element: <CheckoutPage /> },
+        {
+          path: '/checkout',
+          element: (
+            <ProtectedRoute>
+              <CheckoutPage />
+            </ProtectedRoute>
+          ),
+        },
         { path: '/wishlist', element: <WishlistPage /> },
         {
           path: '/accountdetails',
@@ -53,7 +61,14 @@ export default function App() {
             </ProtectedRoute>
           ),
         },
-        { path: '/thankyoupage', element: <ThankYouPage /> },
+        {
+          path: '/thankyoupage',
+          element: (
+            <ProtectedRoute>
+              <ThankYouPage />
+            </ProtectedRoute>
+          ),
+        },
         {
           path: '/orderhistory',
           element: (
@@ -73,6 +88,7 @@ export default function App() {
         { path: '/login', element: <LoginPage /> },
         { path: '/register', element: <RegisterPage /> },
         { path: '/forgetpassword', element: <ForgetPassword /> },
+        { path: '/reset-password', element: <ResetPasswordPage /> },
         { path: '/search', element: <SearchResultsPage /> },
         { path: '*', element: <ErrorPage /> },
       ],
@@ -86,7 +102,15 @@ export default function App() {
           <ProductsProvider>
             <WishlistProvider>
               <CartProvider>
-                <ToastContainer />
+                <ToastContainer
+                  position="top-right"
+                  autoClose={4500}
+                  hideProgressBar={false}
+                  newestOnTop
+                  closeOnClick
+                  pauseOnHover
+                  theme="colored"
+                />
                 <RouterProvider router={router} />
               </CartProvider>
             </WishlistProvider>

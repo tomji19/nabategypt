@@ -8,7 +8,8 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "seed:products": "node scripts/seed-products.mjs"
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^6.6.0",
@@ -16,7 +17,9 @@
     "axios": "^1.7.7",
     "formik": "^2.4.6",
     "framer-motion": "^11.11.9",
+    "html-to-image": "^1.11.13",
     "jwt-decode": "^3.1.2",
+    "libphonenumber-js": "^1.13.10",
     "lucide-react": "^0.453.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

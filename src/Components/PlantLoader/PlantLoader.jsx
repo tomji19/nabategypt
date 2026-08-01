@@ -5,12 +5,16 @@ import { lockBodyScroll, unlockBodyScroll, scrollWindowToTop } from '../../utils
 /**
  * Very simple sprout animation for page / data loading.
  * @param {'page' | 'inline' | 'overlay'} [variant='page']
+ * @param {boolean} [lockScroll] — defaults to true for page/overlay
  */
-export default function PlantLoader({ variant = 'page' }) {
-  const lockScroll = variant === 'overlay' || variant === 'page';
+export default function PlantLoader({ variant = 'page', lockScroll }) {
+  const shouldLock =
+    typeof lockScroll === 'boolean'
+      ? lockScroll
+      : variant === 'overlay' || variant === 'page';
 
   useEffect(() => {
-    if (!lockScroll) return undefined;
+    if (!shouldLock) return undefined;
 
     scrollWindowToTop();
     lockBodyScroll();
@@ -18,7 +22,7 @@ export default function PlantLoader({ variant = 'page' }) {
     return () => {
       unlockBodyScroll();
     };
-  }, [lockScroll]);
+  }, [shouldLock]);
 
   const sprout = (
     <div className={styles.sprout} aria-hidden>

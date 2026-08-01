@@ -1,8 +1,15 @@
 -- ============================================
--- NABAT (نبات) — FULL SUPABASE SCHEMA
--- Run this entire file in Supabase SQL Editor
--- after creating your project.
+-- AUTH SESSION NOTES (configure in Dashboard)
 -- ============================================
+-- Access token (JWT) is short-lived; the client refreshes it automatically.
+-- For ~7 day login persistence, set in:
+--   Authentication → Sessions
+-- Recommended:
+--   - Access token expiry: 3600 seconds (1 hour) — keep short; refresh handles continuity
+--   - Time-box user sessions: 604800 seconds (7 days) — max session lifetime
+--   - Inactivity timeout: optional (e.g. 604800) or leave disabled
+-- Refresh tokens rotate automatically; supabase-js autoRefreshToken keeps users signed in
+-- until the session time-box / refresh token is revoked (sign out).
 
 -- ============================================
 -- PROFILES
@@ -248,19 +255,27 @@ CREATE TRIGGER set_orders_updated_at
 
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 
--- Anyone (incl. guests via anon key) can place an order
+-- Signed-in customers only; order must belong to them
 DROP POLICY IF EXISTS "Anyone can create orders" ON public.orders;
-CREATE POLICY "Anyone can create orders"
+DROP POLICY IF EXISTS "Authenticated users create own orders" ON public.orders;
+CREATE POLICY "Authenticated users create own orders"
   ON public.orders FOR INSERT
-  WITH CHECK (true);
+  TO authenticated
+  WITH CHECK (auth.uid() = user_id);
 
--- Customers see their own orders; dashboard (anon) can see all
+-- Customers see their own orders
 DROP POLICY IF EXISTS "Users read own orders" ON public.orders;
 CREATE POLICY "Users read own orders"
   ON public.orders FOR SELECT
-  USING (
-    true
-  );
+  TO authenticated
+  USING (auth.uid() = user_id);
+
+-- Dashboard (anon key, password-gated UI) can still list/update all orders
+DROP POLICY IF EXISTS "Anon dashboard read orders" ON public.orders;
+CREATE POLICY "Anon dashboard read orders"
+  ON public.orders FOR SELECT
+  TO anon
+  USING (true);
 
 DROP POLICY IF EXISTS "Admin update orders" ON public.orders;
 DROP POLICY IF EXISTS "Dashboard update orders" ON public.orders;
@@ -292,13 +307,32 @@ CREATE TABLE IF NOT EXISTS public.order_items (
 ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Anyone can insert order items" ON public.order_items;
-CREATE POLICY "Anyone can insert order items"
+DROP POLICY IF EXISTS "Authenticated insert order items" ON public.order_items;
+CREATE POLICY "Authenticated insert order items"
   ON public.order_items FOR INSERT
-  WITH CHECK (true);
+  TO authenticated
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.orders o
+      WHERE o.id = order_id AND o.user_id = auth.uid()
+    )
+  );
 
 DROP POLICY IF EXISTS "Users read own order items" ON public.order_items;
 CREATE POLICY "Users read own order items"
   ON public.order_items FOR SELECT
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.orders o
+      WHERE o.id = order_id AND o.user_id = auth.uid()
+    )
+  );
+
+DROP POLICY IF EXISTS "Anon dashboard read order items" ON public.order_items;
+CREATE POLICY "Anon dashboard read order items"
+  ON public.order_items FOR SELECT
+  TO anon
   USING (true);
 
 CREATE INDEX IF NOT EXISTS order_items_order_id_idx ON public.order_items(order_id);
@@ -356,9 +390,101 @@ INSERT INTO public.products (slug, name, category, price, stock, is_featured, is
   ('rose', 'Rose', 'Outdoor Plants', 45, 10, false, false, 30, '')
 ON CONFLICT (slug) DO NOTHING;
 
--- Extra product fields for care / light
+-- Extra product fields for care / light / sale / hover
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS care TEXT;
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS light TEXT;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS compare_at_price NUMERIC(10, 2);
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS hover_image_url TEXT;
+
+-- ============================================
+-- CART ITEMS (logged-in users — synced to Supabase)
+-- Guests keep cart in React memory only (no localStorage)
+-- ============================================
+CREATE TABLE IF NOT EXISTS public.cart_items (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  product_slug TEXT NOT NULL,
+  quantity INTEGER NOT NULL CHECK (quantity > 0),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (user_id, product_slug)
+);
+
+ALTER TABLE public.cart_items ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users manage own cart" ON public.cart_items;
+CREATE POLICY "Users manage own cart"
+  ON public.cart_items FOR ALL TO authenticated
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+DROP TRIGGER IF EXISTS set_cart_items_updated_at ON public.cart_items;
+CREATE TRIGGER set_cart_items_updated_at
+  BEFORE UPDATE ON public.cart_items
+  FOR EACH ROW
+  EXECUTE FUNCTION public.handle_updated_at();
+
+CREATE INDEX IF NOT EXISTS cart_items_user_id_idx ON public.cart_items(user_id);
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.cart_items TO authenticated;
+
+-- ============================================
+-- WISHLIST ITEMS (logged-in users)
+-- ============================================
+CREATE TABLE IF NOT EXISTS public.wishlist_items (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  product_slug TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (user_id, product_slug)
+);
+
+ALTER TABLE public.wishlist_items ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users manage own wishlist" ON public.wishlist_items;
+CREATE POLICY "Users manage own wishlist"
+  ON public.wishlist_items FOR ALL TO authenticated
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE INDEX IF NOT EXISTS wishlist_items_user_id_idx ON public.wishlist_items(user_id);
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.wishlist_items TO authenticated;
+
+-- ============================================
+-- STORAGE: product images (public bucket)
+-- Create bucket in Dashboard → Storage if insert fails,
+-- or run after enabling storage.
+-- ============================================
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'products',
+  'products',
+  true,
+  5242880,
+  ARRAY['image/jpeg', 'image/png', 'image/webp']
+)
+ON CONFLICT (id) DO UPDATE SET public = true;
+
+DROP POLICY IF EXISTS "Public read product images" ON storage.objects;
+CREATE POLICY "Public read product images"
+  ON storage.objects FOR SELECT
+  USING (bucket_id = 'products');
+
+DROP POLICY IF EXISTS "Dashboard upload product images" ON storage.objects;
+CREATE POLICY "Dashboard upload product images"
+  ON storage.objects FOR INSERT
+  WITH CHECK (bucket_id = 'products');
+
+DROP POLICY IF EXISTS "Dashboard update product images" ON storage.objects;
+CREATE POLICY "Dashboard update product images"
+  ON storage.objects FOR UPDATE
+  USING (bucket_id = 'products');
+
+DROP POLICY IF EXISTS "Dashboard delete product images" ON storage.objects;
+CREATE POLICY "Dashboard delete product images"
+  ON storage.objects FOR DELETE
+  USING (bucket_id = 'products');
 
 -- ============================================
 -- CATEGORIES

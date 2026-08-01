@@ -4,24 +4,32 @@ import Navbar from '../Navbar/Navbar';
 import Footer from '../Footer/Footer';
 import PlantLoader from '../PlantLoader/PlantLoader';
 import CartDrawer from '../CartDrawer/CartDrawer';
-import { scrollWindowToTop } from '../../utils/scrollLock';
+import AuthRedirectHandler from '../AuthRedirectHandler/AuthRedirectHandler';
+import {
+  resetBodyScroll,
+  scrollWindowToTop,
+} from '../../utils/scrollLock';
 
+/**
+ * Brief page-change flash. Must clear on cleanup so Back never leaves
+ * a stuck overlay (timeout was previously cleared while visible stayed true).
+ */
 function RouteTransition() {
   const location = useLocation();
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    scrollWindowToTop();
     setVisible(true);
-    const t = setTimeout(() => {
+    const t = window.setTimeout(() => setVisible(false), 320);
+    return () => {
+      window.clearTimeout(t);
       setVisible(false);
-      requestAnimationFrame(() => scrollWindowToTop());
-    }, 420);
-    return () => clearTimeout(t);
+    };
   }, [location.pathname, location.search]);
 
   if (!visible) return null;
-  return <PlantLoader variant="overlay" />;
+  // No body lock — cosmetic only; locking caused stuck “loading” on back
+  return <PlantLoader variant="overlay" lockScroll={false} />;
 }
 
 export default function Layout() {
@@ -29,19 +37,17 @@ export default function Layout() {
 
   useEffect(() => {
     scrollWindowToTop();
+    // Safety: never leave the page scroll-locked after a route change
+    resetBodyScroll();
   }, [location.pathname, location.search]);
 
-  // Hard safety on first mount in case a previous session left body locked
   useEffect(() => {
-    document.documentElement.style.overflow = '';
-    document.body.style.overflow = '';
-    document.body.style.position = '';
-    document.body.style.top = '';
-    document.body.style.width = '';
+    resetBodyScroll();
   }, []);
 
   return (
     <div className="flex min-h-screen flex-col">
+      <AuthRedirectHandler />
       <Navbar />
       <main className="flex-1">
         <RouteTransition />

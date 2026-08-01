@@ -67,7 +67,6 @@ function Field({ label, children }) {
 export default function AdminDashboard() {
   const { refreshProducts } = useProducts();
   const [tab, setTab] = useState('products');
-  const [source, setSource] = useState('local');
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -88,7 +87,6 @@ export default function AdminDashboard() {
         fetchAllOrders().catch(() => []),
       ]);
       setProducts(catalog.products);
-      setSource(catalog.source);
       setCategories(cats.categories);
       setContent(site.content);
       setOrders(ords);
@@ -116,11 +114,7 @@ export default function AdminDashboard() {
       );
       toast.success('Status updated');
     } catch (err) {
-      toast.error(
-        source === 'local'
-          ? 'Orders need Supabase (run supabase_schema.sql).'
-          : err.message || 'Update failed'
-      );
+      toast.error(err.message || 'Update failed');
     }
   };
 
@@ -141,7 +135,7 @@ export default function AdminDashboard() {
           '',
       };
       delete payload._localImage;
-      const saved = await saveDashboardProduct(payload, source);
+      const saved = await saveDashboardProduct(payload);
       setProducts((prev) => {
         const i = prev.findIndex((p) => p.id === saved.id);
         if (i >= 0) {
@@ -153,11 +147,7 @@ export default function AdminDashboard() {
       });
       setEditing(null);
       await refreshProducts?.();
-      toast.success(
-        source === 'local'
-          ? 'Product saved (local). Will sync to Supabase when you connect the DB.'
-          : 'Product saved'
-      );
+      toast.success('Product saved');
     } catch (err) {
       toast.error(err.message || 'Save failed');
     } finally {
@@ -168,7 +158,7 @@ export default function AdminDashboard() {
   const removeProduct = async (product) => {
     if (!window.confirm(`Delete ${product.name}?`)) return;
     try {
-      await deleteDashboardProduct(product, source);
+      await deleteDashboardProduct(product);
       setProducts((prev) => prev.filter((p) => p.id !== product.id));
       await refreshProducts?.();
       toast.success('Deleted');
@@ -185,7 +175,7 @@ export default function AdminDashboard() {
     }
     setSaving(true);
     try {
-      const saved = await saveCategory(editingCat, source);
+      const saved = await saveCategory(editingCat);
       setCategories((prev) => {
         const i = prev.findIndex((c) => c.id === saved.id);
         if (i >= 0) {
@@ -207,7 +197,7 @@ export default function AdminDashboard() {
   const removeCat = async (cat) => {
     if (!window.confirm(`Delete category ${cat.name}?`)) return;
     try {
-      await deleteCategory(cat, source);
+      await deleteCategory(cat);
       setCategories((prev) => prev.filter((c) => c.id !== cat.id));
       toast.success('Deleted');
     } catch (err) {
@@ -218,12 +208,8 @@ export default function AdminDashboard() {
   const saveContentSection = async () => {
     setSaving(true);
     try {
-      await saveSiteContent(content, source);
-      toast.success(
-        source === 'local'
-          ? 'Texts saved locally. Connect Supabase to sync online.'
-          : 'Site texts saved'
-      );
+      await saveSiteContent(content);
+      toast.success('Site texts saved');
     } catch (err) {
       toast.error(err.message || 'Save failed');
     } finally {
@@ -259,8 +245,7 @@ export default function AdminDashboard() {
           <div>
             <BrandLogo imgClassName="mb-2 h-9 w-auto object-contain brightness-0 invert" />
             <p className="font-nav text-[11px] uppercase tracking-[0.2em] text-white/70">
-              Dashboard ·{' '}
-              {source === 'local' ? 'Local draft mode' : 'Connected to Supabase'}
+              Dashboard · Connected to Supabase
             </p>
             <h1 className="font-heading text-2xl font-medium md:text-3xl">
               إدارة المتجر
@@ -281,16 +266,6 @@ export default function AdminDashboard() {
       </div>
 
       <div className="section-pad py-8 md:py-12">
-        {source === 'local' && (
-          <div className="mb-6 border border-nabat-border bg-nabat-mist p-4 font-nav text-sm text-nabat-text">
-            <strong>Why it looked empty before:</strong> the dashboard only talked to
-            Supabase, and your database is not connected yet. It now loads your{' '}
-            <strong>{products.length} local plants</strong> so you can edit everything.
-            When you run <code className="text-nabat-accent">supabase_schema.sql</code>,
-            data can sync to the cloud.
-          </div>
-        )}
-
         <div className="mb-8 grid gap-4 sm:grid-cols-3">
           <div className="border border-nabat-border bg-white p-5">
             <p className="font-nav text-[10px] uppercase tracking-[0.14em] text-nabat-muted">

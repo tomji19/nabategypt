@@ -85,7 +85,7 @@ function FilterDropdown({ id, label, value, options, openId, setOpenId, onChange
 }
 
 export default function ShopPage() {
-  const { products } = useProducts();
+  const { products, loading, error, refreshProducts } = useProducts();
   const [openId, setOpenId] = useState(null);
   const [category, setCategory] = useState('');
   const [light, setLight] = useState('');
@@ -125,6 +125,12 @@ export default function ShopPage() {
     });
 
     next = [...next];
+    if (sort === 'featured') {
+      next.sort((a, b) => {
+        if (a.isFeatured !== b.isFeatured) return a.isFeatured ? -1 : 1;
+        return (a.sortOrder || 0) - (b.sortOrder || 0);
+      });
+    }
     if (sort === 'price-asc') next.sort((a, b) => a.price - b.price);
     if (sort === 'price-desc') next.sort((a, b) => b.price - a.price);
     if (sort === 'name-asc') next.sort((a, b) => a.name.localeCompare(b.name));
@@ -288,20 +294,42 @@ export default function ShopPage() {
       </div>
 
       <div className={`section-pad ${styles.gridWrap}`}>
-        <p className={styles.count}>{filteredProducts.length} plants</p>
-        {filteredProducts.length > 0 ? (
-          <div className={styles.grid}>
-            {filteredProducts.map((product) => (
-              <PlantCard key={product.id} product={product} />
-            ))}
-          </div>
-        ) : (
+        {loading ? (
           <div className={styles.empty}>
-            <p>No plants match these filters.</p>
-            <button type="button" className={styles.reset} onClick={resetFilters}>
-              Clear filters
+            <p>Loading plants…</p>
+          </div>
+        ) : error ? (
+          <div className={styles.empty}>
+            <p>Couldn’t load the shop from Supabase.</p>
+            <p className={styles.count}>{error}</p>
+            <button type="button" className={styles.reset} onClick={refreshProducts}>
+              Try again
             </button>
           </div>
+        ) : (
+          <>
+            <p className={styles.count}>{filteredProducts.length} plants</p>
+            {filteredProducts.length > 0 ? (
+              <div className={styles.grid}>
+                {filteredProducts.map((product) => (
+                  <PlantCard key={product.id} product={product} />
+                ))}
+              </div>
+            ) : (
+              <div className={styles.empty}>
+                <p>
+                  {list.length === 0
+                    ? 'No products in the catalog yet. Seed products in Supabase to populate the shop.'
+                    : 'No plants match these filters.'}
+                </p>
+                {list.length > 0 && (
+                  <button type="button" className={styles.reset} onClick={resetFilters}>
+                    Clear filters
+                  </button>
+                )}
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
