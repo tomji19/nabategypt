@@ -184,7 +184,9 @@ export async function saveDashboardProduct(product) {
     is_recent: !!product.isRecent,
     is_gift: !!product.isGift,
     is_easy_care: !!product.isEasyCare,
-    sort_order: Number(product.sortOrder) || 0,
+    sort_order: Number.isFinite(Number(product.sortOrder))
+      ? Number(product.sortOrder)
+      : 0,
     care: product.care || null,
     light: product.light || null,
     size_type: product.sizeType || null,

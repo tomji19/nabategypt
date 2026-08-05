@@ -145,7 +145,13 @@ export default function AdminDashboard() {
           message: '',
         })),
       ]);
-      setProducts(catalog?.products || []);
+      setProducts(
+        (catalog?.products || [])
+          .slice()
+          .sort(
+            (a, b) => (Number(a.sortOrder) || 0) - (Number(b.sortOrder) || 0)
+          )
+      );
       setCategories(cats?.categories || []);
       setContent(site?.content && typeof site.content === 'object' ? site.content : {});
       setOrders(ords || []);
@@ -282,6 +288,18 @@ export default function AdminDashboard() {
         return;
       }
       delete payload._localImage;
+
+      const isNewProduct =
+        !editing.dbId && !products.some((p) => p.id === slug);
+      if (isNewProduct) {
+        // Lower sort_order shows first — place brand-new plants at the top
+        const minSort = products.reduce((min, p) => {
+          const n = Number(p.sortOrder);
+          return Number.isFinite(n) ? Math.min(min, n) : min;
+        }, 0);
+        payload.sortOrder = minSort - 1;
+      }
+
       try {
         await saveDashboardProduct(payload);
       } catch (err) {
@@ -292,7 +310,14 @@ export default function AdminDashboard() {
         }
       }
       const catalog = await loadDashboardCatalog();
-      setProducts(catalog.products);
+      const nextProducts = [...(catalog.products || [])].sort(
+        (a, b) => (Number(a.sortOrder) || 0) - (Number(b.sortOrder) || 0)
+      );
+      setProducts(nextProducts);
+      if (isNewProduct && payload.category) {
+        setProductCategory(payload.category);
+        setProductFilter('');
+      }
       setEditing(null);
       await refreshProducts?.();
       const schema = await probeDashboardSchema().catch(() => null);
@@ -407,18 +432,23 @@ export default function AdminDashboard() {
   const unreadMessages = messages.filter((m) => !m.is_read).length;
   const activeCategoryOptions = categories.filter((c) => c.isActive !== false);
   const categoryNames = activeCategoryOptions.map((c) => c.name);
-  const filteredProducts = products.filter((p) => {
-    if (productCategory !== 'all' && p.category !== productCategory) {
-      return false;
-    }
-    const q = productFilter.trim().toLowerCase();
-    if (!q) return true;
-    return (
-      p.name?.toLowerCase().includes(q) ||
-      p.category?.toLowerCase().includes(q) ||
-      p.id?.toLowerCase().includes(q)
+  const filteredProducts = products
+    .filter((p) => {
+      if (productCategory !== 'all' && p.category !== productCategory) {
+        return false;
+      }
+      const q = productFilter.trim().toLowerCase();
+      if (!q) return true;
+      return (
+        p.name?.toLowerCase().includes(q) ||
+        p.category?.toLowerCase().includes(q) ||
+        p.id?.toLowerCase().includes(q)
+      );
+    })
+    .slice()
+    .sort(
+      (a, b) => (Number(a.sortOrder) || 0) - (Number(b.sortOrder) || 0)
     );
-  });
 
   const productsByCategory = (() => {
     if (productCategory !== 'all') {
@@ -430,16 +460,14 @@ export default function AdminDashboard() {
       if (!map.has(key)) map.set(key, []);
       map.get(key).push(p);
     });
-    // Prefer dashboard category order
-    const ordered = [];
-    activeCategoryOptions.forEach((c) => {
-      if (map.has(c.name)) {
-        ordered.push({ name: c.name, items: map.get(c.name) });
-        map.delete(c.name);
-      }
-    });
-    map.forEach((items, name) => ordered.push({ name, items }));
-    return ordered;
+    // Categories with newest products (lowest sort_order) float to the top
+    return [...map.entries()]
+      .map(([name, items]) => ({
+        name,
+        items,
+        topSort: Math.min(...items.map((p) => Number(p.sortOrder) || 0)),
+      }))
+      .sort((a, b) => a.topSort - b.topSort);
   })();
 
   const openProductEditor = (product) => {

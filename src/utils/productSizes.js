@@ -94,6 +94,27 @@ export function productRequiresSize(product) {
   return normalizeSizeOptions(product.sizeOptions, product.price).length > 0;
 }
 
+export function getSizeOptionCount(product) {
+  if (!productRequiresSize(product)) return 0;
+  return normalizeSizeOptions(product.sizeOptions, product.price).length;
+}
+
+/** Exactly one size — auto-use it; no picker needed */
+export function getSoleSizeValue(product) {
+  if (getSizeOptionCount(product) !== 1) return '';
+  return normalizeSizeOptions(product.sizeOptions, product.price)[0].value;
+}
+
+/** Customer must pick a size (2+) before adding */
+export function productNeedsSizeChoice(product) {
+  return getSizeOptionCount(product) >= 2;
+}
+
+/** “From …” only when there are 2+ size options */
+export function shouldShowFromPrice(product) {
+  return productNeedsSizeChoice(product);
+}
+
 export function formatSizeLabel(size, sizeType) {
   if (!size) return '';
   if (sizeType === 'cm') return `${size} cm`;

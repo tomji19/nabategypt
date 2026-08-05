@@ -7,7 +7,13 @@ import {
   getCategoryLabel,
   getProductName,
 } from '../../utils/productLocale';
-import { getDisplayPrice, productRequiresSize } from '../../utils/productSizes';
+import {
+  getDisplayPrice,
+  getSoleSizeValue,
+  makeCartKey,
+  productNeedsSizeChoice,
+  shouldShowFromPrice,
+} from '../../utils/productSizes';
 import styles from './PlantCard.module.css';
 
 export default function PlantCard({ product }) {
@@ -27,14 +33,20 @@ export default function PlantCard({ product }) {
 
   const displayName = getProductName(product, { isAr, t });
   const categoryLabel = getCategoryLabel(product.category, { t });
-  const needsSize = productRequiresSize(product);
+  const needsSizeChoice = productNeedsSizeChoice(product);
+  const soleSize = getSoleSizeValue(product);
   const display = getDisplayPrice(product);
+  const showFrom = shouldShowFromPrice(product);
   const onSale = Boolean(product.onSale || display.onSale);
-  const quantity = needsSize
+  const cartKey = makeCartKey(
+    product.id,
+    needsSizeChoice ? '' : soleSize || ''
+  );
+  const quantity = needsSizeChoice
     ? cartItems
         .filter((item) => (item.productId || item.id) === product.id)
         .reduce((sum, item) => sum + (item.quantity || 0), 0)
-    : cartItems.find((item) => item.id === product.id)?.quantity || 0;
+    : cartItems.find((item) => item.id === cartKey)?.quantity || 0;
   const hoverImage = product.hoverImage || product.secondaryImage || product.images?.[1];
   const hasHoverImage = Boolean(hoverImage);
   const outOfStock = product.stock != null && product.stock <= 0;
@@ -51,11 +63,11 @@ export default function PlantCard({ product }) {
   const handleAdd = (e) => {
     e.stopPropagation();
     if (outOfStock) return;
-    if (needsSize) {
+    if (needsSizeChoice) {
       openProduct();
       return;
     }
-    addToCart(product);
+    addToCart(product, { size: soleSize });
     setJustAdded(true);
   };
 
@@ -109,7 +121,7 @@ export default function PlantCard({ product }) {
           onClick={handleAdd}
           disabled={outOfStock}
           aria-label={
-            needsSize
+            needsSizeChoice
               ? t('chooseSize')
               : justAdded
                 ? t('addedToBag')
@@ -120,7 +132,7 @@ export default function PlantCard({ product }) {
           title={
             outOfStock
               ? t('outOfStock')
-              : needsSize
+              : needsSizeChoice
                 ? t('chooseSize')
                 : t('addToBag')
           }
@@ -141,7 +153,7 @@ export default function PlantCard({ product }) {
         </h2>
         <div className={styles.priceRow}>
           <p className={styles.price}>
-            {needsSize
+            {showFrom
               ? `${t('fromPrice')} ${formatEGP(display.price)}`
               : formatEGP(display.price)}
           </p>

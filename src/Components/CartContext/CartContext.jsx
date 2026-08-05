@@ -178,9 +178,12 @@ export const CartProvider = ({ children }) => {
   const addToCart = (product, { openDrawer = true, size = '' } = {}) => {
     if (!product?.id) return false;
 
-    const sizeValue = String(size || '').trim();
+    let sizeValue = String(size || '').trim();
+    const options = normalizeSizeOptions(product.sizeOptions, product.price);
     if (productRequiresSize(product)) {
-      const options = normalizeSizeOptions(product.sizeOptions, product.price);
+      if (!sizeValue && options.length === 1) {
+        sizeValue = options[0].value;
+      }
       if (!sizeValue || !options.some((o) => o.value === sizeValue)) {
         return false;
       }

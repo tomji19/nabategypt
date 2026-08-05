@@ -221,8 +221,10 @@ export default function ShopPage() {
     next = [...next];
     if (sort === 'featured') {
       next.sort((a, b) => {
+        const bySort = (a.sortOrder || 0) - (b.sortOrder || 0);
+        if (bySort !== 0) return bySort;
         if (a.isFeatured !== b.isFeatured) return a.isFeatured ? -1 : 1;
-        return (a.sortOrder || 0) - (b.sortOrder || 0);
+        return 0;
       });
     }
     if (sort === 'price-asc') next.sort((a, b) => a.price - b.price);

@@ -117,7 +117,9 @@ export async function upsertProduct(product) {
     light: product.light || null,
     size_type: product.sizeType || null,
     size_options: normalizeSizeOptions(product.sizeOptions, product.price),
-    sort_order: Number(product.sortOrder) || 0,
+    sort_order: Number.isFinite(Number(product.sortOrder))
+      ? Number(product.sortOrder)
+      : 0,
     updated_at: new Date().toISOString(),
   };
 

@@ -13,10 +13,13 @@ import {
 import {
   formatSizeLabel,
   getDisplayPrice,
+  getSoleSizeValue,
   isSalePrice,
   makeCartKey,
   normalizeSizeOptions,
+  productNeedsSizeChoice,
   productRequiresSize,
+  shouldShowFromPrice,
 } from '../../utils/productSizes';
 import { getProductGalleryImages } from '../../utils/productGallery';
 import styles from './SingleProduct.module.css';
@@ -43,8 +46,10 @@ export default function SingleProduct() {
         : '/shop';
 
   useEffect(() => {
-    setProduct(getProductById(id));
-    setSelectedSize('');
+    const next = getProductById(id);
+    setProduct(next);
+    const sole = getSoleSizeValue(next);
+    setSelectedSize(sole || '');
     setSizeError(false);
     setActiveImage(0);
   }, [id, getProductById]);
@@ -62,29 +67,31 @@ export default function SingleProduct() {
   const displayName = getProductName(product, { isAr, t });
   const categoryLabel = getCategoryLabel(product.category, { t });
   const outOfStock = product.stock != null && product.stock <= 0;
-  const needsSize = productRequiresSize(product);
+  const needsSizeChoice = productNeedsSizeChoice(product);
+  const hasSizedPricing = productRequiresSize(product);
   const sizeOptions = normalizeSizeOptions(product.sizeOptions, product.price);
-  const display = getDisplayPrice(product, needsSize ? selectedSize : '');
-  const unitPrice = needsSize
-    ? selectedSize
-      ? display.price
-      : null
-    : display.price;
+  const soleSize = getSoleSizeValue(product);
+  const effectiveSize = needsSizeChoice ? selectedSize : soleSize;
+  const display = getDisplayPrice(product, effectiveSize);
+  const unitPrice =
+    needsSizeChoice && !selectedSize ? null : display.price;
   const gallery = getProductGalleryImages(product);
   const activeSrc = gallery[activeImage] || gallery[0] || product.image;
-  const cartKey = makeCartKey(product.id, needsSize ? selectedSize : '');
+  const cartKey = makeCartKey(product.id, effectiveSize);
   const quantity =
     cartItems.find((item) => item.id === cartKey)?.quantity || 0;
   const wished = isInWishlist(product.id);
 
   const handleAdd = () => {
     if (outOfStock) return;
-    if (needsSize && !selectedSize) {
+    if (needsSizeChoice && !selectedSize) {
       setSizeError(true);
       toast.error(t('sizeRequired'));
       return;
     }
-    const ok = addToCart(product, { size: selectedSize });
+    const ok = addToCart(product, {
+      size: needsSizeChoice ? selectedSize : soleSize,
+    });
     if (!ok) {
       setSizeError(true);
       toast.error(t('sizeRequired'));
@@ -161,9 +168,9 @@ export default function SingleProduct() {
           <h1 className={styles.name}>{displayName}</h1>
           <div className={styles.priceRow}>
             <p className={styles.price}>
-              {unitPrice == null
+              {unitPrice == null && shouldShowFromPrice(product)
                 ? `${t('fromPrice') || 'From'} ${formatEGP(display.price)}`
-                : formatEGP(unitPrice)}
+                : formatEGP(unitPrice ?? display.price)}
             </p>
             {display.onSale && (
               <p className={styles.compare}>
@@ -175,7 +182,7 @@ export default function SingleProduct() {
             <p className="mt-2 font-nav text-sm text-red-600">{t('outOfStock')}</p>
           )}
 
-          {needsSize && (
+          {needsSizeChoice && (
             <div className="mt-5">
               <p className="font-nav text-[10px] uppercase tracking-[0.14em] text-nabat-muted">
                 {t('selectSize')}
@@ -227,6 +234,12 @@ export default function SingleProduct() {
                 </p>
               )}
             </div>
+          )}
+
+          {!needsSizeChoice && hasSizedPricing && soleSize && (
+            <p className="mt-4 font-nav text-sm text-nabat-muted">
+              {t('size')}: {formatSizeLabel(soleSize, product.sizeType)}
+            </p>
           )}
 
           <div className="mt-4 flex flex-wrap gap-3">

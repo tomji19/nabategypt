@@ -13,7 +13,7 @@ import {
   isSalePrice,
   normalizeCompareAt,
   normalizeSizeOptions,
-  productRequiresSize,
+  shouldShowFromPrice,
 } from '../../utils/productSizes';
 
 function slugify(name) {
@@ -647,9 +647,8 @@ export default function ProductEditor({
 export function DashboardProductCard({ product, onEdit, onDelete }) {
   const img =
     typeof product.image === 'string' && product.image ? product.image : null;
-  const hasSizes = productRequiresSize(product);
   const display = getDisplayPrice(product);
-  const priceLabel = hasSizes
+  const priceLabel = shouldShowFromPrice(product)
     ? `From ${formatEGP(display.price)}`
     : formatEGP(display.price);
 
