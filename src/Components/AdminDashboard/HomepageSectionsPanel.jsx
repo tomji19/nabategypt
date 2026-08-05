@@ -47,7 +47,6 @@ export default function HomepageSectionsPanel({
   const list = useMemo(() => {
     const q = filter.trim().toLowerCase();
     return (products || [])
-      .filter((p) => p.isActive !== false)
       .filter((p) => {
         if (!q) return true;
         return (
@@ -66,7 +65,7 @@ export default function HomepageSectionsPanel({
   }, [products, filter, section]);
 
   const selectedCount = (products || []).filter(
-    (p) => p.isActive !== false && p[section.flag]
+    (p) => !!p[section.flag]
   ).length;
 
   const toggle = async (product, nextValue) => {
@@ -119,7 +118,7 @@ export default function HomepageSectionsPanel({
       <div className="flex flex-wrap gap-2">
         {HOMEPAGE_SECTIONS.map((s) => {
           const count = (products || []).filter(
-            (p) => p.isActive !== false && p[s.flag]
+            (p) => !!p[s.flag]
           ).length;
           return (
             <button

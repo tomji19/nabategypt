@@ -184,6 +184,7 @@ export default function OrderHistoryPage() {
                                       {item.product_name}
                                     </p>
                                     <p className="font-nav text-xs text-nabat-muted">
+                                      {item.size ? `Size: ${item.size} · ` : ''}
                                       Qty {item.quantity}
                                     </p>
                                   </div>

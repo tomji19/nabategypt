@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { useLanguage } from '../LanguageContext/LanguageContext';
 import { useSiteContent } from '../SiteContentContext/SiteContentContext';
 import { formatEGP } from '../../utils/money';
-import { CARD_IMAGE_FALLBACKS, cmsImage } from '../../config/cmsFallbacks';
+import { cmsImage } from '../../config/cmsFallbacks';
 import styles from '../CollectionCards/CollectionCards.module.css';
 
 export default function ScentedCornerSection() {
@@ -12,6 +12,8 @@ export default function ScentedCornerSection() {
   const { content } = useSiteContent();
   const home = content?.home || {};
   const scents = home.scents || [];
+
+  if (!scents.length) return null;
 
   return (
     <section className={`section-pad ${styles.section}`}>
@@ -27,7 +29,7 @@ export default function ScentedCornerSection() {
         {scents.map((item, i) => {
           const name = isAr ? item.nameAr || item.name : item.name;
           const desc = isAr ? item.descAr || item.desc : item.desc;
-          const src = cmsImage(item.image, CARD_IMAGE_FALLBACKS[item.id]);
+          const src = cmsImage(item.image);
           return (
             <motion.article
               key={item.id || i}

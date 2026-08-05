@@ -2,38 +2,35 @@ import React, { useState } from 'react';
 import { STORE } from '../../config/store';
 import BrandLogo from '../BrandLogo/BrandLogo';
 
-const SESSION_KEY = 'nabat_dashboard_unlocked';
+const UNLOCK_KEY = 'nabat-dashboard-unlock';
 
-export function isDashboardUnlocked() {
+function readUnlocked() {
   try {
-    return sessionStorage.getItem(SESSION_KEY) === '1';
+    return sessionStorage.getItem(UNLOCK_KEY) === '1';
   } catch {
     return false;
   }
 }
 
-export function lockDashboard() {
+function writeUnlocked(value) {
   try {
-    sessionStorage.removeItem(SESSION_KEY);
+    if (value) sessionStorage.setItem(UNLOCK_KEY, '1');
+    else sessionStorage.removeItem(UNLOCK_KEY);
   } catch {
-    /* ignore */
+    /* private mode / blocked storage */
   }
 }
 
-/** Password gate for /dashboard — no login account required */
+/** Password gate for /dashboard — unlock once per browser tab (sessionStorage). */
 export default function DashboardGate({ children }) {
-  const [unlocked, setUnlocked] = useState(() => isDashboardUnlocked());
+  const [unlocked, setUnlocked] = useState(readUnlocked);
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (password === STORE.dashboardPassword) {
-      try {
-        sessionStorage.setItem(SESSION_KEY, '1');
-      } catch {
-        /* ignore */
-      }
+      writeUnlocked(true);
       setUnlocked(true);
       setError('');
       setPassword('');
@@ -60,7 +57,19 @@ export default function DashboardGate({ children }) {
           Enter the dashboard password to continue.
         </p>
         <input
+          type="text"
+          name="username"
+          autoComplete="username"
+          value="nabat-dashboard"
+          readOnly
+          tabIndex={-1}
+          aria-hidden="true"
+          className="sr-only"
+        />
+        <input
           type="password"
+          name="dashboard-password"
+          autoComplete="current-password"
           autoFocus
           value={password}
           onChange={(e) => {
@@ -79,4 +88,12 @@ export default function DashboardGate({ children }) {
       </form>
     </div>
   );
+}
+
+export function isDashboardUnlocked() {
+  return readUnlocked();
+}
+
+export function lockDashboard() {
+  writeUnlocked(false);
 }

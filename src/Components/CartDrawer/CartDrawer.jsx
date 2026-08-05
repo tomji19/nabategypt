@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../CartContext/CartContext';
 import { useLanguage } from '../LanguageContext/LanguageContext';
 import { getCategoryLabel, getProductName } from '../../utils/productLocale';
+import { formatSizeLabel } from '../../utils/productSizes';
 import styles from './CartDrawer.module.css';
 
 export default function CartDrawer() {
@@ -74,6 +75,12 @@ export default function CartDrawer() {
                     <p className={styles.itemName}>
                       {getProductName(item, { isAr, t })}
                     </p>
+                    {item.size ? (
+                      <p className={styles.itemPrice}>
+                        {t('sizeLabel')}:{' '}
+                        {formatSizeLabel(item.size, item.sizeType)}
+                      </p>
+                    ) : null}
                     <p className={styles.itemPrice}>
                       {item.price} {t('egp')}
                     </p>

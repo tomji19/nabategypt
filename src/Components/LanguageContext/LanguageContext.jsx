@@ -1,3 +1,4 @@
+/* @refresh reload */
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { translate } from '../../i18n';
 
@@ -9,24 +10,13 @@ export function useLanguage() {
   return ctx;
 }
 
+/** Language is in-memory only — never persisted to localStorage */
 export function LanguageProvider({ children }) {
-  const [lang, setLang] = useState(() => {
-    try {
-      const saved = localStorage.getItem('nabat-lang');
-      return saved === 'ar' || saved === 'en' ? saved : 'en';
-    } catch {
-      return 'en';
-    }
-  });
+  const [lang, setLang] = useState('en');
 
   useEffect(() => {
     document.documentElement.lang = lang === 'ar' ? 'ar' : 'en';
     document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
-    try {
-      localStorage.setItem('nabat-lang', lang);
-    } catch {
-      /* ignore */
-    }
   }, [lang]);
 
   const t = (key, vars) => translate(lang, key, vars);

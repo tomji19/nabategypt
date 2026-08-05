@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { useLanguage } from '../LanguageContext/LanguageContext';
 import { useSiteContent } from '../SiteContentContext/SiteContentContext';
 import { useCategories } from '../CategoriesContext/CategoriesContext';
-import { CARD_IMAGE_FALLBACKS, cmsImage } from '../../config/cmsFallbacks';
+import { cmsImage } from '../../config/cmsFallbacks';
 import styles from './CategorySection.module.css';
 
 const listVariants = {
@@ -71,10 +71,7 @@ export default function CategorySection() {
             const label = isAr
               ? category.nameAr || category.name
               : category.name;
-            const src = cmsImage(
-              category.image,
-              CARD_IMAGE_FALLBACKS[category.id]
-            );
+            const src = cmsImage(category.image);
 
             return (
               <motion.li

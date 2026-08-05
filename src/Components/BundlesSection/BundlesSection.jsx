@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { useLanguage } from '../LanguageContext/LanguageContext';
 import { useSiteContent } from '../SiteContentContext/SiteContentContext';
 import { formatEGP } from '../../utils/money';
-import { CARD_IMAGE_FALLBACKS, cmsImage } from '../../config/cmsFallbacks';
+import { cmsImage } from '../../config/cmsFallbacks';
 import styles from './BundlesSection.module.css';
 
 export default function BundlesSection() {
@@ -33,10 +33,7 @@ export default function BundlesSection() {
           {bundles.map((bundle, i) => {
             const name = isAr ? bundle.nameAr || bundle.name : bundle.name;
             const desc = isAr ? bundle.descAr || bundle.desc : bundle.desc;
-            const src = cmsImage(
-              bundle.image,
-              CARD_IMAGE_FALLBACKS[bundle.id]
-            );
+            const src = cmsImage(bundle.image);
             return (
               <motion.article
                 key={bundle.id || i}

@@ -1,19 +1,20 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import BrandLogo from '../BrandLogo/BrandLogo';
-import { STORE } from '../../config/store';
 import { useLanguage } from '../LanguageContext/LanguageContext';
 import { useSiteContent } from '../SiteContentContext/SiteContentContext';
 
 export default function Footer() {
   const { t, isAr } = useLanguage();
   const { content } = useSiteContent();
-  const phone = content?.store?.phone || STORE.phone;
-  const wa = `https://wa.me/2${String(phone).replace(/^0/, '')}`;
+  const phone = content?.store?.phone || '';
+  const wa = phone
+    ? `https://wa.me/2${String(phone).replace(/^0/, '')}`
+    : '#';
   const tagline = isAr
     ? t('delivering')
     : content?.footer?.tagline || t('delivering');
-  const social = content?.store?.social || STORE.social || {};
+  const social = content?.store?.social || {};
   const socialLinks = [
     {
       id: 'facebook',

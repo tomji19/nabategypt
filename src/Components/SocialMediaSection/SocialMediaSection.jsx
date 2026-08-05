@@ -2,13 +2,12 @@ import React from 'react';
 import BrandLogo from '../BrandLogo/BrandLogo';
 import { useLanguage } from '../LanguageContext/LanguageContext';
 import { useSiteContent } from '../SiteContentContext/SiteContentContext';
-import { SECTION_IMAGE_FALLBACKS } from '../../config/cmsFallbacks';
+import { cmsImage } from '../../config/cmsFallbacks';
 import styles from './SocialMediaSection.module.css';
 
-const WHATSAPP_PHONE = '01270545289';
-
 function whatsappHref(phone) {
-  const digits = String(phone || WHATSAPP_PHONE).replace(/\D/g, '');
+  const digits = String(phone || '').replace(/\D/g, '');
+  if (!digits) return '#';
   const local = digits.replace(/^20/, '').replace(/^0/, '');
   return `https://wa.me/20${local}`;
 }
@@ -17,13 +16,15 @@ export default function SocialMediaSection() {
   const { t, isAr } = useLanguage();
   const { content } = useSiteContent();
   const home = content?.home || {};
+  const store = content?.store || {};
   const socialTitle = isAr
     ? t('socialTitle')
     : home.socialTitle || t('socialTitle');
   const socialSubtitle = isAr
     ? t('socialSubtitle')
     : home.socialSubtitle || t('socialSubtitle');
-  const socialSrc = SECTION_IMAGE_FALLBACKS.socialImage;
+  const socialSrc = cmsImage(home.socialImage);
+  const phone = store.phone || '';
 
   return (
     <section className={styles.section} aria-labelledby="community-heading">
@@ -51,7 +52,7 @@ export default function SocialMediaSection() {
           </ul>
           <div className={styles.actions}>
             <a
-              href={whatsappHref(WHATSAPP_PHONE)}
+              href={whatsappHref(phone)}
               target="_blank"
               rel="noopener noreferrer"
               className="btn-primary"
@@ -61,12 +62,14 @@ export default function SocialMediaSection() {
           </div>
         </div>
 
-        <div className={styles.mediaWrap}>
-          <figure className={styles.media}>
-            <img src={socialSrc} alt="" />
-            <span className={styles.mediaFrame} aria-hidden />
-          </figure>
-        </div>
+        {socialSrc ? (
+          <div className={styles.mediaWrap}>
+            <figure className={styles.media}>
+              <img src={socialSrc} alt="" />
+              <span className={styles.mediaFrame} aria-hidden />
+            </figure>
+          </div>
+        ) : null}
       </div>
     </section>
   );

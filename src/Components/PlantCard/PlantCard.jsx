@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useCart } from '../CartContext/CartContext';
 import { useLanguage } from '../LanguageContext/LanguageContext';
 import { formatEGP } from '../../utils/money';
@@ -7,24 +7,15 @@ import {
   getCategoryLabel,
   getProductName,
 } from '../../utils/productLocale';
+import { getDisplayPrice, productRequiresSize } from '../../utils/productSizes';
 import styles from './PlantCard.module.css';
 
 export default function PlantCard({ product }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { cartItems, addToCart } = useCart();
   const { t, isAr } = useLanguage();
   const [justAdded, setJustAdded] = useState(false);
-
-  if (!product) return null;
-
-  const displayName = getProductName(product, { isAr, t });
-  const categoryLabel = getCategoryLabel(product.category, { t });
-  const quantity = cartItems.find((item) => item.id === product.id)?.quantity || 0;
-  const hoverImage = product.hoverImage || product.secondaryImage || product.images?.[1];
-  const hasHoverImage = Boolean(hoverImage);
-  const outOfStock = product.stock != null && product.stock <= 0;
-  const isSeasonal = Boolean(product.isRecent || product.isSeasonal);
-  const isGift = Boolean(product.isGift);
 
   useEffect(() => {
     if (!justAdded) return undefined;
@@ -32,11 +23,38 @@ export default function PlantCard({ product }) {
     return () => clearTimeout(timer);
   }, [justAdded]);
 
-  const openProduct = () => navigate(`/singleproduct/${product.id}`);
+  if (!product) return null;
+
+  const displayName = getProductName(product, { isAr, t });
+  const categoryLabel = getCategoryLabel(product.category, { t });
+  const needsSize = productRequiresSize(product);
+  const display = getDisplayPrice(product);
+  const onSale = Boolean(product.onSale || display.onSale);
+  const quantity = needsSize
+    ? cartItems
+        .filter((item) => (item.productId || item.id) === product.id)
+        .reduce((sum, item) => sum + (item.quantity || 0), 0)
+    : cartItems.find((item) => item.id === product.id)?.quantity || 0;
+  const hoverImage = product.hoverImage || product.secondaryImage || product.images?.[1];
+  const hasHoverImage = Boolean(hoverImage);
+  const outOfStock = product.stock != null && product.stock <= 0;
+  const isSeasonal = Boolean(product.isRecent || product.isSeasonal);
+  const isGift = Boolean(product.isGift);
+
+  const openProduct = () =>
+    navigate(`/singleproduct/${product.id}`, {
+      state: {
+        fromShop: `${location.pathname}${location.search}`,
+      },
+    });
 
   const handleAdd = (e) => {
     e.stopPropagation();
     if (outOfStock) return;
+    if (needsSize) {
+      openProduct();
+      return;
+    }
     addToCart(product);
     setJustAdded(true);
   };
@@ -79,7 +97,7 @@ export default function PlantCard({ product }) {
           {statusBadge.label}
         </span>
 
-        {product.onSale && !outOfStock && (
+        {onSale && !outOfStock && (
           <span className={`${styles.badge} ${styles.badgeSale}`}>{t('sale')}</span>
         )}
 
@@ -91,13 +109,21 @@ export default function PlantCard({ product }) {
           onClick={handleAdd}
           disabled={outOfStock}
           aria-label={
-            justAdded
-              ? t('addedToBag')
-              : quantity > 0
-                ? t('addAnother')
+            needsSize
+              ? t('chooseSize')
+              : justAdded
+                ? t('addedToBag')
+                : quantity > 0
+                  ? t('addAnother')
+                  : t('addToBag')
+          }
+          title={
+            outOfStock
+              ? t('outOfStock')
+              : needsSize
+                ? t('chooseSize')
                 : t('addToBag')
           }
-          title={outOfStock ? t('outOfStock') : t('addToBag')}
         >
           <i
             className={`fa-solid ${justAdded ? 'fa-check' : 'fa-plus'}`}
@@ -114,11 +140,14 @@ export default function PlantCard({ product }) {
           </button>
         </h2>
         <div className={styles.priceRow}>
-          <p className={styles.price}>{formatEGP(product.price)}</p>
-          {product.compareAtPrice != null &&
-            Number(product.compareAtPrice) > Number(product.price) && (
-              <p className={styles.compare}>{formatEGP(product.compareAtPrice)}</p>
-            )}
+          <p className={styles.price}>
+            {needsSize
+              ? `${t('fromPrice')} ${formatEGP(display.price)}`
+              : formatEGP(display.price)}
+          </p>
+          {display.onSale && (
+            <p className={styles.compare}>{formatEGP(display.compareAtPrice)}</p>
+          )}
         </div>
       </div>
     </article>

@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import pageBanner from '../../assets/images/pagebanner.png';
 import BrandLogo from '../BrandLogo/BrandLogo';
-import { STORE } from '../../config/store';
 import { useLanguage } from '../LanguageContext/LanguageContext';
 import { useSiteContent } from '../SiteContentContext/SiteContentContext';
 import { submitContactMessage } from '../../supabase/contactMessages';
+import { cmsImage } from '../../config/cmsFallbacks';
 
 const emptyForm = { name: '', email: '', message: '' };
 
@@ -14,9 +13,13 @@ export default function ContactPage() {
   const { t } = useLanguage();
   const { content } = useSiteContent();
   const contact = content?.contact || {};
-  const phone = content?.store?.phone || STORE.phone;
-  const email = content?.store?.email || STORE.adminEmail;
-  const wa = `https://wa.me/2${String(phone).replace(/^0/, '')}`;
+  const shop = content?.shop || {};
+  const phone = content?.store?.phone || '';
+  const email = content?.store?.email || '';
+  const wa = phone
+    ? `https://wa.me/2${String(phone).replace(/^0/, '')}`
+    : '#';
+  const bannerSrc = cmsImage(shop.bannerImage || contact.bannerImage);
   const [form, setForm] = useState(emptyForm);
   const [sending, setSending] = useState(false);
 
@@ -46,11 +49,13 @@ export default function ContactPage() {
   return (
     <>
       <section className="page-banner min-h-[16rem] md:min-h-[20rem]">
-        <img
-          src={pageBanner}
-          alt=""
-          className="absolute inset-0 h-full w-full object-cover"
-        />
+        {bannerSrc ? (
+          <img
+            src={bannerSrc}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        ) : null}
         <div className="absolute inset-0 bg-nabat-primary/55" />
         <div className="relative z-10">
           <p className="mb-2 font-nav text-[11px] uppercase tracking-[0.2em] text-white/70">

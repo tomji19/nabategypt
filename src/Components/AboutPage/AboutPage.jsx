@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import BrandLogo from '../BrandLogo/BrandLogo';
 import { useSiteContent } from '../SiteContentContext/SiteContentContext';
 import { useLanguage } from '../LanguageContext/LanguageContext';
-import { cmsImage, SECTION_IMAGE_FALLBACKS } from '../../config/cmsFallbacks';
+import { cmsImage } from '../../config/cmsFallbacks';
 import styles from './AboutPage.module.css';
 
 function storyParagraphs(text) {
@@ -22,23 +22,23 @@ export default function AboutPage() {
 
   const eyebrow = isAr ? t('aboutEyebrow') : about.eyebrow || t('aboutEyebrow');
   const title = isAr ? t('aboutHeading') : about.title || t('aboutHeading');
-  /* Prefer i18n story so CMS stale copy does not hide the new narrative */
-  const body = t('aboutBody');
+  const body = isAr
+    ? about.bodyAr || about.body || t('aboutBody')
+    : about.body || t('aboutBody');
   const paragraphs = storyParagraphs(body);
-  const bannerSrc = cmsImage(
-    shop.bannerImage,
-    SECTION_IMAGE_FALLBACKS.pageBannerImage
-  );
-  const aboutImg = SECTION_IMAGE_FALLBACKS.aboutImage;
+  const bannerSrc = cmsImage(shop.bannerImage || about.bannerImage);
+  const aboutImg = cmsImage(about.image);
 
   return (
     <>
       <section className="page-banner min-h-[16rem] md:min-h-[20rem]">
-        <img
-          src={bannerSrc}
-          alt=""
-          className="absolute inset-0 h-full w-full object-cover"
-        />
+        {bannerSrc ? (
+          <img
+            src={bannerSrc}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        ) : null}
         <div className="absolute inset-0 bg-nabat-primary/55" />
         <div className="relative z-10">
           <p className="mb-2 font-nav text-[11px] uppercase tracking-[0.2em] text-white/70">
@@ -72,17 +72,19 @@ export default function AboutPage() {
           </Link>
         </motion.div>
 
-        <motion.div
-          className={styles.mediaWrap}
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-        >
-          <div className={styles.media}>
-            <img src={aboutImg} alt="" />
-          </div>
-        </motion.div>
+        {aboutImg ? (
+          <motion.div
+            className={styles.mediaWrap}
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+          >
+            <div className={styles.media}>
+              <img src={aboutImg} alt="" />
+            </div>
+          </motion.div>
+        ) : null}
       </section>
     </>
   );

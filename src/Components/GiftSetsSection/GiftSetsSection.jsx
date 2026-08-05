@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { useLanguage } from '../LanguageContext/LanguageContext';
 import { useSiteContent } from '../SiteContentContext/SiteContentContext';
 import { formatEGP } from '../../utils/money';
-import { CARD_IMAGE_FALLBACKS, cmsImage } from '../../config/cmsFallbacks';
+import { cmsImage } from '../../config/cmsFallbacks';
 import styles from '../CollectionCards/CollectionCards.module.css';
 
 function splitParts(value) {
@@ -22,6 +22,8 @@ export default function GiftSetsSection() {
   const home = content?.home || {};
   const gifts = home.gifts || [];
 
+  if (!gifts.length) return null;
+
   return (
     <section className={`section-pad ${styles.section} ${styles.sectionAlt}`}>
       <div className={styles.header}>
@@ -37,7 +39,7 @@ export default function GiftSetsSection() {
           const name = isAr ? gift.nameAr || gift.name : gift.name;
           const desc = isAr ? gift.descAr || gift.desc : gift.desc;
           const parts = splitParts(isAr ? gift.partsAr || gift.parts : gift.parts);
-          const src = cmsImage(gift.image, CARD_IMAGE_FALLBACKS[gift.id]);
+          const src = cmsImage(gift.image);
           return (
             <motion.article
               key={gift.id || i}

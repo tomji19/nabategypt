@@ -1,41 +1,64 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+/* @refresh reload */
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { loadCategories } from '../../supabase/cms';
-import { DEFAULT_CATEGORIES } from '../../config/defaultContent';
 
 const CategoriesContext = createContext(null);
+
+let cachedCategories = [];
 
 export function useCategories() {
   const ctx = useContext(CategoriesContext);
   if (!ctx) {
     return {
-      categories: DEFAULT_CATEGORIES,
-      activeCategories: DEFAULT_CATEGORIES.filter((c) => c.isActive !== false),
+      categories: cachedCategories,
+      activeCategories: cachedCategories.filter((c) => c.isActive !== false),
       refreshCategories: () => {},
       loading: false,
+      error: null,
     };
   }
   return ctx;
 }
 
+/** Categories — Supabase only. No static defaults. */
 export function CategoriesProvider({ children }) {
-  const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
-  const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState(cachedCategories);
+  const [loading, setLoading] = useState(() => !cachedCategories.length);
+  const [error, setError] = useState(null);
+  const requestIdRef = useRef(0);
 
   const load = useCallback(async () => {
+    const requestId = ++requestIdRef.current;
     setLoading(true);
+    setError(null);
     try {
       const { categories: next } = await loadCategories();
-      setCategories(next?.length ? next : DEFAULT_CATEGORIES);
+      if (requestId !== requestIdRef.current) return;
+      const resolved = Array.isArray(next) ? next : [];
+      cachedCategories = resolved;
+      setCategories(resolved);
     } catch (err) {
+      if (requestId !== requestIdRef.current) return;
       console.error('Failed to load categories:', err);
-      setCategories(DEFAULT_CATEGORIES);
+      setError(err?.message || 'Failed to load categories');
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
     load();
+    return () => {
+      requestIdRef.current += 1;
+    };
   }, [load]);
 
   const activeCategories = useMemo(
@@ -49,8 +72,9 @@ export function CategoriesProvider({ children }) {
       activeCategories,
       refreshCategories: load,
       loading,
+      error,
     }),
-    [categories, activeCategories, load, loading]
+    [categories, activeCategories, load, loading, error]
   );
 
   return (

@@ -524,6 +524,7 @@ export default function AccountDetails() {
                                     {item.product_name}
                                   </p>
                                   <p className="font-nav text-sm text-nabat-muted">
+                                    {item.size ? `Size: ${item.size} · ` : ''}
                                     Quantity: {item.quantity}
                                   </p>
                                 </div>

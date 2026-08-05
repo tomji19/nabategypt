@@ -13,6 +13,7 @@ import { SiteContentProvider } from './Components/SiteContentContext/SiteContent
 import { CategoriesProvider } from './Components/CategoriesContext/CategoriesContext';
 import ProtectedRoute from './Components/ProtectedRoute/ProtectedRoute';
 import DashboardGate from './Components/DashboardGate/DashboardGate';
+import AdminDashboard from './Components/AdminDashboard/AdminDashboard';
 
 const Home = lazy(() => import('./Components/Home/Home'));
 const ErrorPage = lazy(() => import('./Components/ErrorPage/ErrorPage'));
@@ -31,71 +32,71 @@ const ResetPasswordPage = lazy(() => import('./Components/ResetPasswordPage/Rese
 const SearchResultsPage = lazy(() => import('./Components/SearchResultsPage/SearchResultsPage'));
 const AccountDetails = lazy(() => import('./Components/AccountDetails/AccountDetails'));
 const WishlistPage = lazy(() => import('./Components/WishlistPage/WishlistPage'));
-const AdminDashboard = lazy(() => import('./Components/AdminDashboard/AdminDashboard'));
+
+/** Stable router instance — creating this inside App() remounted routes on every render. */
+const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <Layout />,
+    children: [
+      { index: true, element: <Home /> },
+      { path: '/shop', element: <ShopPage /> },
+      { path: '/contact', element: <ContactPage /> },
+      { path: '/about', element: <AboutPage /> },
+      { path: '/singleproduct/:id', element: <SingleProduct /> },
+      { path: '/cart', element: <CartPage /> },
+      {
+        path: '/checkout',
+        element: (
+          <ProtectedRoute>
+            <CheckoutPage />
+          </ProtectedRoute>
+        ),
+      },
+      { path: '/wishlist', element: <WishlistPage /> },
+      {
+        path: '/accountdetails',
+        element: (
+          <ProtectedRoute>
+            <AccountDetails />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: '/thankyoupage',
+        element: (
+          <ProtectedRoute>
+            <ThankYouPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: '/orderhistory',
+        element: (
+          <ProtectedRoute>
+            <OrderHistoryPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: '/dashboard',
+        element: (
+          <DashboardGate>
+            <AdminDashboard />
+          </DashboardGate>
+        ),
+      },
+      { path: '/login', element: <LoginPage /> },
+      { path: '/register', element: <RegisterPage /> },
+      { path: '/forgetpassword', element: <ForgetPassword /> },
+      { path: '/reset-password', element: <ResetPasswordPage /> },
+      { path: '/search', element: <SearchResultsPage /> },
+      { path: '*', element: <ErrorPage /> },
+    ],
+  },
+]);
 
 export default function App() {
-  const router = createBrowserRouter([
-    {
-      path: '/',
-      element: <Layout />,
-      children: [
-        { index: true, element: <Home /> },
-        { path: '/shop', element: <ShopPage /> },
-        { path: '/contact', element: <ContactPage /> },
-        { path: '/about', element: <AboutPage /> },
-        { path: '/singleproduct/:id', element: <SingleProduct /> },
-        { path: '/cart', element: <CartPage /> },
-        {
-          path: '/checkout',
-          element: (
-            <ProtectedRoute>
-              <CheckoutPage />
-            </ProtectedRoute>
-          ),
-        },
-        { path: '/wishlist', element: <WishlistPage /> },
-        {
-          path: '/accountdetails',
-          element: (
-            <ProtectedRoute>
-              <AccountDetails />
-            </ProtectedRoute>
-          ),
-        },
-        {
-          path: '/thankyoupage',
-          element: (
-            <ProtectedRoute>
-              <ThankYouPage />
-            </ProtectedRoute>
-          ),
-        },
-        {
-          path: '/orderhistory',
-          element: (
-            <ProtectedRoute>
-              <OrderHistoryPage />
-            </ProtectedRoute>
-          ),
-        },
-        {
-          path: '/dashboard',
-          element: (
-            <DashboardGate>
-              <AdminDashboard />
-            </DashboardGate>
-          ),
-        },
-        { path: '/login', element: <LoginPage /> },
-        { path: '/register', element: <RegisterPage /> },
-        { path: '/forgetpassword', element: <ForgetPassword /> },
-        { path: '/reset-password', element: <ResetPasswordPage /> },
-        { path: '/search', element: <SearchResultsPage /> },
-        { path: '*', element: <ErrorPage /> },
-      ],
-    },
-  ]);
-
   return (
     <AuthProvider>
       <LanguageProvider>

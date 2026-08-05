@@ -6,16 +6,13 @@ import { useLanguage } from '../LanguageContext/LanguageContext';
 import styles from '../RecentProducts/RecentProducts.module.css';
 
 export default function SeasonalPicksSection() {
-  const { recentProducts, products, featuredProducts } = useProducts();
+  const { recentProducts } = useProducts();
   const { t } = useLanguage();
 
   const cards = useMemo(() => {
     const recent = Array.isArray(recentProducts) ? recentProducts : [];
-    if (recent.length) return recent.slice(0, 4);
-    const featured = Array.isArray(featuredProducts) ? featuredProducts : [];
-    if (featured.length) return featured.slice(0, 4);
-    return (Array.isArray(products) ? products : []).slice(0, 4);
-  }, [recentProducts, featuredProducts, products]);
+    return recent.slice(0, 4);
+  }, [recentProducts]);
 
   if (!cards.length) return null;
 

@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import styles from './HeroSection.module.css';
 import BrandLogo from '../BrandLogo/BrandLogo';
 import { useSiteContent } from '../SiteContentContext/SiteContentContext';
 import { useLanguage } from '../LanguageContext/LanguageContext';
-import { cmsImage, HERO_IMAGE_FALLBACKS } from '../../config/cmsFallbacks';
+import { useProducts } from '../ProductsContext/ProductsContext';
+import { cmsImage } from '../../config/cmsFallbacks';
 
 const enter = {
   hidden: { opacity: 0, y: 16 },
@@ -17,28 +18,80 @@ const enter = {
 };
 
 function pick(isAr, en, ar, fallback) {
-  if (isAr) return (ar && String(ar).trim()) || fallback;
-  return (en && String(en).trim()) || fallback;
+  if (isAr) return (ar && String(ar).trim()) || fallback || '';
+  return (en && String(en).trim()) || fallback || '';
+}
+
+function productImage(product) {
+  const img = product?.image;
+  return typeof img === 'string' && img.trim() ? img.trim() : '';
+}
+
+/** CMS override if set; otherwise the catalog product photo. */
+function heroSrc(cmsUrl, product) {
+  return cmsImage(cmsUrl) || productImage(product);
+}
+
+function productHref(product, fallback = '/shop') {
+  return product?.id ? `/singleproduct/${product.id}` : fallback;
 }
 
 export default function HeroSection() {
   const { content } = useSiteContent();
   const { t, isAr } = useLanguage();
+  const { getProductById, products } = useProducts();
   const hero = content?.hero || {};
   const marqueeText = t('marquee');
+
+  const bambooProduct = getProductById('bamboo');
+  const snakeProduct = getProductById('snakeplant');
+  const pothosProduct = getProductById('handingpothos');
 
   const eyebrow = pick(isAr, hero.eyebrow, hero.eyebrowAr, t('heroEyebrow'));
   const tagline = pick(isAr, hero.tagline, hero.taglineAr, t('heroTagline'));
   const cta = pick(isAr, hero.cta, hero.ctaAr, t('heroCta'));
 
-  const bambooSrc = cmsImage(hero.bambooImage, HERO_IMAGE_FALLBACKS.bambooImage);
-  const snakeSrc = cmsImage(hero.snakeImage, HERO_IMAGE_FALLBACKS.snakeImage);
-  const pothosSrc = cmsImage(hero.pothosImage, HERO_IMAGE_FALLBACKS.pothosImage);
-  const trioItems = [
-    cmsImage(hero.trioImage1, HERO_IMAGE_FALLBACKS.trioImage1),
-    cmsImage(hero.trioImage2, HERO_IMAGE_FALLBACKS.trioImage2),
-    cmsImage(hero.trioImage3, HERO_IMAGE_FALLBACKS.trioImage3),
-  ];
+  const bambooSrc = heroSrc(hero.bambooImage, bambooProduct);
+  const snakeSrc = heroSrc(hero.snakeImage, snakeProduct);
+  const pothosSrc = heroSrc(hero.pothosImage, pothosProduct);
+
+  const trioItems = useMemo(() => {
+    const fromCms = [
+      { src: cmsImage(hero.trioImage1), to: '/shop?category=Succulent' },
+      { src: cmsImage(hero.trioImage2), to: '/shop?category=Succulent' },
+      { src: cmsImage(hero.trioImage3), to: '/shop?category=Succulent' },
+    ].filter((item) => item.src);
+
+    if (fromCms.length >= 3) return fromCms.slice(0, 3);
+
+    const succulents = products
+      .filter(
+        (p) =>
+          String(p.category || '')
+            .toLowerCase()
+            .includes('succulent') && productImage(p)
+      )
+      .sort((a, b) => {
+        if (!!b.isFeatured !== !!a.isFeatured) return b.isFeatured ? 1 : -1;
+        return (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
+      })
+      .slice(0, 3)
+      .map((p) => ({
+        src: productImage(p),
+        to: productHref(p, '/shop?category=Succulent'),
+      }));
+
+    // Prefer CMS slots that exist, fill the rest from catalog
+    if (fromCms.length) {
+      const filled = [...fromCms];
+      for (const item of succulents) {
+        if (filled.length >= 3) break;
+        if (!filled.some((f) => f.src === item.src)) filled.push(item);
+      }
+      return filled.slice(0, 3);
+    }
+    return succulents;
+  }, [hero.trioImage1, hero.trioImage2, hero.trioImage3, products]);
 
   const bambooEyebrow = pick(
     isAr,
@@ -120,8 +173,19 @@ export default function HeroSection() {
           initial="hidden"
           animate="show"
         >
-          <Link to="/shop" className={`${styles.tile} ${styles.tileBamboo}`}>
-            <img src={bambooSrc} alt={bambooTitle} className={styles.tileImg} />
+          <Link
+            to={productHref(bambooProduct)}
+            className={`${styles.tile} ${styles.tileBamboo}`}
+          >
+            {bambooSrc ? (
+              <img
+                src={bambooSrc}
+                alt={bambooTitle}
+                className={styles.tileImg}
+              />
+            ) : (
+              <div className={styles.tileImg} aria-hidden />
+            )}
             <div className={styles.marquee} aria-hidden>
               <div className={styles.marqueeBar}>
                 <div className={styles.marqueeTrack}>
@@ -144,8 +208,15 @@ export default function HeroSection() {
           initial="hidden"
           animate="show"
         >
-          <Link to="/shop" className={`${styles.tile} ${styles.tileFern}`}>
-            <img src={snakeSrc} alt={snakeTitle} className={styles.tileImg} />
+          <Link
+            to={productHref(snakeProduct)}
+            className={`${styles.tile} ${styles.tileFern}`}
+          >
+            {snakeSrc ? (
+              <img src={snakeSrc} alt={snakeTitle} className={styles.tileImg} />
+            ) : (
+              <div className={styles.tileImg} aria-hidden />
+            )}
             <div className={styles.label}>
               <p className={styles.labelEyebrow}>{snakeEyebrow}</p>
               <p className={styles.labelTitle}>{snakeTitle}</p>
@@ -162,9 +233,9 @@ export default function HeroSection() {
         >
           <div className={`${styles.tile} ${styles.tileTrio}`}>
             <div className={styles.trioRow}>
-              {trioItems.map((src, i) => (
-                <Link key={i} to="/shop" className={styles.trioItem}>
-                  <img src={src} alt={trioTitle} />
+              {trioItems.map((item, i) => (
+                <Link key={`${item.src}-${i}`} to={item.to} className={styles.trioItem}>
+                  <img src={item.src} alt={trioTitle} />
                 </Link>
               ))}
             </div>
@@ -182,8 +253,19 @@ export default function HeroSection() {
           initial="hidden"
           animate="show"
         >
-          <Link to="/shop" className={`${styles.tile} ${styles.tileFern}`}>
-            <img src={pothosSrc} alt={pothosTitle} className={styles.tileImg} />
+          <Link
+            to={productHref(pothosProduct)}
+            className={`${styles.tile} ${styles.tileFern}`}
+          >
+            {pothosSrc ? (
+              <img
+                src={pothosSrc}
+                alt={pothosTitle}
+                className={styles.tileImg}
+              />
+            ) : (
+              <div className={styles.tileImg} aria-hidden />
+            )}
             <div className={styles.label}>
               <p className={styles.labelEyebrow}>{pothosEyebrow}</p>
               <p className={styles.labelTitle}>{pothosTitle}</p>

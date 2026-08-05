@@ -25,7 +25,7 @@ function useVisibleCount() {
 }
 
 export default function FeaturedProducts() {
-  const { featuredProducts, products } = useProducts();
+  const { featuredProducts } = useProducts();
   const { content } = useSiteContent();
   const { t, isAr } = useLanguage();
   const home = content?.home || {};
@@ -36,9 +36,8 @@ export default function FeaturedProducts() {
 
   const cards = useMemo(() => {
     const featured = Array.isArray(featuredProducts) ? featuredProducts : [];
-    if (featured.length) return featured;
-    return (Array.isArray(products) ? products : []).slice(0, 8);
-  }, [featuredProducts, products]);
+    return featured;
+  }, [featuredProducts]);
 
   const maxIndex = Math.max(0, cards.length - visible);
   const [index, setIndex] = useState(0);

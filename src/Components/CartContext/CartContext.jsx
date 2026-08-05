@@ -1,3 +1,4 @@
+/* @refresh reload */
 import React, {
   createContext,
   useContext,
@@ -14,8 +15,30 @@ import {
   replaceCartItems,
   upsertCartItem,
 } from '../../supabase/cart';
+import {
+  getPriceForSelection,
+  makeCartKey,
+  normalizeSizeOptions,
+  parseCartKey,
+  productRequiresSize,
+} from '../../utils/productSizes';
 
 const CartContext = createContext();
+
+function toCartLine(product, size, quantity) {
+  const productId = product.id;
+  const sizeValue = String(size || '').trim();
+  const price = getPriceForSelection(product, sizeValue);
+  return {
+    ...product,
+    id: makeCartKey(productId, sizeValue),
+    productId,
+    size: sizeValue,
+    sizeType: product.sizeType || '',
+    price,
+    quantity,
+  };
+}
 
 export const CartProvider = ({ children }) => {
   const { currentUser, userLoggedIn } = useAuth();
@@ -28,17 +51,21 @@ export const CartProvider = ({ children }) => {
 
   const mapRows = (rows) =>
     rows.map((row) => {
+      const size = row.size || '';
       const product = getProductById(row.product_slug);
       if (!product) {
         return {
-          id: row.product_slug,
+          id: makeCartKey(row.product_slug, size),
+          productId: row.product_slug,
           name: row.product_slug,
           price: 0,
           image: null,
+          size,
+          sizeType: '',
           quantity: row.quantity,
         };
       }
-      return { ...product, quantity: row.quantity };
+      return toCartLine(product, size, row.quantity);
     });
 
   // Enrich cart when products load
@@ -46,8 +73,11 @@ export const CartProvider = ({ children }) => {
     if (!products?.length) return;
     setCartItems((prev) =>
       prev.map((item) => {
-        const product = getProductById(item.id);
-        return product ? { ...product, quantity: item.quantity } : item;
+        const productId = item.productId || parseCartKey(item.id).productId;
+        const size = item.size ?? parseCartKey(item.id).size;
+        const product = getProductById(productId);
+        if (!product) return item;
+        return toCartLine(product, size, item.quantity);
       })
     );
   }, [products, getProductById]);
@@ -58,7 +88,6 @@ export const CartProvider = ({ children }) => {
 
     const load = async () => {
       if (!userLoggedIn || !currentUser?.uid) {
-        // Keep any in-memory guest cart; do not sync to Supabase
         if (loadedForUserRef.current) {
           pendingGuestRef.current = [];
           loadedForUserRef.current = null;
@@ -114,11 +143,9 @@ export const CartProvider = ({ children }) => {
     return () => {
       cancelled = true;
     };
-    // Do not depend on getProductById — product enrich is a separate effect
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userLoggedIn, currentUser?.uid]);
 
-  // Snapshot guest cart before login so it can merge (clear when empty)
   useEffect(() => {
     if (!userLoggedIn) {
       pendingGuestRef.current = cartItems.length ? [...cartItems] : [];
@@ -134,11 +161,12 @@ export const CartProvider = ({ children }) => {
     };
   }, [isCartOpen]);
 
-  const persistItem = async (productId, quantity) => {
+  const persistItem = async (cartKey, quantity) => {
     if (!userLoggedIn || !currentUser?.uid) return;
+    const { productId, size } = parseCartKey(cartKey);
     try {
-      if (quantity <= 0) await removeCartItem(currentUser.uid, productId);
-      else await upsertCartItem(currentUser.uid, productId, quantity);
+      if (quantity <= 0) await removeCartItem(currentUser.uid, productId, size);
+      else await upsertCartItem(currentUser.uid, productId, quantity, size);
     } catch (err) {
       console.error('Cart sync failed:', err);
     }
@@ -147,19 +175,33 @@ export const CartProvider = ({ children }) => {
   const openCart = () => setIsCartOpen(true);
   const closeCart = () => setIsCartOpen(false);
 
-  const addToCart = (product, { openDrawer = true } = {}) => {
+  const addToCart = (product, { openDrawer = true, size = '' } = {}) => {
+    if (!product?.id) return false;
+
+    const sizeValue = String(size || '').trim();
+    if (productRequiresSize(product)) {
+      const options = normalizeSizeOptions(product.sizeOptions, product.price);
+      if (!sizeValue || !options.some((o) => o.value === sizeValue)) {
+        return false;
+      }
+    }
+
+    const cartKey = makeCartKey(product.id, sizeValue);
+
     setCartItems((prevItems) => {
-      const existingItem = prevItems.find((item) => item.id === product.id);
+      const existingItem = prevItems.find((item) => item.id === cartKey);
       const nextQty = existingItem ? existingItem.quantity + 1 : 1;
-      persistItem(product.id, nextQty);
+      persistItem(cartKey, nextQty);
       if (existingItem) {
         return prevItems.map((item) =>
-          item.id === product.id ? { ...item, quantity: nextQty } : item
+          item.id === cartKey ? { ...item, quantity: nextQty } : item
         );
       }
-      return [...prevItems, { ...product, quantity: 1 }];
+      return [...prevItems, toCartLine(product, sizeValue, 1)];
     });
+
     if (openDrawer) setIsCartOpen(true);
+    return true;
   };
 
   const updateQuantity = (id, quantity) => {
@@ -193,7 +235,6 @@ export const CartProvider = ({ children }) => {
     if (userLoggedIn && currentUser?.uid) {
       try {
         await clearCartItems(currentUser.uid);
-        // Keep loaded marker so auth effect does not re-fetch stale lines
         loadedForUserRef.current = currentUser.uid;
       } catch (err) {
         console.error('Failed to clear cart:', err);

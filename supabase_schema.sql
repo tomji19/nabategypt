@@ -195,6 +195,16 @@ CREATE INDEX IF NOT EXISTS products_category_idx ON public.products(category);
 CREATE INDEX IF NOT EXISTS products_slug_idx ON public.products(slug);
 CREATE INDEX IF NOT EXISTS products_active_idx ON public.products(is_active);
 
+-- Optional sizing (cm / meter / letter). Empty = no size picker on PDP.
+ALTER TABLE public.products
+  ADD COLUMN IF NOT EXISTS size_type TEXT;
+ALTER TABLE public.products
+  ADD COLUMN IF NOT EXISTS size_options JSONB NOT NULL DEFAULT '[]'::jsonb;
+
+-- Extra detail-page gallery images (beyond main + hover)
+ALTER TABLE public.products
+  ADD COLUMN IF NOT EXISTS gallery_images JSONB NOT NULL DEFAULT '[]'::jsonb;
+
 -- ============================================
 -- ORDERS
 -- ============================================
@@ -308,11 +318,15 @@ CREATE TABLE IF NOT EXISTS public.order_items (
   product_id TEXT,
   product_name TEXT NOT NULL,
   product_image TEXT,
+  size TEXT DEFAULT '',
   unit_price NUMERIC(10, 2) NOT NULL,
   quantity INTEGER NOT NULL CHECK (quantity > 0),
   line_total NUMERIC(10, 2) NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+ALTER TABLE public.order_items
+  ADD COLUMN IF NOT EXISTS size TEXT DEFAULT '';
 
 ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
 
@@ -461,11 +475,30 @@ CREATE TABLE IF NOT EXISTS public.cart_items (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   product_slug TEXT NOT NULL,
+  size TEXT NOT NULL DEFAULT '',
   quantity INTEGER NOT NULL CHECK (quantity > 0),
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE (user_id, product_slug)
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Migrate older carts that only keyed by product_slug
+ALTER TABLE public.cart_items
+  ADD COLUMN IF NOT EXISTS size TEXT NOT NULL DEFAULT '';
+
+ALTER TABLE public.cart_items
+  DROP CONSTRAINT IF EXISTS cart_items_user_id_product_slug_key;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'cart_items_user_product_size_key'
+  ) THEN
+    ALTER TABLE public.cart_items
+      ADD CONSTRAINT cart_items_user_product_size_key
+      UNIQUE (user_id, product_slug, size);
+  END IF;
+END $$;
 
 ALTER TABLE public.cart_items ENABLE ROW LEVEL SECURITY;
 
@@ -519,9 +552,12 @@ VALUES (
   'products',
   true,
   5242880,
-  ARRAY['image/jpeg', 'image/png', 'image/webp']
+  ARRAY['image/jpeg', 'image/png', 'image/webp', 'image/gif']
 )
-ON CONFLICT (id) DO UPDATE SET public = true;
+ON CONFLICT (id) DO UPDATE SET
+  public = true,
+  file_size_limit = 5242880,
+  allowed_mime_types = ARRAY['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
 DROP POLICY IF EXISTS "Public read product images" ON storage.objects;
 CREATE POLICY "Public read product images"

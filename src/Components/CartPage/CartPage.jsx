@@ -7,6 +7,7 @@ import pageBanner from '../../assets/images/pagebanner.png';
 import { calcOrderTotals, formatEGP } from '../../utils/money';
 import { useLanguage } from '../LanguageContext/LanguageContext';
 import { getProductName } from '../../utils/productLocale';
+import { formatSizeLabel } from '../../utils/productSizes';
 
 export default function CartPage() {
   const { cartItems, updateQuantity, removeFromCart } = useCart();
@@ -71,6 +72,9 @@ export default function CartPage() {
                         </h3>
                         <p className="mt-1 font-nav text-xs text-nabat-muted">
                           {item.category}
+                          {item.size
+                            ? ` · ${t('sizeLabel')}: ${formatSizeLabel(item.size, item.sizeType)}`
+                            : ''}
                         </p>
                         <p className="mt-2 font-nav text-sm">
                           {formatEGP(item.price)}

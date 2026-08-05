@@ -28,9 +28,12 @@ import { useSiteContent } from '../SiteContentContext/SiteContentContext';
 import { useCategories } from '../CategoriesContext/CategoriesContext';
 import ImageField from '../ImageField/ImageField';
 import SiteContentEditor from './SiteContentEditor';
-import HomepageSectionsPanel, {
-  HOMEPAGE_SECTIONS,
-} from './HomepageSectionsPanel';
+import HomepageSectionsPanel from './HomepageSectionsPanel';
+import ProductEditor, { DashboardProductCard } from './ProductEditor';
+import {
+  normalizeSizeOptions,
+  syncProductPriceFromSizes,
+} from '../../utils/productSizes';
 
 const TABS = [
   { id: 'orders', label: 'Orders' },
@@ -47,21 +50,37 @@ const emptyProduct = (category = '') => ({
   name: '',
   nameAr: '',
   category,
-  price: 45,
+  price: 0,
+  compareAtPrice: null,
   stock: 10,
   description: '',
   descriptionAr: '',
   image: '',
   hoverImage: '',
+  galleryImages: [],
   care: '',
   light: '',
   sortOrder: 0,
-  isActive: true,
   isFeatured: false,
   isRecent: false,
   isGift: false,
   isEasyCare: false,
+  sizeType: 'letter',
+  sizeOptions: [],
 });
+
+function withTimeout(promise, ms, label) {
+  let timer;
+  return Promise.race([
+    Promise.resolve(promise).finally(() => clearTimeout(timer)),
+    new Promise((_, reject) => {
+      timer = setTimeout(
+        () => reject(new Error(`${label} timed out after ${ms}ms`)),
+        ms
+      );
+    }),
+  ]);
+}
 
 const emptyCategory = () => ({
   id: '',
@@ -92,36 +111,49 @@ export default function AdminDashboard() {
   const [messages, setMessages] = useState([]);
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [content, setContent] = useState(null);
+  const [content, setContent] = useState({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savingKey, setSavingKey] = useState(null);
   const [editing, setEditing] = useState(null);
   const [editingCat, setEditingCat] = useState(null);
   const [productFilter, setProductFilter] = useState('');
+  const [productCategory, setProductCategory] = useState('all');
   const [schemaWarning, setSchemaWarning] = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
+    const LOAD_MS = 12000;
     try {
       const [catalog, cats, site, ords, msgs, schema] = await Promise.all([
-        loadDashboardCatalog(),
-        loadCategories(),
-        loadSiteContent(),
-        fetchAllOrders().catch(() => []),
-        fetchContactMessages().catch(() => []),
-        probeDashboardSchema().catch(() => ({
+        withTimeout(loadDashboardCatalog(), LOAD_MS, 'Products').catch((err) => {
+          console.warn('Dashboard products load failed:', err);
+          return { products: [] };
+        }),
+        withTimeout(loadCategories(), LOAD_MS, 'Categories').catch((err) => {
+          console.warn('Dashboard categories load failed:', err);
+          return { categories: [] };
+        }),
+        withTimeout(loadSiteContent(), LOAD_MS, 'Site content').catch((err) => {
+          console.warn('Dashboard site content load failed:', err);
+          return { content: {} };
+        }),
+        withTimeout(fetchAllOrders(), LOAD_MS, 'Orders').catch(() => []),
+        withTimeout(fetchContactMessages(), LOAD_MS, 'Messages').catch(() => []),
+        withTimeout(probeDashboardSchema(), LOAD_MS, 'Schema probe').catch(() => ({
           ok: true,
           message: '',
         })),
       ]);
-      setProducts(catalog.products);
-      setCategories(cats.categories);
-      setContent(site.content);
-      setOrders(ords);
-      setMessages(msgs);
+      setProducts(catalog?.products || []);
+      setCategories(cats?.categories || []);
+      setContent(site?.content && typeof site.content === 'object' ? site.content : {});
+      setOrders(ords || []);
+      setMessages(msgs || []);
       setSchemaWarning(schema?.ok === false ? schema.message || '' : '');
     } catch (err) {
+      console.error(err);
+      setContent((prev) => prev || {});
       toast.error(err.message || 'Failed to load dashboard');
     } finally {
       setLoading(false);
@@ -130,6 +162,8 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     load();
+    const failSafe = window.setTimeout(() => setLoading(false), 15000);
+    return () => window.clearTimeout(failSafe);
   }, [load]);
 
   const handleLock = () => {
@@ -173,8 +207,19 @@ export default function AdminDashboard() {
 
   const saveProduct = async (e) => {
     e.preventDefault();
-    if (!editing?.id || !editing?.name) {
-      toast.error('Slug and name are required');
+    if (!editing?.name) {
+      toast.error('Name is required');
+      return;
+    }
+    const slug =
+      editing.id ||
+      String(editing.name || '')
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
+    if (!slug) {
+      toast.error('Could not create a product ID from the name');
       return;
     }
     if (!editing.category) {
@@ -185,6 +230,7 @@ export default function AdminDashboard() {
     try {
       const payload = {
         ...editing,
+        id: slug,
         image:
           (typeof editing.image === 'string' && editing.image.trim()) ||
           editing._localImage ||
@@ -195,12 +241,46 @@ export default function AdminDashboard() {
             editing.hoverImage.trim()) ||
           editing.hoverImage ||
           '',
+        galleryImages: Array.isArray(editing.galleryImages)
+          ? editing.galleryImages
+              .map((v) => (typeof v === 'string' ? v.trim() : ''))
+              .filter(Boolean)
+          : [],
         isEasyCare: !!editing.isEasyCare,
         care:
           editing.isEasyCare && !editing.care
             ? 'easy'
             : editing.care || '',
+        sizeType: editing.sizeType || 'letter',
+        sizeOptions: normalizeSizeOptions(editing.sizeOptions, 0),
+        compareAtPrice: null,
       };
+      payload.price = syncProductPriceFromSizes(payload.sizeOptions, 0);
+
+      if (!payload.sizeType) {
+        toast.error('Choose a size type');
+        return;
+      }
+      if (!payload.sizeOptions.length) {
+        toast.error('Add at least one size with a price');
+        return;
+      }
+      if (payload.sizeOptions.some((o) => !(Number(o.price) > 0))) {
+        toast.error('Every size needs its own price (EGP)');
+        return;
+      }
+      if (
+        payload.sizeOptions.some(
+          (o) =>
+            o.compareAtPrice != null &&
+            !(Number(o.compareAtPrice) > Number(o.price))
+        )
+      ) {
+        toast.error(
+          'Each size “Was” price must be higher than its sale price (or leave empty)'
+        );
+        return;
+      }
       delete payload._localImage;
       try {
         await saveDashboardProduct(payload);
@@ -317,25 +397,50 @@ export default function AdminDashboard() {
   const updateContent = (section, field, value) => {
     setContent((prev) => ({
       ...prev,
-      [section]: { ...prev[section], [field]: value },
+      [section]: { ...(prev?.[section] || {}), [field]: value },
     }));
   };
 
-  if (loading || !content) return <PlantLoader variant="overlay" />;
+  if (loading) return <PlantLoader variant="overlay" lockScroll={false} />;
 
   const pendingCount = orders.filter((o) => o.status === 'Processing').length;
   const unreadMessages = messages.filter((m) => !m.is_read).length;
   const activeCategoryOptions = categories.filter((c) => c.isActive !== false);
   const categoryNames = activeCategoryOptions.map((c) => c.name);
   const filteredProducts = products.filter((p) => {
+    if (productCategory !== 'all' && p.category !== productCategory) {
+      return false;
+    }
     const q = productFilter.trim().toLowerCase();
     if (!q) return true;
     return (
-      p.name.toLowerCase().includes(q) ||
+      p.name?.toLowerCase().includes(q) ||
       p.category?.toLowerCase().includes(q) ||
-      p.id.toLowerCase().includes(q)
+      p.id?.toLowerCase().includes(q)
     );
   });
+
+  const productsByCategory = (() => {
+    if (productCategory !== 'all') {
+      return [{ name: productCategory, items: filteredProducts }];
+    }
+    const map = new Map();
+    filteredProducts.forEach((p) => {
+      const key = p.category || 'Uncategorized';
+      if (!map.has(key)) map.set(key, []);
+      map.get(key).push(p);
+    });
+    // Prefer dashboard category order
+    const ordered = [];
+    activeCategoryOptions.forEach((c) => {
+      if (map.has(c.name)) {
+        ordered.push({ name: c.name, items: map.get(c.name) });
+        map.delete(c.name);
+      }
+    });
+    map.forEach((items, name) => ordered.push({ name, items }));
+    return ordered;
+  })();
 
   const openProductEditor = (product) => {
     const fallbackCategory = categoryNames[0] || '';
@@ -346,7 +451,13 @@ export default function AdminDashboard() {
           image: typeof product.image === 'string' ? product.image : '',
           hoverImage:
             typeof product.hoverImage === 'string' ? product.hoverImage : '',
+          galleryImages: Array.isArray(product.galleryImages)
+            ? [...product.galleryImages]
+            : [],
           isEasyCare: !!product.isEasyCare,
+          sizeType: product.sizeType || 'letter',
+          sizeOptions: normalizeSizeOptions(product.sizeOptions, 0),
+          compareAtPrice: null,
           _localImage: product.image,
         }
       : emptyProduct(fallbackCategory);
@@ -406,8 +517,8 @@ export default function AdminDashboard() {
             <p className="mt-1">{schemaWarning}</p>
             <p className="mt-2 text-xs text-amber-900/80">
               Open Supabase → SQL Editor → paste and run{' '}
-              <code className="bg-white/80 px-1">scripts/ensure-dashboard-schema.sql</code>
-              , then click Refresh here and save your images/flags again.
+              <code className="bg-white/80 px-1">scripts/ensure-all-schema.sql</code>
+              , then click Refresh here and save your images/flags/sizes again.
             </p>
           </div>
         ) : null}
@@ -523,7 +634,9 @@ export default function AdminDashboard() {
                           className="flex justify-between font-nav text-sm"
                         >
                           <span>
-                            {item.product_name} × {item.quantity}
+                            {item.product_name}
+                            {item.size ? ` (${item.size})` : ''} ×{' '}
+                            {item.quantity}
                           </span>
                           <span>{formatEGP(item.line_total)}</span>
                         </li>
@@ -610,381 +723,116 @@ export default function AdminDashboard() {
         {/* PRODUCTS */}
         {tab === 'products' && (
           <div>
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+              <h2 className="font-heading text-xl font-medium text-nabat-text sm:me-auto">
+                Products
+                <span className="ms-2 font-nav text-sm font-normal text-nabat-muted">
+                  {filteredProducts.length}
+                </span>
+              </h2>
               <input
-                className="input-box max-w-xs"
-                placeholder="Search products…"
+                className="input-box w-full sm:max-w-[14rem]"
+                placeholder="Search…"
                 value={productFilter}
                 onChange={(e) => setProductFilter(e.target.value)}
               />
               <button
                 type="button"
-                className="btn-primary"
+                className="btn-primary shrink-0"
                 onClick={() => openProductEditor(null)}
               >
-                Add product
+                + Add product
               </button>
             </div>
 
-            {editing && (
-              <form
-                id="dashboard-product-editor"
-                key={editing.dbId || editing.id || 'new-product'}
-                onSubmit={saveProduct}
-                className="mb-8 border border-nabat-border bg-white p-6"
+            <div className="mb-5 flex gap-2 overflow-x-auto pb-1">
+              <button
+                type="button"
+                onClick={() => setProductCategory('all')}
+                className={`shrink-0 border px-3 py-1.5 font-nav text-xs uppercase tracking-[0.12em] ${
+                  productCategory === 'all'
+                    ? 'border-nabat-primary bg-nabat-primary text-white'
+                    : 'border-nabat-border bg-white text-nabat-muted hover:border-nabat-primary'
+                }`}
               >
-                <h3 className="font-heading text-lg font-medium">
-                  {editing.dbId || products.some((p) => p.id === editing.id)
-                    ? 'Edit product'
-                    : 'New product'}
-                </h3>
-                <div className="mt-4 grid gap-4 md:grid-cols-2">
-                  <Field label="Slug / ID (english, no spaces)">
-                    <input
-                      className="input-box"
-                      value={editing.id}
-                      onChange={(e) =>
-                        setEditing((prev) => ({
-                          ...prev,
-                          id: e.target.value
-                            .toLowerCase()
-                            .replace(/\s+/g, ''),
-                        }))
-                      }
-                      required
-                    />
-                  </Field>
-                  <Field label="Category (from Categories tab)">
-                    <select
-                      className="input-box"
-                      value={editing.category || ''}
-                      onChange={(e) =>
-                        setEditing((prev) => ({
-                          ...prev,
-                          category: e.target.value,
-                        }))
-                      }
-                      required
-                    >
-                      <option value="" disabled>
-                        Select a category…
-                      </option>
-                      {activeCategoryOptions.length ? (
-                        activeCategoryOptions.map((c) => (
-                          <option key={c.id} value={c.name}>
-                            {c.name}
-                            {c.nameAr ? ` · ${c.nameAr}` : ''}
-                          </option>
-                        ))
-                      ) : (
-                        <option value="" disabled>
-                          Add a category first
-                        </option>
-                      )}
-                    </select>
-                  </Field>
-                  <Field label="Name (EN)">
-                    <input
-                      className="input-box"
-                      value={editing.name}
-                      onChange={(e) =>
-                        setEditing((prev) => ({
-                          ...prev,
-                          name: e.target.value,
-                        }))
-                      }
-                      required
-                    />
-                  </Field>
-                  <Field label="Name (AR)">
-                    <input
-                      className="input-box"
-                      dir="rtl"
-                      value={editing.nameAr || ''}
-                      onChange={(e) =>
-                        setEditing((prev) => ({
-                          ...prev,
-                          nameAr: e.target.value,
-                        }))
-                      }
-                    />
-                  </Field>
-                  <Field label="Price (EGP)">
-                    <input
-                      type="number"
-                      min="0"
-                      className="input-box"
-                      value={editing.price}
-                      onChange={(e) =>
-                        setEditing((prev) => ({
-                          ...prev,
-                          price: e.target.value,
-                        }))
-                      }
-                      required
-                    />
-                  </Field>
-                  <Field label="Stock">
-                    <input
-                      type="number"
-                      min="0"
-                      className="input-box"
-                      value={editing.stock}
-                      onChange={(e) =>
-                        setEditing((prev) => ({
-                          ...prev,
-                          stock: e.target.value,
-                        }))
-                      }
-                    />
-                  </Field>
-                  <Field label="Light needs">
-                    <input
-                      className="input-box"
-                      placeholder="e.g. bright indirect"
-                      value={editing.light || ''}
-                      onChange={(e) =>
-                        setEditing((prev) => ({
-                          ...prev,
-                          light: e.target.value,
-                        }))
-                      }
-                    />
-                  </Field>
-                  <Field label="Care level (shop filter)">
-                    <select
-                      className="input-box"
-                      value={editing.care || ''}
-                      onChange={(e) =>
-                        setEditing((prev) => ({
-                          ...prev,
-                          care: e.target.value,
-                          isEasyCare:
-                            e.target.value === 'easy'
-                              ? true
-                              : prev.isEasyCare,
-                        }))
-                      }
-                    >
-                      <option value="">Not set</option>
-                      <option value="easy">easy</option>
-                      <option value="moderate">moderate</option>
-                      <option value="expert">expert</option>
-                    </select>
-                  </Field>
-                  <div className="md:col-span-2">
-                    <ImageField
-                      key={`img-${editing.dbId || editing.id || 'new'}`}
-                      label="Product image"
-                      value={
-                        typeof editing.image === 'string' ? editing.image : ''
-                      }
-                      onChange={(url) =>
-                        setEditing((prev) => ({ ...prev, image: url }))
-                      }
-                      folder="catalog"
-                      hint="Drag & drop, browse, or paste a URL"
-                    />
-                  </div>
-                  <div className="md:col-span-2">
-                    <ImageField
-                      key={`hover-${editing.dbId || editing.id || 'new'}`}
-                      label="Hover image (optional)"
-                      value={
-                        typeof editing.hoverImage === 'string'
-                          ? editing.hoverImage
-                          : ''
-                      }
-                      onChange={(url) =>
-                        setEditing((prev) => ({ ...prev, hoverImage: url }))
-                      }
-                      folder="catalog"
-                      hint="Shown when hovering a product card"
-                    />
-                  </div>
-                  <Field label="Sort order">
-                    <input
-                      type="number"
-                      className="input-box"
-                      value={editing.sortOrder || 0}
-                      onChange={(e) =>
-                        setEditing((prev) => ({
-                          ...prev,
-                          sortOrder: e.target.value,
-                        }))
-                      }
-                    />
-                  </Field>
-                  <div className="md:col-span-2">
-                    <Field label="Description (EN)">
-                      <textarea
-                        className="input-box"
-                        rows={4}
-                        value={editing.description || ''}
-                        onChange={(e) =>
-                          setEditing((prev) => ({
-                            ...prev,
-                            description: e.target.value,
-                          }))
-                        }
-                      />
-                    </Field>
-                  </div>
-                  <div className="md:col-span-2">
-                    <Field label="Description (AR)">
-                      <textarea
-                        className="input-box"
-                        rows={4}
-                        dir="rtl"
-                        value={editing.descriptionAr || ''}
-                        onChange={(e) =>
-                          setEditing((prev) => ({
-                            ...prev,
-                            descriptionAr: e.target.value,
-                          }))
-                        }
-                      />
-                    </Field>
-                  </div>
-                </div>
-                <div className="mt-6 border border-nabat-border bg-nabat-soft/40 p-4">
-                  <p className="font-nav text-[10px] uppercase tracking-[0.14em] text-nabat-muted">
-                    Homepage sections
-                  </p>
-                  <p className="mt-1 font-nav text-xs text-nabat-muted">
-                    Or manage all plants at once under the{' '}
-                    <button
-                      type="button"
-                      className="text-nabat-accent underline"
-                      onClick={() => setTab('homepage')}
-                    >
-                      Homepage sections
-                    </button>{' '}
-                    tab.
-                  </p>
-                  <div className="mt-3 flex flex-wrap gap-4 font-nav text-sm">
-                    {HOMEPAGE_SECTIONS.map((s) => (
-                      <label key={s.flag} className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={!!editing[s.flag]}
-                          onChange={(e) =>
-                            setEditing((prev) => ({
-                              ...prev,
-                              [s.flag]: e.target.checked,
-                              ...(s.flag === 'isEasyCare' && e.target.checked
-                                ? { care: prev.care || 'easy' }
-                                : {}),
-                            }))
-                          }
-                        />
-                        {s.label}
-                      </label>
-                    ))}
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={editing.isActive !== false}
-                        onChange={(e) =>
-                          setEditing((prev) => ({
-                            ...prev,
-                            isActive: e.target.checked,
-                          }))
-                        }
-                      />
-                      Active / visible in shop
-                    </label>
-                  </div>
-                </div>
-                {editing.image && typeof editing.image !== 'string' && (
-                  <p className="mt-3 font-nav text-xs text-nabat-muted">
-                    Using bundled local image for this plant until you upload or paste a URL.
-                  </p>
-                )}
-                <div className="mt-5 flex gap-3">
-                  <button type="submit" className="btn-primary" disabled={saving}>
-                    {saving ? 'Saving…' : 'Save product'}
-                  </button>
-                  <button
-                    type="button"
-                    className="btn-outline"
-                    onClick={() => setEditing(null)}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
+                All
+              </button>
+              {activeCategoryOptions.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => setProductCategory(c.name)}
+                  className={`shrink-0 border px-3 py-1.5 font-nav text-xs uppercase tracking-[0.12em] ${
+                    productCategory === c.name
+                      ? 'border-nabat-primary bg-nabat-primary text-white'
+                      : 'border-nabat-border bg-white text-nabat-muted hover:border-nabat-primary'
+                  }`}
+                >
+                  {c.name}
+                </button>
+              ))}
+            </div>
+
+            {editing && (
+              <ProductEditor
+                editing={editing}
+                setEditing={setEditing}
+                categories={activeCategoryOptions}
+                saving={saving}
+                isNew={
+                  !(
+                    editing.dbId ||
+                    products.some((p) => p.id === editing.id)
+                  )
+                }
+                onSave={saveProduct}
+                onCancel={() => setEditing(null)}
+              />
             )}
 
-            <div className="overflow-x-auto border border-nabat-border bg-white">
-              <table className="w-full min-w-[720px] text-left">
-                <thead>
-                  <tr className="border-b border-nabat-border font-nav text-[10px] uppercase tracking-[0.14em] text-nabat-muted">
-                    <th className="p-4">Product</th>
-                    <th className="p-4">Price</th>
-                    <th className="p-4">Stock</th>
-                    <th className="p-4">Flags</th>
-                    <th className="p-4" />
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredProducts.map((product) => (
-                    <tr
-                      key={product.id}
-                      className="border-b border-nabat-border font-nav text-sm"
-                    >
-                      <td className="p-4">
-                        <div className="flex items-center gap-3">
-                          {product.image && (
-                            <img
-                              src={product.image}
-                              alt=""
-                              className="h-12 w-12 object-cover bg-nabat-mist"
-                            />
-                          )}
-                          <div>
-                            <p className="font-medium">{product.name}</p>
-                            <p className="text-xs text-nabat-muted">
-                              {product.category} · {product.id}
-                            </p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="p-4">{formatEGP(product.price)}</td>
-                      <td className="p-4">{product.stock}</td>
-                      <td className="p-4 text-xs text-nabat-muted">
-                        {[
-                          product.isRecent && 'Seasonal',
-                          product.isEasyCare && 'Easy care',
-                          product.isGift && 'Gift',
-                          product.isFeatured && 'Bestseller',
-                          !product.isActive && 'Hidden',
-                          product.stock <= 0 && 'OOS',
-                        ]
-                          .filter(Boolean)
-                          .join(' · ') || '—'}
-                      </td>
-                      <td className="space-x-3 p-4 text-right">
-                        <button
-                          type="button"
-                          className="text-nabat-accent hover:underline"
-                          onClick={() => openProductEditor(product)}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          className="text-red-600 hover:underline"
-                          onClick={() => removeProduct(product)}
-                        >
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            {filteredProducts.length === 0 ? (
+              <div className="border border-nabat-border bg-white p-12 text-center">
+                <p className="font-body text-nabat-muted">
+                  {productFilter.trim() || productCategory !== 'all'
+                    ? 'No products in this view.'
+                    : 'No products yet. Add your first plant.'}
+                </p>
+                {!productFilter.trim() && productCategory === 'all' && (
+                  <button
+                    type="button"
+                    className="btn-primary mt-5"
+                    onClick={() => openProductEditor(null)}
+                  >
+                    + Add product
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-8">
+                {productsByCategory.map((group) => (
+                  <section key={group.name}>
+                    {productCategory === 'all' && (
+                      <h3 className="mb-3 flex items-baseline gap-2 border-b border-nabat-border pb-2 font-heading text-lg font-medium text-nabat-text">
+                        {group.name}
+                        <span className="font-nav text-xs text-nabat-muted">
+                          {group.items.length}
+                        </span>
+                      </h3>
+                    )}
+                    <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                      {group.items.map((product) => (
+                        <DashboardProductCard
+                          key={product.id}
+                          product={product}
+                          onEdit={() => openProductEditor(product)}
+                          onDelete={() => removeProduct(product)}
+                        />
+                      ))}
+                    </div>
+                  </section>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

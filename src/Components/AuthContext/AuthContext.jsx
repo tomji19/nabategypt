@@ -1,6 +1,12 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react';
-import { supabase, ensureValidSession } from '../../supabase/supabase';
+/* @refresh reload */
+import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import {
+  supabase,
+  clearLocalSession,
+  ensureValidSession,
+} from '../../supabase/supabase';
 import { doSignOut } from '../../supabase/auth';
+import PlantLoader from '../PlantLoader/PlantLoader';
 
 const AuthContext = React.createContext(null);
 
@@ -63,8 +69,12 @@ export function AuthProvider({ children }) {
   const [userDetails, setUserDetails] = useState(null);
   const [userLoggedIn, setUserLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true);
+  /** Block catalog providers until dead JWT is wiped — same effect as clearing localStorage. */
+  const [storageReady, setStorageReady] = useState(false);
+  const profileUserRef = useRef(null);
 
   const clearAuthState = useCallback(() => {
+    profileUserRef.current = null;
     setCurrentUser(null);
     setUserDetails(null);
     setUserLoggedIn(false);
@@ -82,9 +92,11 @@ export function AuthProvider({ children }) {
       setUserLoggedIn(true);
 
       if (!loadProfile) return;
+      if (profileUserRef.current === user.id) return;
 
       try {
         const profile = await fetchOrCreateProfile(user);
+        profileUserRef.current = user.id;
         setUserDetails(profile);
       } catch (err) {
         console.error('Failed to load profile:', err);
@@ -99,93 +111,80 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     let mounted = true;
+    let subscription = null;
 
-    const boot = async () => {
+    (async () => {
+      // Wipe dead JWT BEFORE any listener / child fetch (same as clearing localStorage)
       try {
-        const session = await ensureValidSession();
-        if (!mounted) return;
-
-        if (session?.user) {
-          await applySessionUser(session.user, { loadProfile: true });
-        } else {
-          clearAuthState();
-        }
+        await ensureValidSession();
       } catch (err) {
-        console.error('Auth boot error:', err);
-        if (mounted) clearAuthState();
-      } finally {
-        if (mounted) setLoading(false);
+        console.warn('Auth bootstrap sanitize failed:', err?.message || err);
+        await clearLocalSession();
       }
-    };
-
-    boot();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
 
-      // Access token was refreshed — keep user logged in; no need to re-hit profiles
-      if (event === 'TOKEN_REFRESHED') {
-        if (session?.user && !session.user.is_anonymous) {
-          const next = toAppUser(session.user);
-          setCurrentUser((prev) =>
-            prev?.uid === next.uid && prev?.email === next.email ? prev : next
-          );
-          setUserLoggedIn(true);
-        }
-        return;
-      }
-
-      if (event === 'SIGNED_OUT' || !session?.user) {
-        clearAuthState();
-        setLoading(false);
-        return;
-      }
-
-      if (session.user.is_anonymous) {
-        await supabase.auth.signOut({ scope: 'local' });
-        clearAuthState();
-        setLoading(false);
-        return;
-      }
-
-      // SIGNED_IN, INITIAL_SESSION, USER_UPDATED, PASSWORD_RECOVERY, etc.
-      if (
-        event === 'SIGNED_IN' ||
-        event === 'INITIAL_SESSION' ||
-        event === 'USER_UPDATED' ||
-        event === 'PASSWORD_RECOVERY'
-      ) {
-        await applySessionUser(session.user, { loadProfile: true });
-        setLoading(false);
-      }
-    });
-
-    // Soft-update currentUser on tab focus — keep same object if unchanged
-    const onVisibility = () => {
-      if (document.visibilityState !== 'visible') return;
-      ensureValidSession().then((session) => {
+      const {
+        data: { subscription: sub },
+      } = supabase.auth.onAuthStateChange(async (event, session) => {
         if (!mounted) return;
-        if (!session?.user || session.user.is_anonymous) {
-          clearAuthState();
+
+        if (event === 'TOKEN_REFRESHED') {
+          if (session?.user && !session.user.is_anonymous) {
+            const next = toAppUser(session.user);
+            setCurrentUser((prev) =>
+              prev?.uid === next.uid && prev?.email === next.email ? prev : next
+            );
+            setUserLoggedIn(true);
+          }
+          if (mounted) setLoading(false);
           return;
         }
-        const next = toAppUser(session.user);
-        setCurrentUser((prev) =>
-          prev?.uid === next.uid && prev?.email === next.email ? prev : next
-        );
-        setUserLoggedIn(true);
+
+        if (event === 'SIGNED_OUT' || !session?.user) {
+          clearAuthState();
+          if (mounted) setLoading(false);
+          return;
+        }
+
+        if (session.user.is_anonymous) {
+          await clearLocalSession();
+          clearAuthState();
+          if (mounted) setLoading(false);
+          return;
+        }
+
+        const shouldLoadProfile =
+          event === 'SIGNED_IN' ||
+          event === 'INITIAL_SESSION' ||
+          event === 'USER_UPDATED' ||
+          event === 'PASSWORD_RECOVERY';
+
+        if (shouldLoadProfile) {
+          await applySessionUser(session.user, {
+            loadProfile: profileUserRef.current !== session.user.id,
+          });
+        }
+        if (mounted) setLoading(false);
       });
-    };
-    document.addEventListener('visibilitychange', onVisibility);
+
+      subscription = sub;
+      if (mounted) setStorageReady(true);
+    })();
+
+    const failSafe = window.setTimeout(() => {
+      if (mounted) {
+        setStorageReady(true);
+        setLoading(false);
+      }
+    }, 8000);
 
     return () => {
       mounted = false;
-      subscription.unsubscribe();
-      document.removeEventListener('visibilitychange', onVisibility);
+      subscription?.unsubscribe();
+      window.clearTimeout(failSafe);
     };
-  }, [applySessionUser, clearAuthState]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clearAuthState]);
 
   const logout = async () => {
     clearAuthState();
@@ -194,6 +193,7 @@ export function AuthProvider({ children }) {
       await doSignOut();
     } catch (err) {
       console.error('Logout error:', err);
+      await clearLocalSession();
     }
   };
 
@@ -204,6 +204,7 @@ export function AuthProvider({ children }) {
     const user = session?.user;
     if (!user || user.is_anonymous) return null;
     const profile = await fetchOrCreateProfile(user);
+    profileUserRef.current = user.id;
     setUserDetails(profile);
     return profile;
   }, []);
@@ -217,6 +218,11 @@ export function AuthProvider({ children }) {
     refreshSession: ensureValidSession,
     refreshProfile,
   };
+
+  // Do not mount products/CMS providers until auth storage is sanitized
+  if (!storageReady) {
+    return <PlantLoader variant="overlay" lockScroll={false} />;
+  }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

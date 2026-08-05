@@ -6,16 +6,13 @@ import { useLanguage } from '../LanguageContext/LanguageContext';
 import styles from '../RecentProducts/RecentProducts.module.css';
 
 export default function GiftReadySection() {
-  const { giftProducts, featuredProducts, products } = useProducts();
+  const { giftProducts } = useProducts();
   const { t } = useLanguage();
 
   const cards = useMemo(() => {
     const gifts = Array.isArray(giftProducts) ? giftProducts : [];
-    if (gifts.length) return gifts.slice(0, 8);
-    const featured = Array.isArray(featuredProducts) ? featuredProducts : [];
-    if (featured.length) return featured.slice(0, 4);
-    return (Array.isArray(products) ? products : []).slice(0, 4);
-  }, [giftProducts, featuredProducts, products]);
+    return gifts.slice(0, 8);
+  }, [giftProducts]);
 
   if (!cards.length) return null;
 

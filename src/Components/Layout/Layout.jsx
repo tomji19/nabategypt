@@ -52,7 +52,7 @@ export default function Layout() {
       <Navbar />
       <main className="flex-1">
         <RouteTransition />
-        <Suspense fallback={<PlantLoader variant="overlay" />}>
+        <Suspense fallback={<PlantLoader variant="overlay" lockScroll={false} />}>
           <Outlet />
         </Suspense>
       </main>

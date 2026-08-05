@@ -8,7 +8,7 @@ export default function ProtectedRoute({ children }) {
   const location = useLocation();
 
   if (loading) {
-    return <PlantLoader variant="overlay" />;
+    return <PlantLoader variant="overlay" lockScroll={false} />;
   }
 
   if (!userLoggedIn) {

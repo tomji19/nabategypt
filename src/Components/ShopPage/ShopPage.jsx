@@ -1,13 +1,11 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import PlantCard from '../PlantCard/PlantCard';
 import styles from './ShopPage.module.css';
 import { useProducts } from '../ProductsContext/ProductsContext';
 import { useLanguage } from '../LanguageContext/LanguageContext';
-// import { useSiteContent } from '../SiteContentContext/SiteContentContext';
 import { useCategories } from '../CategoriesContext/CategoriesContext';
 import { getProductName } from '../../utils/productLocale';
-// import { cmsImage, SECTION_IMAGE_FALLBACKS } from '../../config/cmsFallbacks';
 
 function FilterDropdown({ id, label, value, options, openId, setOpenId, onChange }) {
   const ref = useRef(null);
@@ -82,32 +80,64 @@ function OptionGroup({ label, options, value, onChange }) {
   );
 }
 
+function readShopFilters(params) {
+  return {
+    category: params.get('category') || '',
+    light: params.get('light') || '',
+    care: params.get('care') || '',
+    sort: params.get('sort') || 'featured',
+    onSale: params.get('sale') === '1',
+    availability: params.get('availability') || '',
+    minPrice: params.get('min') || '',
+    maxPrice: params.get('max') || '',
+    searchTerm: params.get('q') || '',
+  };
+}
+
 export default function ShopPage() {
   const { products, loading, error, refreshProducts } = useProducts();
   const { t, isAr } = useLanguage();
-  // const { content } = useSiteContent();
   const { activeCategories } = useCategories();
-  // const shop = content?.shop || {};
-  // const bannerSrc = cmsImage(
-  //   shop.bannerImage,
-  //   SECTION_IMAGE_FALLBACKS.pageBannerImage
-  // );
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [openId, setOpenId] = useState(null);
-  const [category, setCategory] = useState(searchParams.get('category') || '');
-  const [light, setLight] = useState('');
-  const [care, setCare] = useState(searchParams.get('care') || '');
-  const [sort, setSort] = useState('featured');
-  const [onSale, setOnSale] = useState(false);
-  const [minPrice, setMinPrice] = useState('');
-  const [maxPrice, setMaxPrice] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
   const [filtersOpen, setFiltersOpen] = useState(false);
 
-  useEffect(() => {
-    setCategory(searchParams.get('category') || '');
-    setCare(searchParams.get('care') || '');
-  }, [searchParams]);
+  const {
+    category,
+    light,
+    care,
+    sort,
+    onSale,
+    availability,
+    minPrice,
+    maxPrice,
+    searchTerm,
+  } = useMemo(() => readShopFilters(searchParams), [searchParams]);
+
+  /** Keep shop filters in the URL so back from a product restores them. */
+  const patchFilters = useCallback(
+    (patch) => {
+      setSearchParams(
+        (prev) => {
+          const current = readShopFilters(prev);
+          const next = { ...current, ...patch };
+          const params = new URLSearchParams();
+          if (next.category) params.set('category', next.category);
+          if (next.light) params.set('light', next.light);
+          if (next.care) params.set('care', next.care);
+          if (next.sort && next.sort !== 'featured') params.set('sort', next.sort);
+          if (next.onSale) params.set('sale', '1');
+          if (next.availability) params.set('availability', next.availability);
+          if (next.minPrice !== '') params.set('min', String(next.minPrice));
+          if (next.maxPrice !== '') params.set('max', String(next.maxPrice));
+          if (next.searchTerm.trim()) params.set('q', next.searchTerm.trim());
+          return params;
+        },
+        { replace: true }
+      );
+    },
+    [setSearchParams]
+  );
 
   const CATEGORIES = useMemo(
     () => [
@@ -125,6 +155,8 @@ export default function ShopPage() {
     { value: 'low', label: t('lowLight') },
     { value: 'medium', label: t('mediumLight') },
     { value: 'bright', label: t('brightLight') },
+    { value: 'bright-direct', label: t('brightLightDirect') },
+    { value: 'bright-indirect', label: t('brightLightIndirect') },
   ];
 
   const CARE_OPTIONS = [
@@ -132,6 +164,12 @@ export default function ShopPage() {
     { value: 'easy', label: t('easyCare') },
     { value: 'moderate', label: t('moderateCare') },
     { value: 'expert', label: t('expertCare') },
+  ];
+
+  const AVAILABILITY_OPTIONS = [
+    { value: '', label: t('anyAvailability') },
+    { value: 'in', label: t('inStock') },
+    { value: 'out', label: t('outOfStock') },
   ];
 
   const SORT_OPTIONS = [
@@ -160,7 +198,14 @@ export default function ShopPage() {
         : true;
       const matchesLight = light ? product.light === light : true;
       const matchesCare = care ? product.care === care : true;
-      const inStock = product.stock == null || product.stock > 0;
+      const stockQty = Number(product.stock);
+      const isInStock = Number.isFinite(stockQty) ? stockQty > 0 : true;
+      const matchesAvailability =
+        availability === 'in'
+          ? isInStock
+          : availability === 'out'
+            ? !isInStock
+            : true;
 
       return (
         withinPrice &&
@@ -169,7 +214,7 @@ export default function ShopPage() {
         matchesSearch &&
         matchesLight &&
         matchesCare &&
-        inStock
+        matchesAvailability
       );
     });
 
@@ -198,6 +243,7 @@ export default function ShopPage() {
     care,
     sort,
     onSale,
+    availability,
     minPrice,
     maxPrice,
     searchTerm,
@@ -210,19 +256,13 @@ export default function ShopPage() {
     light,
     care,
     onSale,
+    availability,
     minPrice !== '',
     maxPrice !== '',
   ].filter(Boolean).length;
 
   const resetFilters = () => {
-    setCategory('');
-    setLight('');
-    setCare('');
-    setSort('featured');
-    setOnSale(false);
-    setMinPrice('');
-    setMaxPrice('');
-    setSearchTerm('');
+    setSearchParams({}, { replace: true });
     setOpenId(null);
   };
 
@@ -244,19 +284,25 @@ export default function ShopPage() {
         label={t('category')}
         options={CATEGORIES}
         value={category}
-        onChange={setCategory}
+        onChange={(value) => patchFilters({ category: value })}
       />
       <OptionGroup
         label={t('light')}
         options={LIGHT_OPTIONS}
         value={light}
-        onChange={setLight}
+        onChange={(value) => patchFilters({ light: value })}
       />
       <OptionGroup
         label={t('care')}
         options={CARE_OPTIONS}
         value={care}
-        onChange={setCare}
+        onChange={(value) => patchFilters({ care: value })}
+      />
+      <OptionGroup
+        label={t('availability')}
+        options={AVAILABILITY_OPTIONS}
+        value={availability}
+        onChange={(value) => patchFilters({ availability: value })}
       />
 
       <div className={styles.group}>
@@ -267,7 +313,7 @@ export default function ShopPage() {
             min="0"
             placeholder={t('min')}
             value={minPrice}
-            onChange={(e) => setMinPrice(e.target.value)}
+            onChange={(e) => patchFilters({ minPrice: e.target.value })}
             className={styles.priceInput}
             aria-label={t('min')}
           />
@@ -277,7 +323,7 @@ export default function ShopPage() {
             min="0"
             placeholder={t('max')}
             value={maxPrice}
-            onChange={(e) => setMaxPrice(e.target.value)}
+            onChange={(e) => patchFilters({ maxPrice: e.target.value })}
             className={styles.priceInput}
             aria-label={t('max')}
           />
@@ -288,7 +334,7 @@ export default function ShopPage() {
         <input
           type="checkbox"
           checked={onSale}
-          onChange={(e) => setOnSale(e.target.checked)}
+          onChange={(e) => patchFilters({ onSale: e.target.checked })}
         />
         <span>{t('onSale')}</span>
       </label>
@@ -297,25 +343,6 @@ export default function ShopPage() {
 
   return (
     <div className={styles.page}>
-      {/* Shop banner — temporarily hidden
-      <section className="page-banner">
-        <img
-          src={bannerSrc}
-          alt=""
-          className="absolute inset-0 h-full w-full object-cover"
-        />
-        <div className="absolute inset-0 bg-nabat-primary/60" />
-        <div className="relative z-10">
-          <p className="mb-2 font-nav text-[11px] uppercase tracking-[0.2em] text-white/70">
-            {shop.bannerEyebrow || t('collection')}
-          </p>
-          <h1 className="page-banner-title">
-            {shop.bannerTitle || t('shopBanner')}
-          </h1>
-        </div>
-      </section>
-      */}
-
       <div className={`section-pad ${styles.layout}`}>
         {sidebar}
 
@@ -327,7 +354,7 @@ export default function ShopPage() {
                 type="search"
                 placeholder={t('searchPlants')}
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => patchFilters({ searchTerm: e.target.value })}
                 className={styles.search}
               />
             </div>
@@ -358,7 +385,7 @@ export default function ShopPage() {
               options={SORT_OPTIONS}
               openId={openId}
               setOpenId={setOpenId}
-              onChange={setSort}
+              onChange={(value) => patchFilters({ sort: value })}
             />
           </div>
 

@@ -7,7 +7,7 @@ import { useLanguage } from '../LanguageContext/LanguageContext';
 import styles from './RecentProducts.module.css';
 
 export default function RecentProducts() {
-  const { recentProducts, products } = useProducts();
+  const { recentProducts } = useProducts();
   const { content } = useSiteContent();
   const { t, isAr } = useLanguage();
   const home = content?.home || {};
@@ -20,14 +20,8 @@ export default function RecentProducts() {
 
   const cards = useMemo(() => {
     const recent = Array.isArray(recentProducts) ? recentProducts : [];
-    if (recent.length >= 8) return recent.slice(0, 8);
-
-    const seen = new Set(recent.map((p) => p.id));
-    const filler = (Array.isArray(products) ? products : []).filter(
-      (p) => !seen.has(p.id)
-    );
-    return [...recent, ...filler].slice(0, 8);
-  }, [recentProducts, products]);
+    return recent.slice(0, 8);
+  }, [recentProducts]);
 
   if (!cards.length) return null;
 

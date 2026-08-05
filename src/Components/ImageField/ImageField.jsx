@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
+import { toast } from 'react-toastify';
 import { uploadProductImage } from '../../supabase/storage';
 import styles from './ImageField.module.css';
 
@@ -13,29 +14,39 @@ export default function ImageField({
   hint = 'Drop an image, browse, or paste a URL',
 }) {
   const inputRef = useRef(null);
+  const mountedRef = useRef(true);
+  const inFlightRef = useRef(false);
   const [dragging, setDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState(null);
   const urlValue = typeof value === 'string' ? value : '';
 
-  useEffect(() => {
-    setError(null);
-    setDragging(false);
-    setUploading(false);
-  }, [urlValue]);
+  React.useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   const applyFile = useCallback(
     async (file) => {
-      if (!file) return;
+      if (!file || inFlightRef.current) return;
+      inFlightRef.current = true;
       setError(null);
       setUploading(true);
       try {
         const publicUrl = await uploadProductImage(file, { folder });
+        if (!mountedRef.current) return;
         onChange?.(publicUrl);
+        toast.success('Image uploaded');
       } catch (err) {
-        setError(err?.message || 'Upload failed');
+        if (!mountedRef.current) return;
+        const message = err?.message || 'Upload failed';
+        setError(message);
+        toast.error(message);
       } finally {
-        setUploading(false);
+        inFlightRef.current = false;
+        if (mountedRef.current) setUploading(false);
       }
     },
     [folder, onChange]
@@ -43,7 +54,9 @@ export default function ImageField({
 
   const onDrop = (e) => {
     e.preventDefault();
+    e.stopPropagation();
     setDragging(false);
+    if (uploading) return;
     const file = e.dataTransfer.files?.[0];
     if (file) applyFile(file);
   };
@@ -58,12 +71,18 @@ export default function ImageField({
         }`}
         onDragEnter={(e) => {
           e.preventDefault();
-          setDragging(true);
+          if (!uploading) setDragging(true);
         }}
         onDragOver={(e) => e.preventDefault()}
         onDragLeave={() => setDragging(false)}
         onDrop={onDrop}
       >
+        {uploading && (
+          <div className={styles.uploadingOverlay} role="status" aria-live="polite">
+            Uploading…
+          </div>
+        )}
+
         {urlValue ? (
           <div className={styles.previewRow}>
             <img src={urlValue} alt="" className={styles.preview} />
@@ -83,7 +102,10 @@ export default function ImageField({
                   type="button"
                   className={styles.linkBtnDanger}
                   disabled={uploading}
-                  onClick={() => onChange?.('')}
+                  onClick={() => {
+                    setError(null);
+                    onChange?.('');
+                  }}
                 >
                   Remove
                 </button>
@@ -113,6 +135,7 @@ export default function ImageField({
           type="file"
           accept="image/jpeg,image/png,image/webp,image/gif"
           className={styles.fileInput}
+          disabled={uploading}
           onChange={(e) => {
             const file = e.target.files?.[0];
             e.target.value = '';

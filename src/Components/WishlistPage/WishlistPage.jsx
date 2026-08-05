@@ -8,6 +8,7 @@ import {
   getCategoryLabel,
   getProductName,
 } from '../../utils/productLocale';
+import { productRequiresSize } from '../../utils/productSizes';
 import pageBanner from '../../assets/images/pagebanner.png';
 
 export default function WishlistPage() {
@@ -71,11 +72,17 @@ export default function WishlistPage() {
                         type="button"
                         className="btn-primary !px-4 !py-2.5"
                         onClick={() => {
+                          if (productRequiresSize(item)) {
+                            navigate(`/singleproduct/${item.id}`);
+                            return;
+                          }
                           addToCart(item);
                           removeFromWishlist(item.id);
                         }}
                       >
-                        {t('addToBagShort')}
+                        {productRequiresSize(item)
+                          ? t('chooseSize')
+                          : t('addToBagShort')}
                       </button>
                       <button
                         type="button"

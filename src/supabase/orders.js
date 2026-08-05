@@ -1,6 +1,7 @@
 import { supabase } from './supabase';
 import { STORE, PROMO } from '../config/store';
 import { isWelcomePromoCode, normalizePromoCode } from '../utils/money';
+import { parseCartKey } from '../utils/productSizes';
 
 /**
  * True when this account has never placed an order (eligible for MEH10).
@@ -140,17 +141,35 @@ export async function createOrder({
 }
 
 async function finishOrder(order, cartItems) {
-  const items = cartItems.map((item) => ({
-    order_id: order.id,
-    product_id: String(item.id),
-    product_name: item.name,
-    product_image: typeof item.image === 'string' ? item.image : null,
-    unit_price: Number(item.price),
-    quantity: Number(item.quantity),
-    line_total: Number(item.price) * Number(item.quantity),
-  }));
+  const items = cartItems.map((item) => {
+    const productId =
+      item.productId || parseCartKey(item.id).productId || String(item.id);
+    const size = item.size ?? parseCartKey(item.id).size ?? '';
+    return {
+      order_id: order.id,
+      product_id: String(productId),
+      product_name: item.name,
+      product_image: typeof item.image === 'string' ? item.image : null,
+      size: String(size || ''),
+      unit_price: Number(item.price),
+      quantity: Number(item.quantity),
+      line_total: Number(item.price) * Number(item.quantity),
+    };
+  });
 
-  const { error: itemsError } = await supabase.from('order_items').insert(items);
+  let { error: itemsError } = await supabase.from('order_items').insert(items);
+
+  if (
+    itemsError &&
+    (/size/i.test(itemsError.message || '') || itemsError.code === 'PGRST204')
+  ) {
+    const legacy = items.map((row) => {
+      const next = { ...row };
+      delete next.size;
+      return next;
+    });
+    ({ error: itemsError } = await supabase.from('order_items').insert(legacy));
+  }
 
   if (itemsError) {
     await supabase.from('orders').delete().eq('id', order.id);
@@ -160,7 +179,9 @@ async function finishOrder(order, cartItems) {
   await Promise.all(
     cartItems.map(async (item) => {
       try {
-        const slug = String(item.id);
+        const slug = String(
+          item.productId || parseCartKey(item.id).productId || item.id
+        );
         const { data: product } = await supabase
           .from('products')
           .select('id, stock')
@@ -257,13 +278,18 @@ export function orderToReceiptState(order) {
       country: order.shipping_country || '',
       paymentMethod: order.payment_method || '',
     },
-    cartItems: items.map((item) => ({
-      id: item.id,
-      name: item.product_name,
-      price: Number(item.unit_price),
-      quantity: Number(item.quantity),
-      image: item.product_image,
-    })),
+    cartItems: items.map((item) => {
+      const size = item.size || '';
+      return {
+        id: item.id,
+        name: item.product_name,
+        price: Number(item.unit_price),
+        quantity: Number(item.quantity),
+        image: item.product_image,
+        size,
+        sizeType: '',
+      };
+    }),
     order,
     subtotal: Number(order.subtotal) || 0,
     shipping: Number(order.shipping_fee) || 0,

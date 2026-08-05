@@ -1,10 +1,16 @@
-import { supabase } from './supabase';
+import { supabase, withAnonFallback } from './supabase';
+import {
+  normalizeCompareAt,
+  normalizeSizeOptions,
+  productIsOnSale,
+} from '../utils/productSizes';
 
 function mapDbProduct(row) {
   const slug = row.slug || row.id;
-  const compareAt = row.compare_at_price != null ? Number(row.compare_at_price) : null;
+  const compareAt = normalizeCompareAt(row.compare_at_price);
   const price = Number(row.price);
-  return {
+  const sizeOptions = normalizeSizeOptions(row.size_options, price);
+  const mapped = {
     id: slug,
     dbId: row.id,
     name: row.name,
@@ -12,11 +18,13 @@ function mapDbProduct(row) {
     category: row.category,
     price,
     compareAtPrice: compareAt,
-    onSale: compareAt != null && compareAt > price,
     description: row.description || '',
     descriptionAr: row.description_ar || '',
     image: row.image_url || null,
     hoverImage: row.hover_image_url || null,
+    galleryImages: Array.isArray(row.gallery_images)
+      ? row.gallery_images.map((v) => String(v).trim()).filter(Boolean)
+      : [],
     stock: row.stock ?? 0,
     isActive: row.is_active !== false,
     isFeatured: !!row.is_featured,
@@ -27,44 +35,50 @@ function mapDbProduct(row) {
     care: row.care || '',
     light: row.light || '',
     sortOrder: row.sort_order ?? 0,
+    sizeType: row.size_type || '',
+    sizeOptions,
   };
+  mapped.onSale = productIsOnSale(mapped);
+  return mapped;
 }
 
 /**
  * Load active products from Supabase only. No local/CMS fallback.
+ * Retries as anon if a dead multi-tab JWT blocks the request.
  */
 export async function fetchProducts() {
-  let data;
-  let error;
-  try {
-    ({ data, error } = await supabase
-      .from('products')
-      .select('*')
-      .eq('is_active', true)
-      .order('sort_order', { ascending: true }));
-  } catch (err) {
-    const msg = err?.message || String(err);
-    if (/failed to fetch|networkerror|fetch/i.test(msg)) {
-      throw new Error(
-        'Could not reach Supabase (network). Check your connection, that the project is not paused, and restart npm run dev after editing .env.'
-      );
+  return withAnonFallback(async () => {
+    let data;
+    let error;
+    try {
+      ({ data, error } = await supabase
+        .from('products')
+        .select('*')
+        .order('sort_order', { ascending: true }));
+    } catch (err) {
+      const msg = err?.message || String(err);
+      if (/failed to fetch|networkerror|fetch/i.test(msg)) {
+        throw new Error(
+          'Could not reach Supabase (network). Check your connection, that the project is not paused, and restart npm run dev after editing .env.'
+        );
+      }
+      throw err;
     }
-    throw err;
-  }
 
-  if (error) throw error;
+    if (error) throw error;
 
-  const products = (data || []).map(mapDbProduct);
-  return {
-    products,
-    featuredProducts: products.filter((p) => p.isFeatured),
-    recentProducts: products.filter((p) => p.isRecent),
-    giftProducts: products.filter((p) => p.isGift),
-    easyCareProducts: products.filter((p) => p.isEasyCare),
-    source: 'supabase',
-    getProductById: (id) =>
-      products.find((p) => p.id === id || p.dbId === id) || null,
-  };
+    const products = (data || []).map(mapDbProduct);
+    return {
+      products,
+      featuredProducts: products.filter((p) => p.isFeatured),
+      recentProducts: products.filter((p) => p.isRecent),
+      giftProducts: products.filter((p) => p.isGift),
+      easyCareProducts: products.filter((p) => p.isEasyCare),
+      source: 'supabase',
+      getProductById: (id) =>
+        products.find((p) => p.id === id || p.dbId === id) || null,
+    };
+  });
 }
 
 export async function fetchAllProductsAdmin() {
@@ -84,21 +98,25 @@ export async function upsertProduct(product) {
     name_ar: product.nameAr || null,
     category: product.category,
     price: Number(product.price),
-    compare_at_price:
-      product.compareAtPrice != null ? Number(product.compareAtPrice) : null,
+    compare_at_price: normalizeCompareAt(product.compareAtPrice),
     description: product.description || '',
     description_ar: product.descriptionAr || '',
     image_url: typeof product.image === 'string' ? product.image : null,
     hover_image_url:
       typeof product.hoverImage === 'string' ? product.hoverImage : null,
+    gallery_images: Array.isArray(product.galleryImages)
+      ? product.galleryImages.map((v) => String(v).trim()).filter(Boolean)
+      : [],
     stock: Number(product.stock) || 0,
-    is_active: product.isActive !== false,
+    is_active: true,
     is_featured: !!product.isFeatured,
     is_recent: !!product.isRecent,
     is_gift: !!product.isGift,
     is_easy_care: !!product.isEasyCare,
     care: product.care || null,
     light: product.light || null,
+    size_type: product.sizeType || null,
+    size_options: normalizeSizeOptions(product.sizeOptions, product.price),
     sort_order: Number(product.sortOrder) || 0,
     updated_at: new Date().toISOString(),
   };
@@ -123,6 +141,23 @@ export async function upsertProduct(product) {
   }
   if (error && /is_easy_care/i.test(error.message || '')) {
     delete row.is_easy_care;
+    ({ data, error } = await supabase
+      .from('products')
+      .upsert(row, { onConflict: 'slug' })
+      .select()
+      .single());
+  }
+  if (error && /size_type|size_options/i.test(error.message || '')) {
+    delete row.size_type;
+    delete row.size_options;
+    ({ data, error } = await supabase
+      .from('products')
+      .upsert(row, { onConflict: 'slug' })
+      .select()
+      .single());
+  }
+  if (error && /gallery_images/i.test(error.message || '')) {
+    delete row.gallery_images;
     ({ data, error } = await supabase
       .from('products')
       .upsert(row, { onConflict: 'slug' })

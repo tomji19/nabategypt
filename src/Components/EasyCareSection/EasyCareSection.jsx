@@ -6,19 +6,13 @@ import { useLanguage } from '../LanguageContext/LanguageContext';
 import styles from '../RecentProducts/RecentProducts.module.css';
 
 export default function EasyCareSection() {
-  const { easyCareProducts, products } = useProducts();
+  const { easyCareProducts } = useProducts();
   const { t } = useLanguage();
 
   const cards = useMemo(() => {
     const easy = Array.isArray(easyCareProducts) ? easyCareProducts : [];
-    if (easy.length) return easy.slice(0, 8);
-    return (Array.isArray(products) ? products : [])
-      .filter(
-        (p) =>
-          p.isEasyCare || String(p.care || '').toLowerCase() === 'easy'
-      )
-      .slice(0, 8);
-  }, [easyCareProducts, products]);
+    return easy.slice(0, 8);
+  }, [easyCareProducts]);
 
   if (!cards.length) return null;
 

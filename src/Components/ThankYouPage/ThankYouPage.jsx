@@ -10,6 +10,7 @@ import {
   fetchOrderById,
   orderToReceiptState,
 } from '../../supabase/orders';
+import { formatSizeLabel } from '../../utils/productSizes';
 
 const InvoiceDetails = ({ label, value }) => (
   <div className="flex gap-2 font-nav text-sm">
@@ -241,7 +242,11 @@ const ThankYouPage = () => {
                 {cartItems.map((item, index) => (
                   <InvoiceItem
                     key={item.id || index}
-                    description={item.name}
+                    description={
+                      item.size
+                        ? `${item.name} (${formatSizeLabel(item.size, item.sizeType)})`
+                        : item.name
+                    }
                     price={item.price}
                     qty={item.quantity}
                     total={item.price * item.quantity}

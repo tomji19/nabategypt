@@ -17,6 +17,7 @@ import {
   toE164,
 } from '../../utils/phone';
 import { getProductName } from '../../utils/productLocale';
+import { formatSizeLabel } from '../../utils/productSizes';
 import { loginPathWithRedirect } from '../../utils/authRedirect';
 
 const PAY_LABEL = {
@@ -759,6 +760,9 @@ const CheckoutForm = () => {
                             {getProductName(item, { isAr, t })}
                           </p>
                           <p className="font-nav text-xs text-nabat-muted">
+                            {item.size
+                              ? `${t('sizeLabel')}: ${formatSizeLabel(item.size, item.sizeType)} · `
+                              : ''}
                             {t('qty')} {item.quantity}
                           </p>
                         </div>

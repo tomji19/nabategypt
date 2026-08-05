@@ -1,15 +1,14 @@
 import React from 'react';
 import { useLanguage } from '../LanguageContext/LanguageContext';
 import { useSiteContent } from '../SiteContentContext/SiteContentContext';
-import { cmsImage, SECTION_IMAGE_FALLBACKS } from '../../config/cmsFallbacks';
+import { cmsImage } from '../../config/cmsFallbacks';
 
 export default function DiscountSection() {
   const { t } = useLanguage();
   const { content } = useSiteContent();
-  const src = cmsImage(
-    content?.home?.discountImage,
-    SECTION_IMAGE_FALLBACKS.discountImage
-  );
+  const src = cmsImage(content?.home?.discountImage);
+
+  if (!src) return null;
 
   return (
     <section className="relative flex min-h-[28rem] items-center justify-center overflow-hidden md:min-h-[32rem]">

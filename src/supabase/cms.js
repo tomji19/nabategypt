@@ -1,8 +1,9 @@
-import { supabase } from './supabase';
+import { supabase, withAnonFallback } from './supabase';
 import {
-  DEFAULT_CATEGORIES,
-  DEFAULT_SITE_CONTENT,
-} from '../config/defaultContent';
+  normalizeCompareAt,
+  normalizeSizeOptions,
+  productIsOnSale,
+} from '../utils/productSizes';
 
 /** Detect if Supabase products table is usable */
 export async function probeDatabase() {
@@ -21,10 +22,10 @@ function missingColumnError(error, column) {
 }
 
 function mapProductRow(row) {
-  const compareAt =
-    row.compare_at_price != null ? Number(row.compare_at_price) : null;
+  const compareAt = normalizeCompareAt(row.compare_at_price);
   const price = Number(row.price);
-  return {
+  const sizeOptions = normalizeSizeOptions(row.size_options, row.price);
+  const mapped = {
     id: row.slug,
     dbId: row.id,
     name: row.name,
@@ -32,11 +33,13 @@ function mapProductRow(row) {
     category: row.category,
     price,
     compareAtPrice: compareAt,
-    onSale: compareAt != null && compareAt > price,
     description: row.description || '',
     descriptionAr: row.description_ar || '',
     image: row.image_url || null,
     hoverImage: row.hover_image_url || null,
+    galleryImages: Array.isArray(row.gallery_images)
+      ? row.gallery_images.map((v) => String(v).trim()).filter(Boolean)
+      : [],
     stock: row.stock ?? 0,
     isActive: row.is_active !== false,
     isFeatured: !!row.is_featured,
@@ -47,7 +50,11 @@ function mapProductRow(row) {
     sortOrder: row.sort_order ?? 0,
     care: row.care || '',
     light: row.light || '',
+    sizeType: row.size_type || '',
+    sizeOptions,
   };
+  mapped.onSale = productIsOnSale(mapped);
+  return mapped;
 }
 
 function mapCategoryRow(c) {
@@ -65,18 +72,28 @@ function mapCategoryRow(c) {
 }
 
 /**
- * Check columns the dashboard needs. Returns { imageUrl, isGift, ok, message }.
+ * Check columns the dashboard needs. Returns { ok, message, ...flags }.
+ * Probes run in parallel so one slow column check cannot stall the dashboard.
  */
 export async function probeDashboardSchema() {
   const result = {
     categoriesImage: true,
     productGift: true,
     productEasyCare: true,
+    productSizes: true,
+    productGallery: true,
     ok: true,
     message: '',
   };
 
-  const cat = await supabase.from('categories').select('image_url').limit(1);
+  const [cat, gift, easy, sizes, gallery] = await Promise.all([
+    supabase.from('categories').select('image_url').limit(1),
+    supabase.from('products').select('is_gift').limit(1),
+    supabase.from('products').select('is_easy_care').limit(1),
+    supabase.from('products').select('size_type, size_options').limit(1),
+    supabase.from('products').select('gallery_images').limit(1),
+  ]);
+
   if (cat.error && missingColumnError(cat.error, 'image_url')) {
     result.categoriesImage = false;
   } else if (cat.error) {
@@ -84,7 +101,6 @@ export async function probeDashboardSchema() {
     result.message = cat.error.message;
   }
 
-  const gift = await supabase.from('products').select('is_gift').limit(1);
   if (gift.error && missingColumnError(gift.error, 'is_gift')) {
     result.productGift = false;
   } else if (gift.error && result.ok) {
@@ -92,7 +108,6 @@ export async function probeDashboardSchema() {
     result.message = gift.error.message;
   }
 
-  const easy = await supabase.from('products').select('is_easy_care').limit(1);
   if (easy.error && missingColumnError(easy.error, 'is_easy_care')) {
     result.productEasyCare = false;
   } else if (easy.error && result.ok) {
@@ -100,10 +115,34 @@ export async function probeDashboardSchema() {
     result.message = easy.error.message;
   }
 
-  if (!result.categoriesImage || !result.productGift || !result.productEasyCare) {
+  if (
+    sizes.error &&
+    (missingColumnError(sizes.error, 'size_type') ||
+      missingColumnError(sizes.error, 'size_options'))
+  ) {
+    result.productSizes = false;
+  } else if (sizes.error && result.ok) {
+    result.ok = false;
+    result.message = sizes.error.message;
+  }
+
+  if (gallery.error && missingColumnError(gallery.error, 'gallery_images')) {
+    result.productGallery = false;
+  } else if (gallery.error && result.ok) {
+    result.ok = false;
+    result.message = gallery.error.message;
+  }
+
+  if (
+    !result.categoriesImage ||
+    !result.productGift ||
+    !result.productEasyCare ||
+    !result.productSizes ||
+    !result.productGallery
+  ) {
     result.ok = false;
     result.message =
-      'Database is missing columns. Run scripts/ensure-dashboard-schema.sql in the Supabase SQL Editor, then refresh.';
+      'Database is missing columns. Run scripts/ensure-all-schema.sql once in the Supabase SQL Editor, then refresh.';
   }
 
   return result;
@@ -130,15 +169,17 @@ export async function saveDashboardProduct(product) {
     name_ar: product.nameAr || null,
     category: product.category,
     price: Number(product.price),
-    compare_at_price:
-      product.compareAtPrice != null ? Number(product.compareAtPrice) : null,
+    compare_at_price: normalizeCompareAt(product.compareAtPrice),
     description: product.description || '',
     description_ar: product.descriptionAr || '',
     image_url: typeof product.image === 'string' ? product.image || null : null,
     hover_image_url:
       typeof product.hoverImage === 'string' ? product.hoverImage || null : null,
+    gallery_images: Array.isArray(product.galleryImages)
+      ? product.galleryImages.map((v) => String(v).trim()).filter(Boolean)
+      : [],
     stock: Number(product.stock) || 0,
-    is_active: product.isActive !== false,
+    is_active: true,
     is_featured: !!product.isFeatured,
     is_recent: !!product.isRecent,
     is_gift: !!product.isGift,
@@ -146,6 +187,8 @@ export async function saveDashboardProduct(product) {
     sort_order: Number(product.sortOrder) || 0,
     care: product.care || null,
     light: product.light || null,
+    size_type: product.sizeType || null,
+    size_options: normalizeSizeOptions(product.sizeOptions, product.price),
     updated_at: new Date().toISOString(),
   };
   if (product.dbId) row.id = product.dbId;
@@ -171,6 +214,9 @@ export async function saveDashboardProduct(product) {
 
   await stripAndRetry('is_gift', 'isGift');
   await stripAndRetry('is_easy_care', 'isEasyCare');
+  await stripAndRetry('size_type', 'sizeType');
+  await stripAndRetry('size_options', 'sizeOptions');
+  await stripAndRetry('gallery_images', 'galleryImages');
 
   if (error) throw error;
 
@@ -186,7 +232,7 @@ export async function saveDashboardProduct(product) {
   const wantedMissing = dropped.filter((flag) => !!product[flag]);
   if (wantedMissing.length) {
     const err = new Error(
-      `Product saved, but homepage flag(s) were NOT stored (${wantedMissing.join(', ')}). Run scripts/ensure-dashboard-schema.sql in Supabase, then assign the section again.`
+      `Product saved, but some fields were NOT stored (${wantedMissing.join(', ')}). Run scripts/ensure-all-schema.sql in Supabase, then save again.`
     );
     err.code = 'SCHEMA_DRIFT';
     err.saved = saved;
@@ -204,28 +250,20 @@ export async function deleteDashboardProduct(product) {
 }
 
 export async function loadCategories() {
-  const { data, error } = await supabase
-    .from('categories')
-    .select('*')
-    .order('sort_order', { ascending: true });
+  return withAnonFallback(async () => {
+    const { data, error } = await supabase
+      .from('categories')
+      .select('*')
+      .order('sort_order', { ascending: true });
 
-  if (error) throw error;
+    if (error) throw error;
 
-  // Never invent fake rows — only return what Supabase has.
-  // (Seed defaults only when the table is truly empty, and mark them unsaved.)
-  if (!data?.length) {
     return {
       source: 'supabase',
-      categories: DEFAULT_CATEGORIES.map((c) => ({ ...c, dbId: null })),
-      empty: true,
+      categories: (data || []).map(mapCategoryRow),
+      empty: !data?.length,
     };
-  }
-
-  return {
-    source: 'supabase',
-    categories: data.map(mapCategoryRow),
-    empty: false,
-  };
+  });
 }
 
 export async function saveCategory(category) {
@@ -280,7 +318,7 @@ export async function saveCategory(category) {
 
   if (droppedImage && category.image) {
     const err = new Error(
-      'Category saved, but the image was NOT stored. Run scripts/ensure-dashboard-schema.sql in the Supabase SQL Editor, then save the image again.'
+      'Category saved, but the image was NOT stored. Run scripts/ensure-all-schema.sql in the Supabase SQL Editor, then save the image again.'
     );
     err.code = 'SCHEMA_DRIFT';
     err.saved = saved;
@@ -296,31 +334,37 @@ export async function deleteCategory(category) {
   if (error) throw error;
 }
 
-function mergeSection(defaults, saved) {
-  if (!saved || typeof saved !== 'object' || Array.isArray(saved)) return defaults;
-  const out = { ...defaults, ...saved };
-  for (const key of Object.keys(defaults)) {
-    if (Array.isArray(defaults[key]) && !Array.isArray(saved[key])) {
-      out[key] = structuredClone(defaults[key]);
+function mergeSection(base, saved) {
+  if (!saved || typeof saved !== 'object' || Array.isArray(saved)) {
+    return base && typeof base === 'object' ? { ...base } : {};
+  }
+  if (!base || typeof base !== 'object') return { ...saved };
+  const out = { ...base, ...saved };
+  for (const key of Object.keys(base)) {
+    if (Array.isArray(base[key]) && !Array.isArray(saved[key]) && saved[key] == null) {
+      out[key] = Array.isArray(base[key]) ? [...base[key]] : base[key];
     }
   }
   return out;
 }
 
+/** Load site_content rows from Supabase only — no static defaults. */
 export async function loadSiteContent() {
-  const { data, error } = await supabase.from('site_content').select('key, value');
-  if (error) throw error;
+  return withAnonFallback(async () => {
+    const { data, error } = await supabase.from('site_content').select('key, value');
+    if (error) throw error;
 
-  const merged = structuredClone(DEFAULT_SITE_CONTENT);
-  (data || []).forEach((row) => {
-    if (row.key && row.value && typeof row.value === 'object') {
-      merged[row.key] = mergeSection(merged[row.key] || {}, row.value);
-    }
+    const content = {};
+    (data || []).forEach((row) => {
+      if (row.key && row.value && typeof row.value === 'object') {
+        content[row.key] = row.value;
+      }
+    });
+    return { source: 'supabase', content };
   });
-  return { source: 'supabase', content: merged };
 }
 
-/** Save one site_content key only (merge partial into existing row). */
+/** Save one site_content key only (merge partial into existing DB row). */
 export async function saveSiteContentSection(key, partial) {
   if (!key || !partial || typeof partial !== 'object') {
     throw new Error('Invalid section save');
@@ -333,9 +377,9 @@ export async function saveSiteContentSection(key, partial) {
     .maybeSingle();
   if (readError) throw readError;
 
-  const defaults = DEFAULT_SITE_CONTENT[key] || {};
-  const current = mergeSection(defaults, existing?.value || {});
-  const next = { ...current, ...partial };
+  const current =
+    existing?.value && typeof existing.value === 'object' ? existing.value : {};
+  const next = mergeSection(current, partial);
 
   const { error } = await supabase.from('site_content').upsert(
     {
@@ -347,7 +391,6 @@ export async function saveSiteContentSection(key, partial) {
   );
   if (error) throw error;
 
-  // Verify round-trip
   const { data: verified, error: verifyError } = await supabase
     .from('site_content')
     .select('value')
@@ -355,7 +398,9 @@ export async function saveSiteContentSection(key, partial) {
     .single();
   if (verifyError) throw verifyError;
 
-  return mergeSection(defaults, verified?.value || next);
+  return verified?.value && typeof verified.value === 'object'
+    ? verified.value
+    : next;
 }
 
 export async function saveSiteContent(content) {
