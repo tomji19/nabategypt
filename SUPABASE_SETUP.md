@@ -17,6 +17,10 @@ Use the **publishable** key (`sb_publishable_…`) or the legacy **anon** JWT fr
 
 4. **Restart** `npm run dev` after any `.env` change (Vite only reads env on startup).
 
+### Deploy (Netlify)
+
+Vite embeds `VITE_*` vars at **build** time. In Netlify → **Site configuration → Environment variables**, add the same two keys (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`), then trigger a new deploy. Do not commit `.env`.
+
 ## 2. Run the database schema
 
 1. Open Supabase → **SQL Editor**.
