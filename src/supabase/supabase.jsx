@@ -4,13 +4,15 @@ const supabaseUrl = String(import.meta.env.VITE_SUPABASE_URL || '').trim();
 const supabaseAnonKey = String(import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim();
 const AUTH_STORAGE_KEY = 'nabat-auth';
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error(
-    'Missing Supabase env vars. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your .env file, then restart the Vite dev server.'
-  );
-}
+export const supabaseConfigError =
+  !supabaseUrl || !supabaseAnonKey
+    ? 'Missing VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY. For local: add them to .env and restart the dev server. For Netlify: Site configuration → Environment variables, then Clear cache and deploy.'
+    : null;
 
-if (!/^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/i.test(supabaseUrl)) {
+if (
+  !supabaseConfigError &&
+  !/^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/i.test(supabaseUrl)
+) {
   console.warn(
     'VITE_SUPABASE_URL looks unusual:',
     supabaseUrl,
@@ -18,16 +20,20 @@ if (!/^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/i.test(supabaseUrl)) {
   );
 }
 
-export const supabase = createClient(supabaseUrl.replace(/\/$/, ''), supabaseAnonKey, {
-  auth: {
-    storage: typeof window !== 'undefined' ? window.localStorage : undefined,
-    storageKey: AUTH_STORAGE_KEY,
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: true,
-    flowType: 'pkce',
-  },
-});
+export const supabase = createClient(
+  (supabaseUrl || 'https://placeholder.supabase.co').replace(/\/$/, ''),
+  supabaseAnonKey || 'missing-anon-key',
+  {
+    auth: {
+      storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+      storageKey: AUTH_STORAGE_KEY,
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: true,
+      flowType: 'pkce',
+    },
+  }
+);
 
 /** Hard-wipe auth keys — signOut alone sometimes leaves a dead JWT that breaks public reads. */
 export function wipeAuthStorage() {

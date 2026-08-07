@@ -14,6 +14,8 @@ import { CategoriesProvider } from './Components/CategoriesContext/CategoriesCon
 import ProtectedRoute from './Components/ProtectedRoute/ProtectedRoute';
 import DashboardGate from './Components/DashboardGate/DashboardGate';
 import AdminDashboard from './Components/AdminDashboard/AdminDashboard';
+import RouteError from './Components/RouteError/RouteError';
+import { supabaseConfigError } from './supabase/supabase';
 
 const Home = lazy(() => import('./Components/Home/Home'));
 const ErrorPage = lazy(() => import('./Components/ErrorPage/ErrorPage'));
@@ -38,6 +40,7 @@ const router = createBrowserRouter([
   {
     path: '/',
     element: <Layout />,
+    errorElement: <RouteError />,
     children: [
       { index: true, element: <Home /> },
       { path: '/shop', element: <ShopPage /> },
@@ -97,6 +100,29 @@ const router = createBrowserRouter([
 ]);
 
 export default function App() {
+  if (supabaseConfigError) {
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          display: 'grid',
+          placeItems: 'center',
+          padding: '2rem',
+          fontFamily: 'system-ui, sans-serif',
+          background: '#f6f3ee',
+          color: '#1f2a1f',
+        }}
+      >
+        <div style={{ maxWidth: 420 }}>
+          <h1 style={{ fontSize: '1.25rem', marginBottom: '0.75rem' }}>
+            Site configuration error
+          </h1>
+          <p style={{ lineHeight: 1.5, opacity: 0.85 }}>{supabaseConfigError}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <AuthProvider>
       <LanguageProvider>

@@ -30,6 +30,7 @@ import ImageField from '../ImageField/ImageField';
 import SiteContentEditor from './SiteContentEditor';
 import HomepageSectionsPanel from './HomepageSectionsPanel';
 import ProductEditor, { DashboardProductCard } from './ProductEditor';
+import CustomReceiptPanel from './CustomReceiptPanel';
 import {
   normalizeSizeOptions,
   syncProductPriceFromSizes,
@@ -42,6 +43,7 @@ const TABS = [
   { id: 'homepage', label: 'Homepage sections' },
   { id: 'categories', label: 'Categories' },
   { id: 'content', label: 'Site content' },
+  { id: 'custom-receipt', label: 'Custom Receipt' },
   { id: 'settings', label: 'Store settings' },
 ];
 
@@ -1094,6 +1096,9 @@ export default function AdminDashboard() {
             />
           </div>
         )}
+
+        {/* CUSTOM RECEIPT */}
+        {tab === 'custom-receipt' && <CustomReceiptPanel />}
 
         {/* SETTINGS */}
         {tab === 'settings' && (

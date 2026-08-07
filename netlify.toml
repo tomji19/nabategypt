@@ -4,9 +4,24 @@
 
 [build.environment]
   NODE_VERSION = "20"
+  # Set these in Netlify UI (Site configuration → Environment variables).
+  # Do NOT put secrets in this file — they must be present at build time:
+  #   VITE_SUPABASE_URL
+  #   VITE_SUPABASE_ANON_KEY
 
-# SPA: React Router paths must serve index.html
+# SPA: React Router paths must serve index.html (static files still win when present)
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+
+# Fresh HTML after each deploy so browsers don't keep a stale JS/CSS map
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
